@@ -19,56 +19,186 @@
 #include "history.h"
 #include "selector.h"
 
-void	score_instable(const board_t *board, extmove_t *begin, extmove_t *end)
+void	score_instable(selector_t *sel)
 {
-	while (begin < end)
+	for (extmove_t *ext = sel->cur; ext < sel->end; ++ext)
 	{
-		switch (type_of_move(begin->move))
+		if (ext->move == sel->tt_move)
+		{
+			sel->end--;
+			*ext = *sel->end;
+			ext--;
+			continue ;
+		}
+
+		switch (type_of_move(ext->move))
 		{
 			case PROMOTION:
-				begin->score = 128 + promotion_type(begin->move);
+				ext->score = 128;
 				break ;
 
 			case EN_PASSANT:
-				begin->score = 64 + PAWN * 8 - PAWN;
+				ext->score = 64 + PAWN * 8 - PAWN;
 				break ;
 
 			default:
-				begin->score = see_greater_than(board, begin->move, 0) ? 64
+				ext->score = see_greater_than(sel->board, ext->move, -30) ? 64
 					: 0;
-				begin->score += type_of_piece(piece_on(board,
-					move_to_square(begin->move))) * 8;
-				begin->score -= type_of_piece(piece_on(board,
-					move_from_square(begin->move)));
+				ext->score += type_of_piece(piece_on(sel->board,
+					move_to_square(ext->move))) * 8;
+				ext->score -= type_of_piece(piece_on(sel->board,
+					move_from_square(ext->move)));
 				break ;
 		}
-		++begin;
 	}
 }
 
-void	score_quiet(const board_t *board, extmove_t *begin, extmove_t *end)
+void	score_quiet(selector_t *sel)
 {
-	const bool	in_endgame = popcount(board->piecetype_bits[ALL_PIECES]) <= 16;
+	const bool	in_endgame = popcount(sel->board->piecetype_bits[ALL_PIECES]) <= 16;
+	const bool	black_to_move = sel->board->side_to_move == BLACK;
 
-	while (begin < end)
+	for (extmove_t *ext = sel->cur; ext < sel->end; ++ext)
 	{
-		const square_t		from = move_from_square(begin->move);
-		const square_t		to = move_to_square(begin->move);
-		const piece_t		piece = piece_on(board, from);
+		if (ext->move == sel->tt_move || ext->move == sel->killers[0]
+			|| ext->move == sel->killers[1])
+		{
+			sel->end--;
+			*ext = *sel->end;
+			ext--;
+			continue ;
+		}
+
+		const square_t		from = move_from_square(ext->move);
+		const square_t		to = move_to_square(ext->move);
+		const piece_t		piece = piece_on(sel->board, from);
 		const scorepair_t	qscore = PsqScore[piece][to] - PsqScore[piece][from];
 
-		begin->score = (in_endgame) ? endgame_score(qscore) : midgame_score(qscore);
+		ext->score = (in_endgame) ? endgame_score(qscore) : midgame_score(qscore);
 
-		if (board->side_to_move == BLACK)
-			begin->score = -begin->score;
+		if (black_to_move)
+			ext->score = -ext->score;
 
-		begin->score += get_hist_score(piece, begin->move);
+		ext->score += get_hist_score(piece, ext->move);
+	}
+}
 
-		++begin;
+void	score_evasions(selector_t *sel)
+{
+	const bool	in_endgame = popcount(sel->board->piecetype_bits[ALL_PIECES]) <= 16;
+	const bool	black_to_move = sel->board->side_to_move == BLACK;
+
+	for (extmove_t *ext = sel->cur; ext < sel->end; ++ext)
+	{
+		if (ext->move == sel->tt_move)
+		{
+			sel->end--;
+			*ext = *sel->end;
+			ext--;
+			continue ;
+		}
+
+		const square_t		from = move_from_square(ext->move);
+		const square_t		to = move_to_square(ext->move);
+		const piece_t		piece = piece_on(sel->board, from);
+
+		if (!empty_square(sel->board, from))
+			ext->score = 2048 - type_of_piece(piece);
+		else if (type_of_piece(piece) == KING)
+		{
+			const scorepair_t	qscore = PsqScore[piece][to] - PsqScore[piece][from];
+
+			ext->score = (in_endgame) ? endgame_score(qscore) : midgame_score(qscore);
+
+			if (black_to_move)
+				ext->score = -ext->score;
+		}
+		else
+			ext->score = -2048 - type_of_piece(piece);
 	}
 }
 
 move_t	next_move(selector_t *sel)
 {
-	return (sel->tt_move);
+__top:
+	switch(sel->stage)
+	{
+		case MainTT:
+		case EvasionTT:
+			sel->stage++;
+			if (sel->tt_move && board_tt_legal(sel->board, sel->tt_move))
+				return (sel->tt_move);
+			goto __top;
+
+		case CaptureInit:
+		case QcaptureInit:
+			sel->stage++;
+			sel->end = generate_captures(sel->end, sel->board);
+			score_instable(sel);
+			goto __top;
+
+		case GoodCapture:
+			if (sel->cur == sel->end)
+			{
+				sel->stage++;
+				goto __top;
+			}
+			place_top_move(sel->cur, sel->end);
+			if (sel->cur->score < 64)
+			{
+				sel->stage++;
+				goto __top;
+			}
+			return ((sel->cur++)->move);
+
+		case Killer:
+			if (sel->kcount == 2)
+			{
+				sel->stage++;
+				goto __top;
+			}
+			move_t	move = sel->killers[sel->kcount++];
+			if (!move || !board_tt_legal(sel->board, move))
+				goto __top;
+			return (move);
+
+		case BadCapture:
+			if (sel->cur == sel->end)
+			{
+				sel->stage++;
+				goto __top;
+			}
+			place_top_move(sel->cur, sel->end);
+			return ((sel->cur++)->move);
+
+		case InitQuiet:
+			sel->stage++;
+			sel->end = generate_quiet(sel->end, sel->board);
+			score_quiet(sel);
+
+		// Fallthrough
+		case Quiet:
+		case Evasion:
+		case Qcapture:
+			if (sel->cur == sel->end)
+				return (NO_MOVE);
+			place_top_move(sel->cur, sel->end);
+			return ((sel->cur++)->move);
+
+		case QsearchTT:
+			sel->stage++;
+			if (sel->tt_move
+				&& is_capture_or_promotion(sel->board, sel->tt_move)
+				&& board_tt_legal(sel->board, sel->tt_move))
+				return (sel->tt_move);
+			goto __top;
+
+		case EvasionInit:
+			sel->stage++;
+			sel->end = generate_evasions(sel->end, sel->board);
+			score_evasions(sel);
+			goto __top;
+	}
+	__builtin_unreachable();
+	return (NO_MOVE);
 }

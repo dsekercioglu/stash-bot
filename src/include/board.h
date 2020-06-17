@@ -68,6 +68,7 @@ typedef struct	board_s
 }				board_t;
 
 bool			board_legal(const board_t *board, move_t move);
+bool			board_tt_legal(const board_t *board, move_t move);
 bool			move_gives_check(const board_t *board, move_t move);
 
 bitboard_t		attackers_list(const board_t *board, square_t s,
@@ -178,6 +179,9 @@ INLINED bitboard_t	piece_moves(piecetype_t piecetype, square_t square,
 		case QUEEN:
 			return (bishop_move_bits(square, occupied)
 				| rook_move_bits(square, occupied));
+
+		case KING:
+			return (PseudoMoves[KING][square]);
 
 		default:
 			__builtin_unreachable();

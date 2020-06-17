@@ -24,14 +24,19 @@ void	init_selector(selector_t *sel, const board_t *board, move_t tt_move,
 	sel->board = board;
 	sel->tt_move = tt_move;
 
+	sel->kcount = 0;
 	if (killers)
 	{
 		sel->killers[0] = killers[0];
 		sel->killers[1] = killers[1];
 	}
+	else
+		sel->killers[0] = sel->killers[1] = NO_MOVE;
 
 	if (board->stack->checkers)
 		sel->stage = EvasionTT;
 	else
 		sel->stage = in_qsearch ? QsearchTT : MainTT;
+
+	sel->cur = sel->end = sel->moves;
 }

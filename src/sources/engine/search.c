@@ -22,7 +22,7 @@
 #include "history.h"
 #include "imath.h"
 #include "info.h"
-#include "movelist.h"
+#include "selector.h"
 #include "tt.h"
 
 extern int	g_seldepth;
@@ -33,8 +33,10 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	if (depth <= 0)
 		return (qsearch(board, depth, alpha, beta, ss));
 
-	movelist_t			list;
+	selector_t			selector;
 	move_t				pv[512];
+	move_t				quiets[128];
+	int					qcount = 0;
 	score_t				best_value = -INF_SCORE;
 
 	if (g_nodes % 4096 == 0 && out_of_time())
@@ -183,24 +185,22 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	(ss + 1)->plies = ss->plies + 1;
 
-	list_pseudo(&list, board);
-	generate_move_values(&list, board, tt_move, ss->killers);
+	init_selector(&selector, board, tt_move, ss->killers, false);
 
 	move_t	bestmove = NO_MOVE;
 	int		move_count = 0;
+	move_t	move;
 
-	for (const extmove_t *extmove = movelist_begin(&list);
-		extmove < movelist_end(&list); ++extmove)
+	while ((move = next_move(&selector)) != NO_MOVE)
 	{
-		place_top_move((extmove_t *)extmove, (extmove_t *)movelist_end(&list));
-		if (!board_legal(board, extmove->move))
+		if (!board_legal(board, move))
 			continue ;
 
 		move_count++;
 
 		boardstack_t	stack;
 
-		do_move(board, extmove->move, &stack);
+		do_move(board, move, &stack);
 
 		score_t		next;
 
@@ -242,7 +242,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			}
 		}
 
-		undo_move(board, extmove->move);
+		undo_move(board, move);
 
 		if (abs(next) > INF_SCORE)
 		{
@@ -256,7 +256,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 			if (alpha < best_value)
 			{
-				ss->pv[0] = bestmove = extmove->move;
+				ss->pv[0] = bestmove = move;
 				alpha = best_value;
 
 				size_t	j;
@@ -278,15 +278,17 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 							ss->killers[1] = bestmove;
 					}
 
-					while (--extmove >= movelist_begin(&list))
-						if (!is_capture_or_promotion(board, extmove->move))
-							add_hist_penalty(piece_on(board,
-								move_from_square(extmove->move)), extmove->move);
+					for (int i = 0; i < qcount; ++i)
+						add_hist_penalty(piece_on(board,
+							move_from_square(quiets[i])), quiets[i]);
 
 					break ;
 				}
 			}
 		}
+
+		if (!is_capture_or_promotion(board, move))
+			quiets[qcount++] = move;
 	}
 
 	// Checkmate/Stalemate ?

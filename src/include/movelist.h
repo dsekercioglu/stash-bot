@@ -45,6 +45,7 @@ extmove_t	*generate_pseudo(extmove_t *movelist, const board_t *board);
 extmove_t	*generate_classic(extmove_t *movelist, const board_t *board);
 extmove_t	*generate_evasions(extmove_t *movelist, const board_t *board);
 extmove_t	*generate_captures(extmove_t *movelist, const board_t *board);
+extmove_t	*generate_quiet(extmove_t *movelist, const board_t *board);
 
 extmove_t	*generate_knight_moves(extmove_t *movelist, const board_t *board,
 			color_t us, bitboard_t target_squares);

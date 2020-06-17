@@ -24,7 +24,8 @@ typedef struct
 	const board_t	*board;
 	move_t			tt_move;
 	move_t			killers[2];
-	extmove_t		*current;
+	int				kcount;
+	extmove_t		*cur;
 	extmove_t		*end;
 	int				stage;
 	extmove_t		moves[256];

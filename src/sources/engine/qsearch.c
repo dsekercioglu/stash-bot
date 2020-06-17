@@ -21,7 +21,7 @@
 #include "engine.h"
 #include "imath.h"
 #include "info.h"
-#include "movelist.h"
+#include "selector.h"
 #include "tt.h"
 
 extern int	g_seldepth;
@@ -30,7 +30,7 @@ score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 		searchstack_t *ss)
 {
 	const score_t		old_alpha = alpha;
-	movelist_t			list;
+	selector_t			selector;
 
 	if (g_nodes % 4096 == 0 && out_of_time())
 		return (NO_SCORE);
@@ -92,8 +92,7 @@ score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 
 	(ss + 1)->plies = ss->plies + 1;
 
-	list_instable(&list, board);
-	generate_move_values(&list, board, tt_move, NULL);
+	init_selector(&selector, board, tt_move, NULL, true);
 
 	move_t	bestmove = NO_MOVE;
 	int		move_count = 0;
@@ -104,22 +103,21 @@ score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 		&& popcount(board->piecetype_bits[ALL_PIECES]) > 6);
 	const score_t	delta_base = eval + PAWN_EG_SCORE * 2;
 
-	for (const extmove_t *extmove = movelist_begin(&list);
-		extmove < movelist_end(&list); ++extmove)
+	move_t	move;
+
+	while ((move = next_move(&selector)) != NO_MOVE)
 	{
-		place_top_move((extmove_t *)extmove, (extmove_t *)movelist_end(&list));
-		if (!board_legal(board, extmove->move))
+		if (!board_legal(board, move))
 			continue ;
 
 		move_count++;
 
-		bool	gives_check = move_gives_check(board, extmove->move);
+		bool	gives_check = move_gives_check(board, move);
 
-		if (delta_pruning && !gives_check
-			&& type_of_move(extmove->move) == NORMAL_MOVE)
+		if (delta_pruning && !gives_check && type_of_move(move) == NORMAL_MOVE)
 		{
 			score_t		delta = delta_base + PieceScores[ENDGAME]
-				[type_of_piece(piece_on(board, move_to_square(extmove->move)))];
+				[type_of_piece(piece_on(board, move_to_square(move)))];
 
 			// Check if the move is very unlikely to improve alpha.
 
@@ -129,12 +127,12 @@ score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 
 		boardstack_t	stack;
 
-		do_move_gc(board, extmove->move, &stack, gives_check);
+		do_move_gc(board, move, &stack, gives_check);
 
 		score_t		next = -qsearch(board, depth - 1, -beta, -alpha,
 			ss + 1);
 
-		undo_move(board, extmove->move);
+		undo_move(board, move);
 
 		if (abs(next) > INF_SCORE)
 		{
@@ -148,7 +146,7 @@ score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 			if (alpha < best_value)
 			{
 				alpha = best_value;
-				bestmove = extmove->move;
+				bestmove = move;
 				if (alpha >= beta)
 					break ;
 			}
