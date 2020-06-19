@@ -75,6 +75,9 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 	move_t	bestmove = NO_MOVE;
 	int		move_count = 0;
 
+	if (board->stack->checkers)
+		depth += 1;
+
 	for (const extmove_t *extmove = movelist_begin(&list);
 		extmove < movelist_end(&list); ++extmove)
 	{

@@ -183,6 +183,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	(ss + 1)->plies = ss->plies + 1;
 
+	if (board->stack->checkers)
+		depth += 1;
+
 	list_pseudo(&list, board);
 	generate_move_values(&list, board, tt_move, ss->killers);
 
