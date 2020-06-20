@@ -150,20 +150,23 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 score_t		evaluate(const board_t *board)
 {
 	scorepair_t		eval = board->psq_scorepair;
-
-	if (!(board->stack->castlings & WHITE_CASTLING))
-		eval += evaluate_shelter(board, WHITE);
-	if (!(board->stack->castlings & BLACK_CASTLING))
-		eval -= evaluate_shelter(board, BLACK);
+	const int		piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
 
 	eval += evaluate_pawns(board);
 	eval += evaluate_mobility(board, WHITE);
 	eval -= evaluate_mobility(board, BLACK);
 
+	if (piece_count > 16)
+	{
+		if (!(board->stack->castlings & WHITE_CASTLING))
+			eval += evaluate_shelter(board, WHITE);
+		if (!(board->stack->castlings & BLACK_CASTLING))
+			eval -= evaluate_shelter(board, BLACK);
+	}
+
+	score_t		score;
 	score_t		mg = midgame_score(eval);
 	score_t		eg = endgame_score(eval);
-	int			piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
-	score_t		score;
 
 	if (piece_count <= 7)
 	{
