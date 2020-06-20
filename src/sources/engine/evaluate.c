@@ -24,7 +24,7 @@
 
 enum
 {
-	CastlingBonus = SPAIR(100, 0),
+	ShelterPenalty = SPAIR(-30, 0),
 	Initiative = 15,
 	MobilityBase = SPAIR(-42, -66),
 	MobilityPlus = SPAIR(7, 11),
@@ -41,6 +41,19 @@ enum
 const int	AttackWeights[8] = {
 	0, 0, 50, 75, 88, 94, 97, 99
 };
+
+scorepair_t	evaluate_shelter(const board_t *board, color_t c)
+{
+	const bitboard_t	edges = FILE_A_BITS | FILE_H_BITS;
+	square_t			king_square = board->piece_list[create_piece(c, KING)][0];
+	int					min_shelter_count = 2 + !(edges & square_bit(king_square));
+	bitboard_t			king_zone = king_moves(king_square);
+
+	king_zone |= (c == WHITE) ? shift_up(king_zone) : shift_down(king_zone);
+
+	return (ShelterPenalty * max(0, min_shelter_count
+		- popcount(king_zone & board->color_bits[c] & board->piecetype_bits[PAWN])));
+}
 
 scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 {
@@ -138,10 +151,10 @@ score_t		evaluate(const board_t *board)
 {
 	scorepair_t		eval = board->psq_scorepair;
 
-	if (board->stack->castlings & WHITE_CASTLING)
-		eval += CastlingBonus;
-	if (board->stack->castlings & BLACK_CASTLING)
-		eval -= CastlingBonus;
+	if (!(board->stack->castlings & WHITE_CASTLING))
+		eval += evaluate_shelter(board, WHITE);
+	if (!(board->stack->castlings & BLACK_CASTLING))
+		eval -= evaluate_shelter(board, BLACK);
 
 	eval += evaluate_pawns(board);
 	eval += evaluate_mobility(board, WHITE);
