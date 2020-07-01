@@ -239,27 +239,32 @@ void	search_bestmove(board_t *board, int depth, root_move_t *begin,
 
 		pv[0] = NO_MOVE;
 
+		score_t		next;
+
 		if (i == begin)
-			i->score = -search_pv(board, depth, -INF_SCORE, INF_SCORE, sstack);
+			next = -search_pv(board, depth, -INF_SCORE, INF_SCORE, sstack);
 		else
 		{
-			i->score = -search(board, depth, -alpha - 1, -alpha, sstack);
+			next = -search(board, depth, -alpha - 1, -alpha, sstack);
 
-			if (alpha < i->score)
+			if (alpha < next)
 			{
 				pv[0] = NO_MOVE;
-				i->score = -search_pv(board, depth, -INF_SCORE,
-					-i->score, sstack);
+				next = -search_pv(board, depth, -INF_SCORE,
+					-next, sstack);
 			}
 		}
 
 		undo_move(board, i->move);
 
-		if (abs(i->score) > INF_SCORE)
-			return ;
-		else if (i->score > alpha)
+		if (abs(next) > INF_SCORE)
 		{
-			alpha = i->score;
+			i->score = -NO_SCORE;
+			return ;
+		}
+		else if (next > alpha)
+		{
+			alpha = i->score = next;
 			i->depth = depth + 1;
 			i->pv[0] = i->move;
 
