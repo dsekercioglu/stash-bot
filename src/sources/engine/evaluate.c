@@ -46,6 +46,43 @@ const int	AttackWeights[8] = {
 	0, 0, 50, 75, 88, 94, 97, 99
 };
 
+score_t		scaled_score(const board_t *board, score_t score)
+{
+	const color_t		adv = (score < 0) ? BLACK : WHITE;
+	const color_t		los = opposite_color(adv);
+	const bitboard_t	adv_pieces = board->color_bits[adv];
+
+	if (!(adv_pieces & board->piecetype_bits[PAWN]))
+	{
+		// Apply insufficient material scaling
+
+		int	adv_points = 3 * board->piece_count[create_piece(adv, KNIGHT)]
+			+ 3 * board->piece_count[create_piece(adv, BISHOP)]
+			+ 5 * board->piece_count[create_piece(adv, ROOK)]
+			+ 9 * board->piece_count[create_piece(adv, QUEEN)];
+
+		int los_points = 3 * board->piece_count[create_piece(los, KNIGHT)]
+			+ 3 * board->piece_count[create_piece(los, BISHOP)]
+			+ 5 * board->piece_count[create_piece(los, ROOK)]
+			+ 9 * board->piece_count[create_piece(los, QUEEN)];
+
+		if (adv_points < 5)
+			return (0);
+		else
+		{
+			int		point_diff = adv_points - los_points;
+
+			if (point_diff < 4)
+			{
+				int		scale = max(16, 64 * los_points / adv_points);
+
+				return ((score * scale) / 128);
+			}
+		}
+	}
+	return (score);
+}
+
 scorepair_t	evaluate_material(const board_t *board, color_t c)
 {
 	scorepair_t			ret = 0;
@@ -177,36 +214,14 @@ score_t		evaluate(const board_t *board)
 	int			piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
 	score_t		score;
 
-	if (piece_count <= 7)
-	{
-		// Insufficient material check.
-
-		int		pieces = popcount(board->color_bits[WHITE]);
-
-		if (eg > 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, WHITE, KNIGHT, BISHOP))
-				return (0);
-		}
-
-		pieces = piece_count - pieces;
-
-		if (eg < 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, BLACK, KNIGHT, BISHOP))
-				return (0);
-		}
-	}
-
-
 	if (piece_count <= 16)
 		score = eg;
 	else
 		score = (eg * (32 - piece_count) + mg * (piece_count - 16)) / 16;
 
-	return (Initiative + (board->side_to_move == WHITE ? score : -score));
+	score += (board->side_to_move == WHITE) ? Initiative : -Initiative;
+
+	score = scaled_score(board, score);
+
+	return (board->side_to_move == WHITE ? score : -score);
 }
