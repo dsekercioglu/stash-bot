@@ -16,18 +16,34 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "imath.h"
 #include "pawns.h"
 
 enum
 {
-	BackwardPenalty = SPAIR(-16, -40),
-	StragglerPenalty = SPAIR(-24, -56),
-	DoubledPenalty = SPAIR(-14, -36),
-	IsolatedPenalty = SPAIR(-14, -36),
+	ZeroEightPawns = SPAIR(-10, -10),
+	PawnsInCenter = SPAIR(14, 0),
+	PawnsAttackingCenter = SPAIR(9, 8),
 
-	CandidateBonus = SPAIR(20, 48),
-	PassedPawnBonus = SPAIR(28, 64),
-	PassedRankBonus = SPAIR(32, 56)
+	BackwardPenalty = SPAIR(-8, -20),
+	StragglerPenalty = SPAIR(-12, -28),
+	DoubledPenalty = SPAIR(-8, -7),
+	IsolatedPenalty = SPAIR(-22, -20),
+
+	PawnChain = SPAIR(4, 2),
+	PawnShield = SPAIR(27, 0),
+
+	MyKingProximity = SPAIR(16, 16),
+	OppKingProximity = SPAIR(-10, -10),
+};
+
+const scorepair_t	PassedRankBonus[RANK_NB] = {
+	0, 0, 0, SPAIR(18, 18), SPAIR(52, 52), SPAIR(108, 108), SPAIR(186, 186), 0
+};
+
+const scorepair_t	PassedFileBonus[RANK_NB] = {
+	SPAIR(25, 20), SPAIR(11, 15), SPAIR(-14, 5), SPAIR(-14, -7),
+	SPAIR(-14, -7), SPAIR(-14, 5), SPAIR(11, 15), SPAIR(25, 20)
 };
 
 pawns_cache_t	g_pawns[PawnCacheSize];
@@ -57,36 +73,39 @@ bitboard_t	safe_pawn_squares(color_t c, bitboard_t us, bitboard_t them)
 	return (our_double_attacks | ~their_attacks | (our_odd_attacks & ~their_double_attacks));
 }
 
-scorepair_t	evaluate_passers(color_t c, const square_t *ulist, bitboard_t them)
+scorepair_t	evaluate_passers(color_t c, const square_t *ulist, bitboard_t them,
+			const board_t *board)
 {
 	scorepair_t	ret = 0;
+	const square_t	my_king = board->piece_list[create_piece(c, KING)][0];
+	const square_t	opp_king = board->piece_list[create_piece(them, KING)][0];
 
 	for (square_t sq = *ulist; sq != SQ_NONE; sq = *++ulist)
 	{
-		rank_t	r = relative_square_rank(sq, c);
-		if (r == RANK_7)
-			ret += PassedPawnBonus + PassedRankBonus;
-		else if (!(passed_pawn_span(c, sq) & them))
-			ret += PassedPawnBonus + scorepair_divide(PassedRankBonus, RANK_8 - r);
+		if (!(passed_pawn_span(c, sq) & them))
+		{
+			rank_t	r = relative_square_rank(sq, c);
+			ret += PassedFileBonus[file_of_square(sq)] + PassedRankBonus[r];
+			ret += MyKingProximity * SquareDistance[sq][my_king];
+			ret += OppKingProximity * SquareDistance[sq][opp_king];
+		}
 	}
 	return (ret);
 }
 
-scorepair_t	evaluate_candidates(color_t c, bitboard_t us, bitboard_t them)
+scorepair_t	evaluate_chain(bitboard_t us, color_t c)
 {
-	bitboard_t	rank5 = (c == WHITE) ? RANK_5_BITS : RANK_4_BITS;
-	bitboard_t	their_attacks = (c == WHITE) ? black_pawn_attacks(them)
-		: white_pawn_attacks(them);
+	scorepair_t	ret = 0;
+	bitboard_t	b = us;
 
-	bitboard_t	our_safe_squares = safe_pawn_squares(c, us, them);
-	bitboard_t	safe_attacked = our_safe_squares & their_attacks;
-	bitboard_t	their_front_span = (c == WHITE) ? (them >> 8) | (them >> 16)
-		: (them << 8) | (them << 16);
+	while (b)
+	{
+		square_t	sq = pop_first_square(&b);
 
-	bitboard_t	candidates = us & rank5 & ~their_front_span
-		& (c == WHITE ? shift_up(safe_attacked) : shift_down(safe_attacked));
-
-	return (candidates ? CandidateBonus * popcount(candidates) : 0);
+		if (PawnMoves[c][sq] & us)
+			ret += PawnChain;
+	}
+	return (ret);
 }
 
 scorepair_t	evaluate_backward(color_t c, bitboard_t us, bitboard_t them,
@@ -151,16 +170,46 @@ scorepair_t	evaluate_doubled_isolated(bitboard_t us)
 	return (ret);
 }
 
+scorepair_t	evaluate_center(bitboard_t us, color_t c)
+{
+	scorepair_t	ret = 0;
+
+	int	count = popcount(us);
+
+	if (count == 0 || count == 8)
+		ret += ZeroEightPawns;
+
+	ret += PawnsInCenter * popcount(us & CENTER_BITS);
+	ret += PawnsAttackingCenter
+		* popcount((c == WHITE ? white_pawn_attacks(us) : black_pawn_attacks(us))
+		& CENTER_BITS);
+
+	return (ret);
+}
+
+scorepair_t	evaluate_shield(bitboard_t us, color_t c, const board_t *board)
+{
+	bitboard_t	king_zone = board->piecetype_bits[KING] & board->color_bits[c];
+
+	if (c == WHITE)
+	{
+		king_zone = shift_up(king_zone) | shift_up_left(king_zone)
+			| shift_up_right(king_zone);
+		king_zone |= shift_up(king_zone);
+	}
+	else
+	{
+		king_zone = shift_down(king_zone) | shift_down_left(king_zone)
+			| shift_down_right(king_zone);
+		king_zone |= shift_down(king_zone);
+	}
+
+	return (PawnShield * min(3, popcount(king_zone & us)));
+}
+
 scorepair_t	evaluate_pawns(const board_t *board)
 {
-	pawns_cache_t	*entry = &(g_pawns[board->stack->pawn_key
-		& (PawnCacheSize - 1)]);
-
-	if (entry->key == board->stack->pawn_key)
-		return (entry->value);
-
-	entry->key = board->stack->pawn_key;
-	entry->value = 0;
+	score_t	score = 0;
 
 	const bitboard_t	wpawns = board->piecetype_bits[PAWN]
 		& board->color_bits[WHITE];
@@ -169,14 +218,18 @@ scorepair_t	evaluate_pawns(const board_t *board)
 	const square_t		*wlist = board->piece_list[WHITE_PAWN];
 	const square_t		*blist = board->piece_list[BLACK_PAWN];
 
-	entry->value += evaluate_backward(WHITE, wpawns, bpawns, wlist, blist);
-	entry->value -= evaluate_backward(BLACK, bpawns, wpawns, blist, wlist);
-	entry->value += evaluate_passers(WHITE, wlist, bpawns);
-	entry->value -= evaluate_passers(BLACK, blist, wpawns);
-	entry->value += evaluate_candidates(WHITE, wpawns, bpawns);
-	entry->value -= evaluate_candidates(BLACK, bpawns, wpawns);
-	entry->value += evaluate_doubled_isolated(wpawns);
-	entry->value -= evaluate_doubled_isolated(bpawns);
+	score += evaluate_backward(WHITE, wpawns, bpawns, wlist, blist);
+	score -= evaluate_backward(BLACK, bpawns, wpawns, blist, wlist);
+	score += evaluate_passers(WHITE, wlist, bpawns, board);
+	score -= evaluate_passers(BLACK, blist, wpawns, board);
+	score += evaluate_doubled_isolated(wpawns);
+	score -= evaluate_doubled_isolated(bpawns);
+	score += evaluate_center(wpawns, WHITE);
+	score -= evaluate_center(bpawns, BLACK);
+	score += evaluate_chain(wpawns, WHITE);
+	score -= evaluate_chain(bpawns, BLACK);
+	score += evaluate_shield(wpawns, WHITE, board);
+	score -= evaluate_shield(bpawns, BLACK, board);
 
-	return (entry->value);
+	return (score);
 }

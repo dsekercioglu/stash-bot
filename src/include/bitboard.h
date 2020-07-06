@@ -52,8 +52,8 @@ typedef uint64_t	bitboard_t;
 # define RANK_8_BITS	0xFF00000000000000ull
 
 # define FULL_BITS		0xFFFFFFFFFFFFFFFFull
-
 # define DARK_SQUARES	0xAA55AA55AA55AA55ull
+# define CENTER_BITS	0x00003C3C3C3C0000ull
 
 extern bitboard_t	LineBits[SQUARE_NB][SQUARE_NB];
 extern bitboard_t	PseudoMoves[PIECETYPE_NB][SQUARE_NB];
