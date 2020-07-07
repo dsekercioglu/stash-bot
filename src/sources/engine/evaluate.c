@@ -431,28 +431,28 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 
 	mobility_t	*mob = compute_mobility(board, c);
 
-	ret += KnightMobility[clamp(0, 8, mobility_score(mob + KNIGHT))];
+	ret += KnightMobility[clamp(mobility_score(mob + KNIGHT), 0, 8)];
 	ret += create_scorepair(mob[KNIGHT].home_rows_attacks, 0);
 	king_attacks += mob[KNIGHT].king_attacks;
 	king_attackers += mob[KNIGHT].king_attackers;
 
-	ret += BishopMobility[clamp(0, 13, mobility_score(mob + BISHOP))];
+	ret += BishopMobility[clamp(mobility_score(mob + BISHOP), 0, 13)];
 	ret += create_scorepair(mob[BISHOP].home_rows_attacks, 0);
 	king_attacks += mob[BISHOP].king_attacks;
 	king_attackers += mob[BISHOP].king_attackers;
 
-	ret += RookMobility[clamp(0, 14, mobility_score(mob + ROOK))];
+	ret += RookMobility[clamp(mobility_score(mob + ROOK), 0, 14)];
 	ret += create_scorepair(mob[ROOK].home_rows_attacks, 0);
 	king_attacks += mob[ROOK].king_attacks * 2;
 	king_attackers += mob[ROOK].king_attackers;
 
-	ret += QueenMobility[clamp(0, 27, mobility_score(mob + QUEEN))];
+	ret += QueenMobility[clamp(mobility_score(mob + QUEEN), 0, 27)];
 	ret += create_scorepair(mob[QUEEN].home_rows_attacks, 0);
 	king_attacks += mob[QUEEN].king_attacks * 4;
 	king_attackers += mob[QUEEN].king_attackers;
 
-	king_attackers = min(9, king_attacks);
-	king_attacks = min(30, king_attacks);
+	king_attackers = min(8, king_attackers);
+	king_attacks = min(29, king_attacks);
 
 	score_t		attack_bonus = SafetyTable[king_attackers][king_attacks];
 
