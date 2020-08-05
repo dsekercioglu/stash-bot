@@ -20,14 +20,17 @@
 
 enum
 {
-	BackwardPenalty = SPAIR(-16, -40),
-	StragglerPenalty = SPAIR(-24, -56),
-	DoubledPenalty = SPAIR(-14, -36),
-	IsolatedPenalty = SPAIR(-14, -36),
+	BackwardPenalty = SPAIR(-3, -18),
+	StragglerPenalty = SPAIR(-28, -7),
+	DoubledPenalty = SPAIR(-34, -20),
+	IsolatedPenalty = SPAIR(-19, -27),
 
-	CandidateBonus = SPAIR(20, 48),
-	PassedPawnBonus = SPAIR(28, 64),
-	PassedRankBonus = SPAIR(32, 56)
+	CandidateBonus = SPAIR(24, 25),
+};
+
+const scorepair_t	PassedRankBonus[RANK_NB] = {
+	0, SPAIR(0, 4), SPAIR(1, 7), SPAIR(0, 61),
+	SPAIR(0, 102), SPAIR(81, 179), SPAIR(49, 200), 0
 };
 
 pawns_cache_t	g_pawns[PawnCacheSize];
@@ -64,10 +67,8 @@ scorepair_t	evaluate_passers(color_t c, const square_t *ulist, bitboard_t them)
 	for (square_t sq = *ulist; sq != SQ_NONE; sq = *++ulist)
 	{
 		rank_t	r = relative_square_rank(sq, c);
-		if (r == RANK_7)
-			ret += PassedPawnBonus + PassedRankBonus;
-		else if (!(passed_pawn_span(c, sq) & them))
-			ret += PassedPawnBonus + scorepair_divide(PassedRankBonus, RANK_8 - r);
+		if (!(passed_pawn_span(c, sq) & them))
+			ret += PassedRankBonus[r];
 	}
 	return (ret);
 }

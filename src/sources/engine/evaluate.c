@@ -24,26 +24,32 @@
 
 enum
 {
-	CastlingBonus = SPAIR(100, 0),
-	Initiative = 15,
-	MobilityBase = SPAIR(-42, -66),
-	MobilityPlus = SPAIR(7, 11),
+	CastlingBonus = SPAIR(79, -17),
+	Initiative = 8,
+
+	MobB_Base = SPAIR(-45, -80),
+	MobB_Plus = SPAIR(5, 16),
+	MobB_Moves = 7,
+	MobR_Base = SPAIR(-75, -36),
+	MobR_Plus = SPAIR(0, 14),
+	MobR_Moves = 11,
+	MobQ_Base = SPAIR(-51, -20),
+	MobQ_Plus = SPAIR(0, 36),
+	MobQ_Moves = 13,
 
 	PawnWeight = 10,
-	MinorWeight = 20,
-	RookWeight = 40,
-	QueenWeight = 80,
-	SafetyScale = 2,
-	SafetyRatio = SPAIR(2, 1),
+	MinorWeight = 27,
+	RookWeight = 16,
+	QueenWeight = 54,
 
-	BishopPairBonus = SPAIR(30, 50),
-	KnightPairPenalty = SPAIR(-15, -35),
-	RookPairPenalty = SPAIR(-20, -40),
-	NonPawnBonus = SPAIR(32, 48),
+	BishopPair = SPAIR(59, 109),
+	KnightPair = SPAIR(21, 30),
+	RookPair = SPAIR(-45, -81),
+	NonPawnBonus = SPAIR(85, 138),
 
-	RookOnSemiOpenFile = SPAIR(24, 24),
-	RookOnOpenFile = SPAIR(48, 6),
-	RookXrayQueen = SPAIR(18, 0),
+	RookOnSemiOpenFile = SPAIR(42, 42),
+	RookOnOpenFile = SPAIR(93, 47),
+	RookXrayQueen = SPAIR(20, 39),
 
 	QueenPhase = 4,
 	RookPhase = 2,
@@ -87,13 +93,13 @@ scorepair_t	evaluate_material(const board_t *board, color_t c)
 	const bitboard_t	b = board->color_bits[c];
 
 	if (more_than_one(b & board->piecetype_bits[BISHOP]))
-		ret += BishopPairBonus;
+		ret += BishopPair;
 
 	if (more_than_one(b & board->piecetype_bits[KNIGHT]))
-		ret += KnightPairPenalty;
+		ret += KnightPair;
 
 	if (more_than_one(b & board->piecetype_bits[ROOK]))
-		ret += RookPairPenalty;
+		ret += RookPair;
 
 	ret += NonPawnBonus * popcount(b & ~board->piecetype_bits[PAWN]);
 
@@ -142,7 +148,7 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 
 		int			move_count = popcount(b);
 
-		ret += MobilityBase + MobilityPlus * min(move_count, 9);
+		ret += MobB_Base + MobB_Plus * min(move_count, MobB_Moves);
 
 		if (b & king_zone)
 		{
@@ -158,7 +164,7 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 
 		int			move_count = popcount(b);
 
-		ret += MobilityBase + MobilityPlus * min(move_count, 9);
+		ret += MobR_Base + MobR_Plus * min(move_count, MobR_Moves);
 
 		if (b & king_zone)
 		{
@@ -175,7 +181,7 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 
 		int			move_count = popcount(b);
 
-		ret += MobilityBase + MobilityPlus * min(move_count, 9);
+		ret += MobQ_Base + MobQ_Plus * min(move_count, MobQ_Moves);
 
 		if (b & king_zone)
 		{
@@ -184,10 +190,10 @@ scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 		}
 	}
 
-	if (attackers >= 8)
-		ret += scorepair_divide(SafetyRatio * wattacks, SafetyScale);
-	else
-		ret += scorepair_divide(SafetyRatio * (wattacks * AttackWeights[attackers] / 100), SafetyScale);
+	if (attackers < 8)
+		wattacks = wattacks * AttackWeights[attackers] / 100;
+
+	ret += create_scorepair(wattacks, min(wattacks * wattacks / 100, 10000));
 
 	return (ret);
 }
