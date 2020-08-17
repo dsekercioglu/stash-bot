@@ -20,21 +20,19 @@
 
 enum
 {
-	BackwardPenalty = SPAIR(-3, -18),
-	StragglerPenalty = SPAIR(-28, -7),
-	DoubledPenalty = SPAIR(-34, -20),
-	IsolatedPenalty = SPAIR(-19, -27),
-
-	CandidateBonus = SPAIR(24, 25),
+	BackwardPenalty = SPAIR(-9, -15),
+	StragglerPenalty = SPAIR(-20, -16),
+	DoubledPenalty = SPAIR(-14, -34),
+	IsolatedPenalty = SPAIR(-27, -30),
 };
 
 const scorepair_t	PassedRankBonus[RANK_NB] = {
-	0, SPAIR(0, 4), SPAIR(1, 7), SPAIR(0, 61),
-	SPAIR(0, 102), SPAIR(81, 179), SPAIR(49, 200), 0
+	0, SPAIR(0, 9), SPAIR(0, 23), SPAIR(0, 55),
+	SPAIR(0, 122), SPAIR(29, 209), SPAIR(6, 281), 0
 };
 
 pawns_cache_t	g_pawns[PawnCacheSize];
-
+/*
 bitboard_t	safe_pawn_squares(color_t c, bitboard_t us, bitboard_t them)
 {
 	bitboard_t	our_double_attacks;
@@ -59,7 +57,7 @@ bitboard_t	safe_pawn_squares(color_t c, bitboard_t us, bitboard_t them)
 
 	return (our_double_attacks | ~their_attacks | (our_odd_attacks & ~their_double_attacks));
 }
-
+*/
 scorepair_t	evaluate_passers(color_t c, const square_t *ulist, bitboard_t them)
 {
 	scorepair_t	ret = 0;
@@ -72,7 +70,7 @@ scorepair_t	evaluate_passers(color_t c, const square_t *ulist, bitboard_t them)
 	}
 	return (ret);
 }
-
+/*
 scorepair_t	evaluate_candidates(color_t c, bitboard_t us, bitboard_t them)
 {
 	bitboard_t	rank5 = (c == WHITE) ? RANK_5_BITS : RANK_4_BITS;
@@ -89,7 +87,7 @@ scorepair_t	evaluate_candidates(color_t c, bitboard_t us, bitboard_t them)
 
 	return (candidates ? CandidateBonus * popcount(candidates) : 0);
 }
-
+*/
 scorepair_t	evaluate_backward(color_t c, bitboard_t us, bitboard_t them,
 			const square_t *ulist, const square_t *tlist)
 {
@@ -174,8 +172,8 @@ scorepair_t	evaluate_pawns(const board_t *board)
 	entry->value -= evaluate_backward(BLACK, bpawns, wpawns, blist, wlist);
 	entry->value += evaluate_passers(WHITE, wlist, bpawns);
 	entry->value -= evaluate_passers(BLACK, blist, wpawns);
-	entry->value += evaluate_candidates(WHITE, wpawns, bpawns);
-	entry->value -= evaluate_candidates(BLACK, bpawns, wpawns);
+//	entry->value += evaluate_candidates(WHITE, wpawns, bpawns);
+//	entry->value -= evaluate_candidates(BLACK, bpawns, wpawns);
 	entry->value += evaluate_doubled_isolated(wpawns);
 	entry->value -= evaluate_doubled_isolated(bpawns);
 
