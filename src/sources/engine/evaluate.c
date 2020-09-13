@@ -98,6 +98,44 @@ scorepair_t	evaluate_material(const board_t *board, color_t c)
 	return (ret);
 }
 
+int			scale_score(const board_t *board, color_t winning)
+{
+	bitboard_t	win_pieces = board->color_bits[winning];
+
+	if (!(win_pieces & board->piecetype_bits[PAWN]))
+	{
+		int		wmat = 3 * (board->piece_count[create_piece(winning, KNIGHT)]
+			+ board->piece_count[create_piece(winning, BISHOP)])
+			+ 5 * board->piece_count[create_piece(winning, ROOK)]
+			+ 10 * board->piece_count[create_piece(winning, QUEEN)];
+
+		// Score KvK, KNvK and KBvK as draws
+
+		if (wmat <= 3)
+			return (0);
+
+		color_t		losing = opposite_color(winning);
+		int			lmat = board->piece_count[create_piece(losing, PAWN)]
+			+ 3 * (board->piece_count[create_piece(losing, KNIGHT)]
+			+ board->piece_count[create_piece(losing, BISHOP)])
+			+ 5 * board->piece_count[create_piece(losing, ROOK)]
+			+ 10 * board->piece_count[create_piece(losing, QUEEN)];
+
+		// Use the +4 rule to scale endgame value
+
+		if (wmat - lmat < 0)
+			return (32);
+		else if (wmat - lmat < 4)
+			return (1 << (4 + lmat - wmat));
+
+		// Handle the tricky draw case of KNNvK
+
+		if (wmat == 6 && !lmat && !(win_pieces & board->piecetype_bits[BISHOP]))
+			return (0);
+	}
+	return (1);
+}
+
 scorepair_t	evaluate_mobility(const board_t *board, color_t c)
 {
 	scorepair_t		ret = 0;
@@ -214,33 +252,7 @@ score_t		evaluate(const board_t *board)
 
 	score_t		mg = midgame_score(eval);
 	score_t		eg = endgame_score(eval);
-	int			piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
 	score_t		score;
-
-	if (piece_count <= 7)
-	{
-		// Insufficient material check.
-
-		int		pieces = popcount(board->color_bits[WHITE]);
-
-		if (eg > 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, WHITE, KNIGHT, BISHOP))
-				return (0);
-		}
-
-		pieces = piece_count - pieces;
-
-		if (eg < 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, BLACK, KNIGHT, BISHOP))
-				return (0);
-		}
-	}
 
 	{
 		int		phase = QueenPhase * popcount(board->piecetype_bits[QUEEN])
@@ -256,5 +268,9 @@ score_t		evaluate(const board_t *board)
 		}
 	}
 
-	return (Initiative + (board->side_to_move == WHITE ? score : -score));
+	int		scaler = scale_score(board, score > 0 ? WHITE : BLACK);
+
+	score = Initiative + (board->side_to_move == WHITE ? score : -score);
+
+	return (!scaler ? 0 : score / scaler);
 }
