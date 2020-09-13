@@ -38,7 +38,6 @@ enum
 	BishopPairBonus = SPAIR(30, 50),
 	KnightPairPenalty = SPAIR(-15, -35),
 	RookPairPenalty = SPAIR(-20, -40),
-	NonPawnBonus = SPAIR(32, 48),
 
 	RookOnSemiOpenFile = SPAIR(24, 24),
 	RookOnOpenFile = SPAIR(48, 6),
@@ -92,8 +91,6 @@ scorepair_t	evaluate_material(const board_t *board, color_t c)
 
 	if (more_than_one(b & board->piecetype_bits[ROOK]))
 		ret += RookPairPenalty;
-
-	ret += NonPawnBonus * popcount(b & ~board->piecetype_bits[PAWN]);
 
 	return (ret);
 }
