@@ -58,6 +58,10 @@ enum
 	Razor_HeavyMargin = 300
 };
 
+void	update_quiets(const board_t *board, move_t bestmove,
+		const move_t *quiets, int quiets_searched, int depth,
+		searchstack_t *ss);
+
 void	sort_root_moves(root_move_t *begin, root_move_t *end);
 
 void	engine_go(board_t *board);

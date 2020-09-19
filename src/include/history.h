@@ -38,14 +38,14 @@ INLINED void	reset_history(void)
 	memset(g_history_table, 0, sizeof(g_history_table));
 }
 
-INLINED void	add_hist_bonus(piece_t piece, move_t move)
+INLINED void	add_hist_bonus(piece_t piece, move_t move, int value)
 {
-	g_history_table[piece][move_squares(move)] += 1;
+	g_history_table[piece][move_squares(move)] += value;
 }
 
-INLINED void	add_hist_penalty(piece_t piece, move_t move)
+INLINED void	add_hist_penalty(piece_t piece, move_t move, int value)
 {
-	g_butterfly_table[piece][move_squares(move)] += 1;
+	g_butterfly_table[piece][move_squares(move)] += value;
 }
 
 INLINED score_t	get_hist_score(piece_t piece, move_t move)

@@ -74,6 +74,8 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 
 	move_t	bestmove = NO_MOVE;
 	int		move_count = 0;
+	move_t	quiets[64];
+	int		qcount = 0;
 
 	for (const extmove_t *extmove = movelist_begin(&list);
 		extmove < movelist_end(&list); ++extmove)
@@ -148,33 +150,21 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 				ss->pv[j + 1] = NO_MOVE;
 
 				if (alpha >= beta)
-				{
-					if (!is_capture_or_promotion(board, bestmove))
-					{
-						add_hist_bonus(piece_on(board,
-							move_from_square(bestmove)), bestmove);
-
-						if (ss->killers[0] == NO_MOVE)
-							ss->killers[0] = bestmove;
-						else if (ss->killers[0] != bestmove)
-							ss->killers[1] = bestmove;
-					}
-
-					while (--extmove >= movelist_begin(&list))
-						if (!is_capture_or_promotion(board, extmove->move))
-							add_hist_penalty(piece_on(board,
-								move_from_square(extmove->move)), extmove->move);
-
 					break ;
-				}
 			}
 		}
+
+		if (!is_capture_or_promotion(board, extmove->move) && qcount < 64)
+			quiets[qcount++] = extmove->move;
 	}
 
 	// Checkmate/Stalemate ?
 
 	if (move_count == 0)
 		best_value = (board->stack->checkers) ? mated_in(ss->plies) : 0;
+
+	if (alpha >= beta)
+		update_quiets(board, bestmove, quiets, qcount, depth, ss);
 
 	// Do not erase entries with higher depth for same position.
 
