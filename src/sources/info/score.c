@@ -28,7 +28,7 @@ const char	*score_to_str(score_t score)
 		sprintf(buf, "mate %d", (score > 0 ? MATE - score + 1 : -MATE - score)
 			/ 2);
 	else
-		sprintf(buf, "cp %d", score / 2);
+		sprintf(buf, "cp %d", (int)(score * 0.73));
 
 	return (buf);
 }
