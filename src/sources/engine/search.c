@@ -30,6 +30,8 @@ extern int	g_seldepth;
 score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		searchstack_t *ss)
 {
+	static int	nmp_restricted_plies = 0;
+
 	if (depth <= 0)
 		return (qsearch(board, depth, alpha, beta, ss));
 
@@ -124,7 +126,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	// Null move pruning.
 
 	if (depth >= NMP_MinDepth && !board->stack->checkers
-		&& board->stack->plies_from_null_move >= NMP_MinPlies
+		&& board->stack->plies_from_null_move >= nmp_restricted_plies
 		&& eval >= beta && eval >= ss->static_eval)
 	{
 		boardstack_t	stack;
@@ -150,20 +152,16 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			if (score > MATE_FOUND)
 				score = beta;
 
-			// Do not trust win claims.
+			// Do not trust win claims, except if we are already in zugzwang checking.
 
-			if (depth <= NMP_TrustDepth && abs(beta) < VICTORY)
+			if (nmp_restricted_plies || (depth <= NMP_TrustDepth && abs(beta) < VICTORY))
 				return (score);
 
 			// Zugzwang checking.
 
-			int nmp_depth = board->stack->plies_from_null_move;
-			board->stack->plies_from_null_move = -(depth - nmp_reduction) * 3 / 4;
-
-			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta,
-					ss);
-
-			board->stack->plies_from_null_move = nmp_depth;
+			nmp_restricted_plies = ss->plies + (depth - nmp_reduction) * 3 / 4;
+			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta, ss);
+			nmp_restricted_plies = 0;
 
 			if (zzscore >= beta)
 				return (score);
