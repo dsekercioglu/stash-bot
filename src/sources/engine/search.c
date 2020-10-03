@@ -25,15 +25,16 @@
 #include "movelist.h"
 #include "tt.h"
 
-extern int	g_seldepth;
+int		g_seldepth;
 
 score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
-		searchstack_t *ss)
+		searchstack_t *ss, bool pv_node)
 {
 	if (depth <= 0)
 		return (qsearch(board, depth, alpha, beta, ss));
 
 	movelist_t			list;
+	move_t				pv[512];
 	score_t				best_value = -INF_SCORE;
 
 	if (g_nodes % 4096 == 0 && out_of_time())
@@ -65,7 +66,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		score_t	tt_score = score_from_tt(entry->score, ss->plies);
 		int		bound = entry->genbound & 3;
 
-		if (entry->depth >= depth - DEPTH_OFFSET)
+		if (!pv_node && entry->depth >= depth - DEPTH_OFFSET)
 		{
 			if (bound == EXACT_BOUND)
 				return (tt_score);
@@ -118,12 +119,12 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	// Futility Pruning.
 
-	if (depth <= 2 && eval + 256 * depth <= alpha)
+	if (!pv_node && depth <= 2 && eval + 256 * depth <= alpha)
 		return (eval);
 
 	// Null move pruning.
 
-	if (depth >= NMP_MinDepth && !board->stack->checkers
+	if (!pv_node && depth >= NMP_MinDepth && !board->stack->checkers
 		&& board->stack->plies_from_null_move >= NMP_MinPlies
 		&& eval >= beta && eval >= ss->static_eval)
 	{
@@ -136,7 +137,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		do_null_move(board, &stack);
 
 		score_t			score = -search(board, depth - nmp_reduction, -beta, -beta + 1,
-				ss + 1);
+				ss + 1, false);
 
 		undo_null_move(board);
 
@@ -161,7 +162,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			board->stack->plies_from_null_move = -(depth - nmp_reduction) * 3 / 4;
 
 			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta,
-					ss);
+					ss, false);
 
 			board->stack->plies_from_null_move = nmp_depth;
 
@@ -172,7 +173,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	if (depth > 7 && !tt_move)
 	{
-		search(board, depth / 2, alpha, beta, ss);
+		search(board, depth / 2, alpha, beta, ss, pv_node);
 		entry = tt_probe(board->stack->board_key, &found);
 		tt_move = entry->bestmove;
 	}
@@ -192,37 +193,37 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 		move_count++;
 
+		if (pv_node)
+			(ss + 1)->pv = NULL;
+
 		boardstack_t	stack;
 
 		do_move(board, extmove->move, &stack);
 
-		score_t		next;
+		score_t		next = alpha;
+		bool		need_full_depth_search;
 
-		if (move_count == 1)
-			next = -search(board, depth - 1, -beta, -alpha, ss + 1);
-		else
+		if (depth >= LMR_MinDepth && move_count > LMR_MinMoves
+			&& !board->stack->checkers)
 		{
-			// Late Move Reductions.
+			int		lmr_depth = depth - (depth + move_count) / 10 - 2;
 
-			bool	need_full_depth_search = true;
+			next = -search(board, lmr_depth, -alpha - 1, -alpha, ss + 1, false);
 
-			if (depth >= LMR_MinDepth && move_count > LMR_MinMoves
-				&& !board->stack->checkers)
-			{
-				int		lmr_depth = depth - (depth + move_count) / 10 - 2;
+			need_full_depth_search = (abs(next) < INF_SCORE && alpha < next);
+		}
+		else
+			need_full_depth_search = !pv_node || move_count > 1;
 
-				next = -search(board, lmr_depth, -alpha - 1, -alpha, ss + 1);
+		if (need_full_depth_search)
+			next = -search(board, depth - 1, -alpha - 1, -alpha, ss + 1, false);
 
-				need_full_depth_search = (abs(next) < INF_SCORE && alpha < next);
-			}
+		if (pv_node && (move_count == 1 || (next > alpha && next < beta)))
+		{
+			(ss + 1)->pv = pv;
+			pv[0] = NO_MOVE;
 
-			if (need_full_depth_search)
-			{
-				next = -search(board, depth - 1, -alpha - 1, -alpha, ss + 1);
-
-				if (alpha < next && next < beta)
-					next = -search(board, depth - 1, -beta, -next, ss + 1);
-			}
+			next = -search(board, depth - 1, -beta, -next, ss + 1, true);
 		}
 
 		undo_move(board, extmove->move);
@@ -241,6 +242,17 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			{
 				bestmove = extmove->move;
 				alpha = best_value;
+
+				if (pv_node)
+				{
+					ss->pv[0] = bestmove;
+					size_t		j;
+
+					for (j = 0; (ss + 1)->pv && (ss + 1)->pv[j]; ++j)
+						ss->pv[j + 1] = (ss + 1)->pv[j];
+
+					ss->pv[j + 1] = NO_MOVE;
+				}
 
 				if (alpha >= beta)
 				{
@@ -276,7 +288,8 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	if (best_value != NO_SCORE && (entry->key != board->stack->board_key
 		|| entry->depth <= depth - DEPTH_OFFSET))
 	{
-		int bound = (best_value >= beta) ? LOWER_BOUND : UPPER_BOUND;
+		int bound = (best_value >= beta) ? LOWER_BOUND
+			: (pv_node && bestmove) ? EXACT_BOUND : UPPER_BOUND;
 
 		tt_save(entry, board->stack->board_key, score_to_tt(best_value, ss->plies),
 			ss->static_eval, depth, bound, bestmove);

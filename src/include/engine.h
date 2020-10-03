@@ -66,7 +66,7 @@ void	search_bestmove(board_t *board, int depth, root_move_t *begin,
 score_t	qsearch(board_t *board, int depth, score_t alpha, score_t beta,
 		searchstack_t *ss);
 score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
-		searchstack_t *ss);
+		searchstack_t *ss, bool pv_node);
 
 bool	out_of_time(void);
 score_t	evaluate(const board_t *board);
