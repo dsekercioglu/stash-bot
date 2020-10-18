@@ -161,12 +161,15 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 			// Zugzwang checking.
 
-			verif_plies = ss->plies + (depth - nmp_reduction) * 3 / 4;
+			int		prev_verif_plies = verif_plies;
+
+			verif_plies = board->stack->plies_from_null_move
+				+ (depth - nmp_reduction) * 3 / 4;
 
 			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta,
 					ss);
 
-			verif_plies = 0;
+			verif_plies = prev_verif_plies;
 
 			if (zzscore >= beta)
 				return (score);
