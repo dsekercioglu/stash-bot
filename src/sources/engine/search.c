@@ -30,6 +30,8 @@ extern int	g_seldepth;
 score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		searchstack_t *ss)
 {
+	static int	verif_plies = 0;
+
 	if (depth <= 0)
 		return (qsearch(board, depth, alpha, beta, ss));
 
@@ -121,11 +123,13 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	if (depth <= 2 && eval + 256 * depth <= alpha)
 		return (eval);
 
-	// Null move pruning.
+	// Null move pruning. Disabled if the side to move has no pieces left
+	// to avoid wrong scoring in KQKP-like endgames.
 
 	if (depth >= NMP_MinDepth && !board->stack->checkers
-		&& board->stack->plies_from_null_move >= NMP_MinPlies
-		&& eval >= beta && eval >= ss->static_eval)
+		&& board->stack->plies_from_null_move >= verif_plies
+		&& eval >= beta && eval >= ss->static_eval
+		&& (board->color_bits[board->side_to_move] & ~board_pieces(board, KING, PAWN)))
 	{
 		boardstack_t	stack;
 
@@ -157,13 +161,12 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 			// Zugzwang checking.
 
-			int nmp_depth = board->stack->plies_from_null_move;
-			board->stack->plies_from_null_move = -(depth - nmp_reduction) * 3 / 4;
+			verif_plies = ss->plies + (depth - nmp_reduction) * 3 / 4;
 
 			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta,
 					ss);
 
-			board->stack->plies_from_null_move = nmp_depth;
+			verif_plies = 0;
 
 			if (zzscore >= beta)
 				return (score);
