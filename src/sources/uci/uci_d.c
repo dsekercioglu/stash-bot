@@ -17,13 +17,13 @@
 */
 
 #include <stdio.h>
-#include "board.h"
+#include "lazy_smp.h"
 #include "engine.h"
 
 void	uci_d(const char *args)
 {
 	(void)args;
-	extern const board_t	g_board;
+	board_t					*board = &WPool.workers->board;
 	const char				*grid = "+---+---+---+---+---+---+---+---+";
 	const char				*piece_to_char = " PNBRQK  pnbrqk";
 
@@ -32,15 +32,15 @@ void	uci_d(const char *args)
 	for (file_t rank = RANK_8; rank >= RANK_1; --rank)
 	{
 		for (file_t file = FILE_A; file <= FILE_H; ++file)
-			printf("| %c ", piece_to_char[piece_on(&g_board,
+			printf("| %c ", piece_to_char[piece_on(board,
 				create_square(file, rank))]);
 
 		puts("|");
 		puts(grid);
 	}
 
-	printf("\nKey: 0x%lx\n", (unsigned long)g_board.stack->board_key);
-	double eval = (double)evaluate(&g_board) / 100.0;
-	printf("Eval: %+.2lf\n\n", g_board.side_to_move == WHITE ? eval : -eval);
+	printf("\nKey: 0x%lx\n", (unsigned long)board->stack->board_key);
+	double eval = (double)evaluate(board) / 100.0;
+	printf("Eval: %+.2lf\n\n", board->side_to_move == WHITE ? eval : -eval);
 	fflush(stdout);
 }

@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "info.h"
+#include "lazy_smp.h"
 #include "movelist.h"
 #include "uci.h"
 
@@ -29,14 +30,13 @@ void	uci_go(const char *args)
 	const char	*delim = " \t\n";
 
 	wait_search_end();
-	pthread_mutex_lock(&g_engine_mutex);
+	pthread_mutex_lock(&WPool.workers->mutex);
 
 	extern movelist_t	g_searchmoves;
-	extern board_t		g_board;
 
-	g_engine_send = DO_THINK;
+	WPool.send = DO_THINK;
 	memset(&g_goparams, 0, sizeof(goparams_t));
-	list_all(&g_searchmoves, &g_board);
+	list_all(&g_searchmoves, &WPool.workers->board);
 
 	char	*copy = strdup(args ? args : "");
 	char	*token = strtok(copy, delim);
@@ -49,7 +49,7 @@ void	uci_go(const char *args)
 			extmove_t	*m = g_searchmoves.moves;
 			while (token)
 			{
-				(m++)->move = str_to_move(&g_board, token);
+				(m++)->move = str_to_move(&WPool.workers->board, token);
 				token = strtok(NULL, delim);
 			}
 			g_searchmoves.last = m;
@@ -121,10 +121,13 @@ void	uci_go(const char *args)
 		token = strtok(NULL, delim);
 	}
 
-	g_engine_mode = THINKING;
+	for (size_t i = 0; i < WPool.wcount; ++i)
+	{
+		WPool.workers[i].mode = THINKING;
+		pthread_cond_broadcast(&WPool.workers[i].cond);
+	}
 
-	pthread_cond_broadcast(&g_engine_condvar);
-	pthread_mutex_unlock(&g_engine_mutex);
+	pthread_mutex_unlock(&WPool.workers->mutex);
 
 	free(copy);
 }

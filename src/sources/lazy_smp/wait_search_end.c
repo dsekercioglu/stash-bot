@@ -16,15 +16,19 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <unistd.h>
-#include "uci.h"
+#include "lazy_smp.h"
 
 void	wait_search_end(void)
 {
-	pthread_mutex_lock(&g_engine_mutex);
+	for (size_t i = 0; i < WPool.wcount; ++i)
+	{
+		worker_t	*worker = &WPool.workers[i];
 
-	while (g_engine_mode != WAITING)
-		pthread_cond_wait(&g_engine_condvar, &g_engine_mutex);
+		pthread_mutex_lock(&worker->mutex);
 
-	pthread_mutex_unlock(&g_engine_mutex);
+		while (worker->mode != WAITING)
+			pthread_cond_wait(&worker->cond, &worker->mutex);
+
+		pthread_mutex_unlock(&worker->mutex);
+	}
 }

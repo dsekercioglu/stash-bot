@@ -16,13 +16,18 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "uci.h"
+#include "lazy_smp.h"
+#include <stdio.h>
 
 void	uci_quit(const char *args)
 {
 	(void)args;
-	pthread_mutex_lock(&g_engine_mutex);
-	g_engine_send = DO_ABORT;
-	pthread_mutex_unlock(&g_engine_mutex);
-	pthread_cond_signal(&g_engine_condvar);
+	if (WPool.wcount)
+	{
+		pthread_mutex_lock(&WPool.workers->mutex);
+		WPool.send = DO_ABORT;
+		pthread_mutex_unlock(&WPool.workers->mutex);
+		for (size_t i = 0; i < WPool.wcount; ++i)
+			pthread_cond_signal(&WPool.workers[i].cond);
+	}
 }

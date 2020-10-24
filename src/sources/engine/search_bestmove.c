@@ -24,11 +24,10 @@
 #include "history.h"
 #include "imath.h"
 #include "info.h"
+#include "lazy_smp.h"
 #include "movelist.h"
 #include "tt.h"
 #include "uci.h"
-
-int		g_seldepth;
 
 score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 		searchstack_t *ss)
@@ -40,11 +39,11 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 	move_t				pv[512];
 	score_t				best_value = -INF_SCORE;
 
-	if (g_nodes % 2048 == 0 && out_of_time())
+	if (get_worker(board)->nodes % 2048 == 0 && out_of_time(board))
 		return (NO_SCORE);
 
-	if (g_seldepth < ss->plies + 1)
-		g_seldepth = ss->plies + 1;
+	if (get_worker(board)->seldepth < ss->plies + 1)
+		get_worker(board)->seldepth = ss->plies + 1;
 
 	if (is_draw(board, ss->plies + 1))
 		return (0);
@@ -151,8 +150,9 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 				{
 					if (!is_capture_or_promotion(board, bestmove))
 					{
-						add_hist_bonus(piece_on(board,
-							move_from_square(bestmove)), bestmove);
+						add_history(get_worker(board)->good_hist,
+							piece_on(board, move_from_square(bestmove)),
+							bestmove);
 
 						if (ss->killers[0] == NO_MOVE)
 							ss->killers[0] = bestmove;
@@ -162,8 +162,9 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 
 					while (--extmove >= movelist_begin(&list))
 						if (!is_capture_or_promotion(board, extmove->move))
-							add_hist_penalty(piece_on(board,
-								move_from_square(extmove->move)), extmove->move);
+							add_history(get_worker(board)->bad_hist,
+								piece_on(board, move_from_square(extmove->move)),
+								extmove->move);
 
 					break ;
 				}
@@ -225,14 +226,10 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 
 		clock_t			elapsed = chess_clock() - g_goparams.start;
 
-		if (elapsed > 3000)
+		if (is_main_worker(get_worker(board)) && elapsed > 3000)
 		{
-			uint64_t	nps = (g_nodes * 1000) / elapsed;
-
-			printf("info depth %d nodes %lu nps %lu"
-				" time %lu currmove %s currmovenumber %d\n",
-				depth, (info_t)g_nodes, (info_t)nps, elapsed,
-				move_to_str(cur->move, board->chess960),
+			printf("info depth %d currmove %s currmovenumber %d\n",
+				depth, move_to_str(cur->move, board->chess960),
 				move_count + pv_line);
 			fflush(stdout);
 		}
@@ -277,16 +274,19 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 
 		if (abs(next) > INF_SCORE)
 		{
-			pthread_mutex_lock(&g_engine_mutex);
-			g_engine_send = DO_EXIT;
-			pthread_mutex_unlock(&g_engine_mutex);
+			if (is_main_worker(get_worker(board)))
+			{
+				pthread_mutex_lock(&get_worker(board)->mutex);
+				WPool.send = DO_EXIT;
+				pthread_mutex_unlock(&get_worker(board)->mutex);
+			}
 			return ;
 		}
 		else if (move_count == 1 || next > alpha)
 		{
 			cur->score = next;
 			alpha = max(alpha, next);
-			cur->seldepth = g_seldepth;
+			cur->seldepth = get_worker(board)->seldepth;
 			cur->pv[0] = cur->move;
 
 			size_t	j;

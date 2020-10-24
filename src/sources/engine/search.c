@@ -22,6 +22,7 @@
 #include "history.h"
 #include "imath.h"
 #include "info.h"
+#include "lazy_smp.h"
 #include "movelist.h"
 #include "tt.h"
 
@@ -36,11 +37,11 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	movelist_t			list;
 	score_t				best_value = -INF_SCORE;
 
-	if (g_nodes % 2048 == 0 && out_of_time())
+	if (get_worker(board)->nodes % 2048 == 0 && out_of_time(board))
 		return (NO_SCORE);
 
-	if (g_seldepth < ss->plies + 1)
-		g_seldepth = ss->plies + 1;
+	if (get_worker(board)->seldepth < ss->plies + 1)
+		get_worker(board)->seldepth = ss->plies + 1;
 
 	if (is_draw(board, ss->plies + 1))
 		return (0);
@@ -241,8 +242,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 				{
 					if (!is_capture_or_promotion(board, bestmove))
 					{
-						add_hist_bonus(piece_on(board,
-							move_from_square(bestmove)), bestmove);
+						add_history(get_worker(board)->good_hist,
+							piece_on(board, move_from_square(bestmove)),
+							bestmove);
 
 						if (ss->killers[0] == NO_MOVE)
 							ss->killers[0] = bestmove;
@@ -252,8 +254,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 					while (--extmove >= movelist_begin(&list))
 						if (!is_capture_or_promotion(board, extmove->move))
-							add_hist_penalty(piece_on(board,
-								move_from_square(extmove->move)), extmove->move);
+							add_history(get_worker(board)->bad_hist,
+								piece_on(board, move_from_square(extmove->move)),
+								extmove->move);
 
 					break ;
 				}

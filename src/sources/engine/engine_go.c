@@ -23,7 +23,7 @@
 #include "history.h"
 #include "imath.h"
 #include "info.h"
-#include "pawns.h"
+#include "lazy_smp.h"
 #include "tt.h"
 #include "uci.h"
 
@@ -60,10 +60,12 @@ void		engine_go(board_t *board)
 	extern movelist_t	g_searchmoves;
 	const size_t		root_move_count = movelist_size(&g_searchmoves);
 
-	g_goparams.start = chess_clock();
 
 	if (g_goparams.perft)
 	{
+		if (!is_main_worker(get_worker(board)))
+			return ;
+
 		uint64_t	nodes = perft(board, (unsigned int)g_goparams.perft);
 
 		clock_t		time = chess_clock() - g_goparams.start;
@@ -97,70 +99,73 @@ void		engine_go(board_t *board)
 		root_moves[i].pv[0] = NO_MOVE;
 	}
 
-	tt_clear();
-	reset_pawn_cache();
-	reset_history();
+	// Only the main worker will have access to time management settings
 
-	// Do we have to use the time manager ?
-
-	if (g_goparams.wtime || g_goparams.btime)
+	if (is_main_worker(get_worker(board)))
 	{
-		if (g_goparams.movestogo == 0)
+		g_goparams.start = chess_clock();
+		tt_clear();
+
+		// Do we have to use the time manager ?
+
+		if (g_goparams.wtime || g_goparams.btime)
 		{
-			g_goparams.movestogo = 50;
+			if (g_goparams.movestogo == 0)
+			{
+				g_goparams.movestogo = 50;
 
-			// If we have an increment to avoid time burns, decrease
-			// estimated movestogo.
+				// If we have an increment to avoid time burns, decrease
+				// estimated movestogo.
 
-			if (board->side_to_move == WHITE && g_goparams.winc)
-				g_goparams.movestogo = 35;
-			if (board->side_to_move == BLACK && g_goparams.binc)
-				g_goparams.movestogo = 35;
+				if (board->side_to_move == WHITE && g_goparams.winc)
+					g_goparams.movestogo = 35;
+				if (board->side_to_move == BLACK && g_goparams.binc)
+					g_goparams.movestogo = 35;
+			}
+
+			clock_t		our_time = (board->side_to_move == WHITE) ? g_goparams.wtime
+				: g_goparams.btime;
+			clock_t		our_inc = (board->side_to_move == WHITE) ? g_goparams.winc
+				: g_goparams.binc;
+
+			// Remove overhead from initial time
+
+			our_time = max(0, our_time - g_options.move_overhead);
+
+			clock_t		estimated_time = our_time / g_goparams.movestogo + our_inc;
+
+			g_goparams.maximal_time = estimated_time * g_options.burn_ratio;
+			g_goparams.optimal_time = estimated_time / g_options.save_ratio;
+
+			g_goparams.maximal_time = min(g_goparams.maximal_time, our_time);
+			g_goparams.optimal_time = min(g_goparams.optimal_time, our_time);
 		}
+		else if (g_goparams.movetime)
+		{
+			g_goparams.maximal_time = max(1, g_goparams.movetime - g_options.move_overhead);
+			g_goparams.optimal_time = g_goparams.maximal_time;
+		}
+		else
+			g_goparams.maximal_time = g_goparams.optimal_time = 0;
 
-		clock_t		our_time = (board->side_to_move == WHITE) ? g_goparams.wtime
-			: g_goparams.btime;
-		clock_t		our_inc = (board->side_to_move == WHITE) ? g_goparams.winc
-			: g_goparams.binc;
+		if (g_goparams.depth == 0)
+			g_goparams.depth = 240;
 
-		// Remove overhead from initial time
-
-		our_time = max(0, our_time - g_options.move_overhead);
-
-		clock_t		estimated_time = our_time / g_goparams.movestogo + our_inc;
-
-		g_goparams.maximal_time = estimated_time * g_options.burn_ratio;
-		g_goparams.optimal_time = estimated_time / g_options.save_ratio;
-
-		g_goparams.maximal_time = min(g_goparams.maximal_time, our_time);
-		g_goparams.optimal_time = min(g_goparams.optimal_time, our_time);
+		if (g_goparams.nodes == 0)
+			g_goparams.nodes = SIZE_MAX;
 	}
-	else if (g_goparams.movetime)
-	{
-		g_goparams.maximal_time = max(1, g_goparams.movetime - g_options.move_overhead);
-		g_goparams.optimal_time = g_goparams.maximal_time;
-	}
-	else
-		g_goparams.maximal_time = g_goparams.optimal_time = 0;
 
-	g_nodes = 0;
-
-	if (g_goparams.depth == 0)
-		g_goparams.depth = 240;
-
-	if (g_goparams.nodes == 0)
-		g_goparams.nodes = SIZE_MAX;
+	worker_reset(get_worker(board));
 
 	const int	multi_pv = min(g_options.multi_pv, root_move_count);
 
 	for (int iter_depth = 0; iter_depth < g_goparams.depth; ++iter_depth)
 	{
 		bool		has_search_aborted = false;
-		extern int	g_seldepth;
 
 		for (int pv_line = 0; pv_line < multi_pv; ++pv_line)
 		{
-			g_seldepth = 0;
+			get_worker(board)->seldepth = 0;
 
 			score_t	_alpha, _beta, _delta;
 
@@ -184,9 +189,7 @@ __retry:
 
 			// Catch search aborting
 
-			pthread_mutex_lock(&g_engine_mutex);
-			has_search_aborted = (g_engine_send == DO_ABORT || g_engine_send == DO_EXIT);
-			pthread_mutex_unlock(&g_engine_mutex);
+			has_search_aborted = (WPool.send == DO_ABORT || WPool.send == DO_EXIT);
 
 			sort_root_moves(root_moves + pv_line, root_moves + root_move_count);
 
@@ -197,37 +200,44 @@ __retry:
 			if (bound == EXACT_BOUND)
 				sort_root_moves(root_moves, root_moves + multi_pv);
 
-			clock_t		chess_time = chess_clock() - g_goparams.start;
-			uint64_t	chess_nodes = g_nodes;
-			uint64_t	chess_nps = (!chess_time) ? 0 : (chess_nodes * 1000)
-				/ chess_time;
+			// Only main worker displays stuff on stdout
 
-			// Don't update Multi-PV lines if not all analysed at current depth
-			// and not enough time elapsed
-
-			if ((multi_pv == 1 && (bound == EXACT_BOUND || chess_time > 3000))
-				|| (multi_pv > 1 && bound == EXACT_BOUND && (pv_line == multi_pv - 1 || chess_time > 3000)))
+			if (is_main_worker(get_worker(board)))
 			{
-				for (int i = 0; i < multi_pv; ++i)
-				{
-					bool		searched = (root_moves[i].score != -INF_SCORE);
-					score_t		root_score = (searched) ? root_moves[i].score
-						: root_moves[i].previous_score;
 
-					printf("info depth %d seldepth %d multipv %d nodes %lu"
-						" nps %lu hashfull %d time %lu score %s%s pv",
-						max(iter_depth + (int)searched, 1), root_moves[i].seldepth, i + 1,
-						(info_t)chess_nodes, (info_t)chess_nps,
-						tt_hashfull(), chess_time,
-						score_to_str(root_score), bound == EXACT_BOUND ? ""
-						: bound == LOWER_BOUND ? " lowerbound" : " upperbound");
+				clock_t		chess_time = chess_clock() - g_goparams.start;
+				uint64_t	chess_nodes = get_node_count();
+				uint64_t	chess_nps = (!chess_time) ? 0 : (chess_nodes * 1000)
+					/ chess_time;
+
+				// Don't update Multi-PV lines if not all analysed at current depth
+				// and not enough time elapsed
+
+				if ((multi_pv == 1 && (bound == EXACT_BOUND || chess_time > 3000))
+					|| (multi_pv > 1 && bound == EXACT_BOUND
+						&& (pv_line == multi_pv - 1 || chess_time > 3000)))
+				{
+					for (int i = 0; i < multi_pv; ++i)
+					{
+						bool		searched = (root_moves[i].score != -INF_SCORE);
+						score_t		root_score = (searched) ? root_moves[i].score
+							: root_moves[i].previous_score;
+
+						printf("info depth %d seldepth %d multipv %d nodes %lu"
+							" nps %lu hashfull %d time %lu score %s%s pv",
+							max(iter_depth + (int)searched, 1), root_moves[i].seldepth, i + 1,
+							(info_t)chess_nodes, (info_t)chess_nps,
+							tt_hashfull(), chess_time,
+							score_to_str(root_score), bound == EXACT_BOUND ? ""
+							: bound == LOWER_BOUND ? " lowerbound" : " upperbound");
 	
-					for (size_t k = 0; root_moves[i].pv[k] != NO_MOVE; ++k)
-						printf(" %s", move_to_str(root_moves[i].pv[k],
-							board->chess960));
-					puts("");
+						for (size_t k = 0; root_moves[i].pv[k] != NO_MOVE; ++k)
+							printf(" %s", move_to_str(root_moves[i].pv[k],
+								board->chess960));
+						puts("");
+					}
+					fflush(stdout);
 				}
-				fflush(stdout);
 			}
 
 			if (has_search_aborted)
@@ -260,9 +270,17 @@ __retry:
 		// If we went over optimal time usage, we just finished our iteration,
 		// so we can safely return our bestmove.
 
-		if ((g_goparams.wtime || g_goparams.btime)
-			&& chess_clock() - g_goparams.start >= g_goparams.optimal_time)
-			break ;
+		if (is_main_worker(get_worker(board)))
+		{
+			if ((g_goparams.wtime || g_goparams.btime)
+				&& chess_clock() - g_goparams.start >= g_goparams.optimal_time)
+			{
+				pthread_mutex_lock(&get_worker(board)->mutex);
+				WPool.send = DO_EXIT;
+				pthread_mutex_unlock(&get_worker(board)->mutex);
+				break ;
+			}
+		}
 
 		if (g_goparams.mate < 0 && root_moves->previous_score <= mated_in(1 - g_goparams.mate * 2))
 			break ;
@@ -274,10 +292,13 @@ __retry:
 	// before the GUI sends us the "stop" in infinite mode.
 
 	if (g_goparams.infinite)
-		while (!out_of_time())
+		while (!out_of_time(board))
 			;
 
-	printf("bestmove %s\n", move_to_str(root_moves->move, board->chess960));
-	fflush(stdout);
+	if (is_main_worker(get_worker(board)))
+	{
+		printf("bestmove %s\n", move_to_str(root_moves->move, board->chess960));
+		fflush(stdout);
+	}
 	free(root_moves);
 }

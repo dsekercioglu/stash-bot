@@ -17,9 +17,9 @@
 */
 
 #include "init.h"
+#include "lazy_smp.h"
 #include "tt.h"
 #include "uci.h"
-#include <pthread.h>
 #include <stdio.h>
 
 int		main(int argc, char **argv)
@@ -28,18 +28,8 @@ int		main(int argc, char **argv)
 	psq_score_init();
 	zobrist_init();
 	tt_resize(16);
-
-	pthread_t	engine_pt;
-
-	if (pthread_create(&engine_pt, NULL, &engine_thread, NULL))
-	{
-		perror("Failed to boot engine thread");
-		return (1);
-	}
-
+	init_wpool(1);
 	wait_search_end();
-
 	uci_loop(argc, argv);
-
 	return (0);
 }

@@ -17,11 +17,14 @@
 */
 
 #include "history.h"
+#include "lazy_smp.h"
 #include "movelist.h"
 
 void	generate_move_values(movelist_t *movelist, const board_t *board,
 		move_t tt_move, move_t *killers)
 {
+	history_t	*const good_hist = &get_worker(board)->good_hist;
+	history_t	*const bad_hist = &get_worker(board)->bad_hist;
 	extmove_t	*const end = movelist->last;
 
 	for (extmove_t *extmove = movelist->moves; extmove < end; ++extmove)
@@ -59,7 +62,8 @@ void	generate_move_values(movelist_t *movelist, const board_t *board,
 				else if (killers && (move == killers[0] || move == killers[1]))
 					extmove->score = 1536;
 				else
-					extmove->score = get_hist_score(moved_piece, move);
+					extmove->score = get_history_score(*good_hist, *bad_hist,
+						moved_piece, move);
 				break ;
 		}
 	}

@@ -19,17 +19,25 @@
 #ifndef INFO_H
 # define INFO_H
 
-# include <stdint.h>
+# include <inttypes.h>
 # include "board.h"
 # include "move.h"
 # include "movelist.h"
 
-extern uint64_t		g_nodes;
+# ifdef PRIu64
+
+typedef uint64_t		info_t;
+#  define FMT_INFO		PRIu64
+
+# else
+
+typedef uint32_t		info_t;
+#  define FMT_INFO		PRIu32
+
+# endif
 
 const char	*move_to_str(move_t move, bool is_chess960);
 const char	*score_to_str(score_t score);
-
-typedef unsigned long	info_t;
 
 move_t		str_to_move(const board_t *board, const char *str);
 

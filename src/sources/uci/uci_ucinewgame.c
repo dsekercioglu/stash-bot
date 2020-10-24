@@ -17,7 +17,7 @@
 */
 
 #include "tt.h"
-#include "uci.h"
+#include "lazy_smp.h"
 
 void	uci_ucinewgame(const char *args)
 {

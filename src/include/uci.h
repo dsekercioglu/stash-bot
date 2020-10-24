@@ -26,20 +26,6 @@
 # include <sys/timeb.h>
 # include "inlining.h"
 
-enum	e_egn_mode
-{
-	WAITING,
-	THINKING
-};
-
-enum	e_egn_send
-{
-	DO_NOTHING,
-	DO_THINK,
-	DO_EXIT,
-	DO_ABORT
-};
-
 typedef struct	goparams_s
 {
 	clock_t		wtime;
@@ -61,6 +47,7 @@ typedef struct	goparams_s
 
 typedef struct	ucioptions_s
 {
+	long		threads;
 	long		hash;
 	long		move_overhead;
 	long		multi_pv;
@@ -69,10 +56,6 @@ typedef struct	ucioptions_s
 	bool		chess960;
 }				ucioptions_t;
 
-extern pthread_mutex_t	g_engine_mutex;
-extern pthread_cond_t	g_engine_condvar;
-extern enum e_egn_mode	g_engine_mode;
-extern enum e_egn_send	g_engine_send;
 extern goparams_t		g_goparams;
 
 typedef struct	cmdlink_s
@@ -96,7 +79,6 @@ INLINED clock_t	chess_clock(void)
 #endif
 }
 
-void	wait_search_end(void);
 char	*get_next_token(char **str);
 
 void	uci_bench(const char *args);
