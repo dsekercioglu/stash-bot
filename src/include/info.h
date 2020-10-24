@@ -27,12 +27,12 @@
 # ifdef PRIu64
 
 typedef uint64_t		info_t;
-#  define FMT_INFO		PRIu64
+#  define FMT_INFO		"%" PRIu64
 
 # else
 
 typedef uint32_t		info_t;
-#  define FMT_INFO		PRIu32
+#  define FMT_INFO		"%" PRIu32
 
 # endif
 
