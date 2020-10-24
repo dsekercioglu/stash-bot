@@ -54,8 +54,8 @@ void	*worker_loop(void *ptr)
 
 				if (WPool.send != DO_ABORT)
 					WPool.send = DO_NOTHING;
-				pthread_cond_broadcast(&worker->cond);
 			}
+			pthread_cond_broadcast(&worker->cond);
 		}
 	}
 

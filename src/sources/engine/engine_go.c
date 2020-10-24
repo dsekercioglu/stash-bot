@@ -272,16 +272,9 @@ __retry:
 		// so we can safely return our bestmove.
 
 		if (is_main_worker(get_worker(board)))
-		{
 			if ((g_goparams.wtime || g_goparams.btime)
 				&& chess_clock() - g_goparams.start >= g_goparams.optimal_time)
-			{
-				pthread_mutex_lock(&get_worker(board)->mutex);
-				WPool.send = DO_EXIT;
-				pthread_mutex_unlock(&get_worker(board)->mutex);
 				break ;
-			}
-		}
 
 		if (g_goparams.mate < 0 && root_moves->previous_score <= mated_in(1 - g_goparams.mate * 2))
 			break ;
@@ -300,6 +293,10 @@ __retry:
 	{
 		printf("bestmove %s\n", move_to_str(root_moves->move, board->chess960));
 		fflush(stdout);
+
+		if (WPool.send != DO_ABORT)
+			WPool.send = DO_EXIT;
 	}
+
 	free(root_moves);
 }
