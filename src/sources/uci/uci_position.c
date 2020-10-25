@@ -30,7 +30,7 @@ void	uci_position(const char *args)
 	static boardstack_t	**hidden_list = NULL;
 	static size_t		hidden_size = 0;
 	extern ucioptions_t	g_options;
-	board_t				board;
+	board_t				*board = &WPool.workers->board;
 
 	wait_search_end();
 
@@ -77,20 +77,21 @@ void	uci_position(const char *args)
 	else
 		return ;
 
-	board_set(&board, fen, g_options.chess960, *hidden_list);
+	board_set(board, fen, g_options.chess960, *hidden_list);
+	board->worker = WPool.workers;
 	free(fen);
 
 	token = get_next_token(&ptr);
 
 	move_t	move;
 
-	while (token && (move = str_to_move(&board, token)) != NO_MOVE)
+	while (token && (move = str_to_move(board, token)) != NO_MOVE)
 	{
 		hidden_list = realloc(hidden_list,
 			sizeof(boardstack_t *) * ++hidden_size);
 		hidden_list[hidden_size - 1] = malloc(sizeof(boardstack_t));
 
-		do_move(&board, move, hidden_list[hidden_size - 1]);
+		do_move(board, move, hidden_list[hidden_size - 1]);
 
 		token = get_next_token(&ptr);
 	}
@@ -99,13 +100,13 @@ void	uci_position(const char *args)
 
 	// Apply board state to all workers
 
-	for (size_t i = 0; i < WPool.wcount; i++)
+	for (size_t i = 1; i < WPool.wcount; i++)
 	{
 		worker_t	*worker = &WPool.workers[i];
 
-		worker->board = board;
+		worker->board = *board;
 		boardstack_free(worker->stack);
-		worker->stack = boardstack_dup(board.stack);
+		worker->stack = boardstack_dup(board->stack);
 		worker->board.stack = worker->stack;
 		worker->board.worker = worker;
 	}
