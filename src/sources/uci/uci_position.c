@@ -98,6 +98,10 @@ void	uci_position(const char *args)
 
 	free(copy);
 
+	// Don't use the stack saved here, copy it
+
+	board->stack = boardstack_dup(board->stack);
+
 	// Apply board state to all workers
 
 	for (size_t i = 1; i < WPool.wcount; i++)
