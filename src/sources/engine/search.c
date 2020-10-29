@@ -241,9 +241,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 				{
 					if (!is_capture_or_promotion(board, bestmove))
 					{
-						add_history(worker->good_history,
+						add_history(worker->history,
 							piece_on(board, move_from_square(bestmove)),
-							bestmove);
+							bestmove, 1);
 
 						if (ss->killers[0] == NO_MOVE)
 							ss->killers[0] = bestmove;
@@ -253,9 +253,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 					while (--extmove >= movelist_begin(&list))
 						if (!is_capture_or_promotion(board, extmove->move))
-							add_history(worker->bad_history,
+							add_history(worker->history,
 								piece_on(board, move_from_square(extmove->move)),
-								extmove->move);
+								extmove->move, -1);
 
 					break ;
 				}
