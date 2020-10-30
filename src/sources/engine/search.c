@@ -152,18 +152,16 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 			// Do not trust win claims.
 
-			if (depth <= NMP_TrustDepth && abs(beta) < VICTORY)
+			if (worker->verif_plies || (depth <= NMP_TrustDepth && abs(beta) < VICTORY))
 				return (score);
 
 			// Zugzwang checking.
 
-			int nmp_depth = board->stack->plies_from_null_move;
-			board->stack->plies_from_null_move = -(depth - nmp_reduction) * 3 / 4;
+			worker->verif_plies = ss->plies + (depth - nmp_reduction) * 3 / 4;
 
-			score_t		zzscore = search(board, depth - nmp_reduction, beta - 1, beta,
-					ss);
+			score_t	zzscore = search(board, depth - nmp_reduction, beta - 1, beta, ss);
 
-			board->stack->plies_from_null_move = nmp_depth;
+			worker->verif_plies = 0;
 
 			if (zzscore >= beta)
 				return (score);
