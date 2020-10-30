@@ -129,9 +129,8 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	{
 		boardstack_t	stack;
 
-		int	nmp_reduction = NMP_BaseReduction
-			+ min((eval - beta) / NMP_EvalScale, NMP_MaxEvalReduction)
-			+ (depth / 4);
+		int	nmp_reduction = 4.96 + fmin((eval - beta) / 249.0, 2.09)
+			+ (depth / 7.83);
 
 		do_null_move(board, &stack);
 
