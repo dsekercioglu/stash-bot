@@ -39,7 +39,7 @@ void	generate_move_values(movelist_t *movelist, const board_t *board,
 		switch (type_of_move(move))
 		{
 			case PROMOTION:
-				extmove->score = 4096 + PieceScores[ENDGAME][promotion_type(move)];
+				extmove->score = 4096 + promotion_type(move);
 				break ;
 
 			case EN_PASSANT:
@@ -54,14 +54,16 @@ void	generate_move_values(movelist_t *movelist, const board_t *board,
 
 				if (captured_piece != NO_PIECE)
 				{
-					extmove->score = see_greater_than(board, move, -30) ? 2048 : 1024;
+					extmove->score = see_greater_than(board, move,
+						BISHOP_MG_SCORE - KNIGHT_MG_SCORE) ? 2048 : 1024;
 					extmove->score += type_of_piece(captured_piece) * 8
 						- type_of_piece(moved_piece);
 				}
 				else if (killers && (move == killers[0] || move == killers[1]))
 					extmove->score = 1536;
 				else
-					extmove->score = get_history_score(worker->good_history, worker->bad_history, moved_piece, move);
+					extmove->score = get_history_score(worker->good_history,
+						worker->bad_history, moved_piece, move);
 				break ;
 		}
 	}
