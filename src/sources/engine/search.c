@@ -237,7 +237,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 				{
 					if (!is_capture_or_promotion(board, bestmove))
 					{
-						int		bonus = (depth <= 12) ? 16 * depth * depth : 20;
+						int		bonus = min(16 * depth * depth, 2304);
 
 						add_history(worker->history,
 							piece_on(board, move_from_square(bestmove)),
