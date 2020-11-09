@@ -28,6 +28,15 @@
 #include "tt.h"
 #include "uci.h"
 
+int		Reductions[64][64];
+
+void	init_reductions(void)
+{
+	for (int depth = 1; depth < 64; ++depth)
+		for (int count = 1; count < 64; ++count)
+			Reductions[depth][count] = 1.07 + log(depth) * log(count) / 1.51;
+}
+
 uint64_t	perft(board_t *board, unsigned int depth)
 {
 	if (depth == 0)
@@ -108,6 +117,7 @@ void		*engine_go(void *ptr)
 		tt_clear();
 
 		g_goparams.start = chess_clock();
+		init_reductions();
 
 		// Do we have to use the time manager ?
 

@@ -208,7 +208,8 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			if (depth >= LMR_MinDepth && move_count > LMR_MinMoves
 				&& !board->stack->checkers)
 			{
-				int		lmr_depth = depth - (depth + move_count) / 10 - 2;
+				int		reduction = Reductions[min(depth, 63)][min(move_count, 63)];
+				int		lmr_depth = depth - reduction - 1;
 
 				next = -search(board, lmr_depth, -alpha - 1, -alpha, ss + 1);
 
