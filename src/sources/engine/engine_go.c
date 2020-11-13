@@ -34,7 +34,7 @@ void	init_reductions(void)
 {
 	for (int depth = 1; depth < 64; ++depth)
 		for (int count = 1; count < 64; ++count)
-			Reductions[depth][count] = 1.16 + log(depth) * log(count) / 1.72;
+			Reductions[depth][count] = 1.58 + log(depth) * log(count) / 2.55;
 }
 
 uint64_t	perft(board_t *board, unsigned int depth)
