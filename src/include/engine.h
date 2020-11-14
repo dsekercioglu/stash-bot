@@ -51,7 +51,6 @@ enum
 	NMP_TrustDepth = 10,
 
 	LMR_MinDepth = 3,
-	LMR_MinMoves = 4,
 
 	Razor_LightMargin = 150,
 	Razor_HeavyMargin = 300,

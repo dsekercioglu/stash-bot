@@ -94,11 +94,12 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 		score_t			next;
 		int				reduction;
 		int				new_depth = depth - 1;
+		bool			is_quiet = !is_capture_or_promotion(board, extmove->move);
 
 		do_move(board, extmove->move, &stack);
 
 		// Can we apply LMR ?
-		if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
+		if (depth >= LMR_MinDepth && move_count > 1 && is_quiet && !board->stack->checkers)
 			reduction = (depth + move_count) / 10 + 1;
 		else
 			reduction = 0;
@@ -140,7 +141,7 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 
 				if (alpha >= beta)
 				{
-					if (!is_capture_or_promotion(board, bestmove))
+					if (is_quiet)
 					{
 						int		bonus = (depth <= 12) ? 16 * depth * depth : 20;
 
@@ -164,7 +165,7 @@ score_t	search_pv(board_t *board, int depth, score_t alpha, score_t beta,
 			}
 		}
 
-		if (qcount < 64 && !is_capture_or_promotion(board, extmove->move))
+		if (qcount < 64 && is_quiet)
 			quiets[qcount++] = extmove->move;
 
 		if (depth < 4 && qcount > depth * 8)
@@ -232,11 +233,12 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 		score_t			next;
 		int				reduction;
 		int				new_depth = depth - 1;
+		bool			is_quiet = !is_capture_or_promotion(board, extmove->move);
 
 		do_move(board, extmove->move, &stack);
 
 		// Can we apply LMR ?
-		if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
+		if (depth >= LMR_MinDepth && move_count > 4 && is_quiet && !board->stack->checkers)
 			reduction = (depth + move_count) / 10 + 1;
 		else
 			reduction = 0;
