@@ -107,11 +107,9 @@ void		*engine_go(void *ptr)
 	{
 		tt_clear();
 
-		g_goparams.start = chess_clock();
-
 		// Do we have to use the time manager ?
 
-		if (g_goparams.wtime || g_goparams.btime)
+		if (g_goparams.wtime || g_goparams.btime || g_goparams.winc || g_goparams.binc)
 		{
 			if (g_goparams.movestogo == 0)
 			{
@@ -289,7 +287,7 @@ __retry:
 		// so we can safely return our bestmove.
 
 		if (!worker->idx)
-			if ((g_goparams.wtime || g_goparams.btime)
+			if ((g_goparams.wtime || g_goparams.btime || g_goparams.winc || g_goparams.binc)
 				&& chess_clock() - g_goparams.start >= g_goparams.optimal_time)
 				break ;
 

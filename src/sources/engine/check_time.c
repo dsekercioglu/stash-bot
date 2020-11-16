@@ -17,8 +17,10 @@
 */
 
 #include "engine.h"
+#include "info.h"
 #include "lazy_smp.h"
 #include "uci.h"
+#include <stdio.h>
 
 void	check_time(void)
 {
@@ -40,11 +42,12 @@ void	check_time(void)
 	if (get_node_count() >= g_goparams.nodes)
 		goto __set_stop;
 
-	if (g_goparams.movetime || g_goparams.wtime || g_goparams.winc)
+	if (g_goparams.movetime || g_goparams.wtime || g_goparams.winc
+		|| g_goparams.btime || g_goparams.binc)
 	{
 		clock_t		end = g_goparams.start + g_goparams.maximal_time;
 
-		if (chess_clock() > end)
+		if (chess_clock() >= end)
 			goto __set_stop;
 	}
 

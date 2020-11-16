@@ -37,6 +37,7 @@ void	uci_go(const char *args)
 	g_engine_send = DO_THINK;
 	memset(&g_goparams, 0, sizeof(goparams_t));
 	list_all(&g_searchmoves, &g_board);
+	g_goparams.start = chess_clock();
 
 	char	*copy = strdup(args ? args : "");
 	char	*token = strtok(copy, delim);
