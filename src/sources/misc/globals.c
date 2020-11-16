@@ -47,6 +47,7 @@ void __attribute__((constructor))	init_globals(void)
 	g_options.burn_ratio = 1.4;
 	g_options.save_ratio = 1.1;
 	g_options.chess960 = false;
+	g_options.reduce_output = false;
 
 	g_seed = 1048592ul;
 }

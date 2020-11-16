@@ -122,6 +122,9 @@ void	uci_go(const char *args)
 		token = strtok(NULL, delim);
 	}
 
+	g_goparams.needs_timeman = !!g_goparams.wtime || !!g_goparams.btime
+		|| !!g_goparams.winc || !!g_goparams.binc;
+
 	g_engine_mode = THINKING;
 
 	pthread_cond_broadcast(&g_engine_condvar);

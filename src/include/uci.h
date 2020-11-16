@@ -54,6 +54,7 @@ typedef struct	goparams_s
 	int			perft;
 	clock_t		movetime;
 
+	int			needs_timeman;
 	clock_t		start;
 	clock_t		maximal_time;
 	clock_t		optimal_time;
@@ -68,6 +69,7 @@ typedef struct	ucioptions_s
 	double		burn_ratio;
 	double		save_ratio;
 	bool		chess960;
+	bool		reduce_output;
 }				ucioptions_t;
 
 extern pthread_mutex_t	g_engine_mutex;

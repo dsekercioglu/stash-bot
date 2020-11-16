@@ -229,32 +229,39 @@ __retry:
 				// Don't update Multi-PV lines if not all analysed at current depth
 				// and not enough time elapsed
 
-				if ((multi_pv == 1 && (bound == EXACT_BOUND || chess_time > 3000))
-					|| (multi_pv > 1 && bound == EXACT_BOUND
-						&& (pv_line == multi_pv - 1 || chess_time > 3000)))
-				{
-					for (int i = 0; i < multi_pv; ++i)
-					{
-						bool		searched = (root_moves[i].score != -INF_SCORE);
-						score_t		root_score = (searched) ? root_moves[i].score
-						: root_moves[i].previous_score;
+				if (g_goparams.needs_timeman && g_options.reduce_output
+					&& chess_time < g_options.move_overhead)
+					goto __no_output;
 
-						printf("info depth %d seldepth %d multipv %d nodes %" FMT_INFO
-							" nps %" FMT_INFO " hashfull %d time %" FMT_INFO " score %s%s pv",
-							max(iter_depth + (int)searched, 1), root_moves[i].seldepth, i + 1,
-							(info_t)chess_nodes, (info_t)chess_nps,
-							tt_hashfull(), (info_t)chess_time,
-							score_to_str(root_score), bound == EXACT_BOUND ? ""
-							: bound == LOWER_BOUND ? " lowerbound" : " upperbound");
+				if (bound != EXACT_BOUND && (multi_pv > 1 || chess_time < 3000))
+					goto __no_output;
+
+				if (multi_pv > 1 && (pv_line != multi_pv - 1 || chess_time < 3000))
+					goto __no_output;
+
+				for (int i = 0; i < multi_pv; ++i)
+				{
+					bool		searched = (root_moves[i].score != -INF_SCORE);
+					score_t		root_score = (searched) ? root_moves[i].score
+					: root_moves[i].previous_score;
+
+					printf("info depth %d seldepth %d multipv %d nodes %" FMT_INFO
+						" nps %" FMT_INFO " hashfull %d time %" FMT_INFO " score %s%s pv",
+						max(iter_depth + (int)searched, 1), root_moves[i].seldepth, i + 1,
+						(info_t)chess_nodes, (info_t)chess_nps,
+						tt_hashfull(), (info_t)chess_time,
+						score_to_str(root_score), bound == EXACT_BOUND ? ""
+						: bound == LOWER_BOUND ? " lowerbound" : " upperbound");
 	
-						for (size_t k = 0; root_moves[i].pv[k] != NO_MOVE; ++k)
-							printf(" %s", move_to_str(root_moves[i].pv[k],
-								board->chess960));
-						puts("");
-					}
-					fflush(stdout);
+					for (size_t k = 0; root_moves[i].pv[k] != NO_MOVE; ++k)
+						printf(" %s", move_to_str(root_moves[i].pv[k],
+							board->chess960));
+					puts("");
 				}
+				fflush(stdout);
 			}
+
+__no_output:
 
 			if (has_search_aborted)
 				break ;
@@ -294,6 +301,9 @@ __retry:
 		if (g_goparams.mate < 0 && root_moves->previous_score <= mated_in(1 - g_goparams.mate * 2))
 			break ;
 		if (g_goparams.mate > 0 && root_moves->previous_score >= mate_in(g_goparams.mate * 2))
+			break ;
+		if (g_goparams.needs_timeman
+			&& abs(root_moves->previous_score) >= mate_in(iter_depth / 2))
 			break ;
 	}
 

@@ -99,6 +99,7 @@ void	uci_loop(int argc, char **argv)
 	add_option_spin_flt(&g_opthandler, "TimesaveRatio", &g_options.save_ratio, 1.1, 0.1, 10, NULL);
 	add_option_spin_int(&g_opthandler, "MultiPV", &g_options.multi_pv, 1, 1, 16, NULL);
 	add_option_check(&g_opthandler, "UCI_Chess960", &g_options.chess960, false, NULL);
+	add_option_check(&g_opthandler, "LessOutput", &g_options.reduce_output, false, NULL);
 	add_option_button(&g_opthandler, "Clear Hash", &on_clear_hash);
 
 	uci_position("startpos");
