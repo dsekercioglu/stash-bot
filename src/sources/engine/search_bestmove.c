@@ -33,19 +33,38 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 		root_move_t *begin, root_move_t *end, int pv_line)
 {
 	extern goparams_t	g_goparams;
-	searchstack_t		sstack[512];
-	move_t				pv[512];
+	searchstack_t		sstack[256];
+	searchstack_t		*ss = sstack;
+	move_t				pv[256];
 
 	memset(sstack, 0, sizeof(sstack));
 
-	sstack[0].plies = 1;
-	sstack[0].pv = pv;
+	(ss + 1)->plies = ss->plies + 1;
+	(ss + 1)->pv = pv;
 
 	movelist_t			list;
 	int					move_count = 0;
+	move_t				tt_move = NO_MOVE;
+	tt_entry_t			*entry = NULL;
+
+	if (pv_line == 0)
+	{
+		bool		found;
+
+		entry = tt_probe(board->stack->board_key, &found);
+		if (found)
+			tt_move = entry->bestmove;
+	}
+	if (!tt_move)
+		tt_move = begin->move;
 
 	list_pseudo(&list, board);
-	generate_move_values(&list, board, begin->move, NULL);
+	generate_move_values(&list, board, tt_move, NULL);
+
+	move_t	bestmove = NO_MOVE;
+	score_t	best_value = -INF_SCORE;
+	move_t	quiets[64];
+	int		qcount = 0;
 
 	for (extmove_t *extmove = list.moves; extmove < list.last; ++extmove)
 	{
@@ -71,6 +90,7 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 		score_t			next;
 		int				reduction;
 		int				new_depth = depth - 1;
+		bool			is_quiet = !is_capture_or_promotion(board, cur->move);
 
 		do_move(board, cur->move, &stack);
 
@@ -81,18 +101,18 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 			reduction = 0;
 
 		if (reduction)
-			next = -search(board, new_depth - reduction, -alpha - 1, -alpha, sstack, false);
+			next = -search(board, new_depth - reduction, -alpha - 1, -alpha, ss + 1, false);
 
 		// If LMR is not possible, or our LMR failed, do a search with no reductions
 		if ((reduction && next > alpha) || (!reduction && move_count != 1))
-			next = -search(board, new_depth, -alpha - 1, -alpha, sstack, false);
+			next = -search(board, new_depth, -alpha - 1, -alpha, ss + 1, false);
 
 		// Finally, if null window search and LMR search failed above alpha, do
 		// a full window search.
 		if (move_count == 1 || next > alpha)
 		{
 			pv[0] = NO_MOVE;
-			next = -search(board, new_depth, -beta, -alpha, sstack, true);
+			next = -search(board, new_depth, -beta, -alpha, ss + 1, true);
 		}
 
 		undo_move(board, cur->move);
@@ -100,24 +120,44 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 		if (g_engine_send == DO_ABORT || g_engine_send == DO_EXIT)
 			return ;
 
-		else if (move_count == 1 || next > alpha)
+		if (best_value < next)
 		{
-			cur->score = next;
-			alpha = max(alpha, next);
+			best_value = cur->score = next;
 			cur->seldepth = get_worker(board)->seldepth;
 			cur->pv[0] = cur->move;
 
 			size_t	j;
-			for (j = 0; sstack[0].pv[j] != NO_MOVE; ++j)
-				cur->pv[j + 1] = sstack[0].pv[j];
+			for (j = 0; (ss + 1)->pv[j] != NO_MOVE; ++j)
+				cur->pv[j + 1] = (ss + 1)->pv[j];
 
 			cur->pv[j + 1] = NO_MOVE;
 
-			if (next >= beta)
-				return ;
+			if (alpha < best_value)
+			{
+				bestmove = cur->move;
+				alpha = best_value;
+				if (alpha >= beta)
+				{
+					if (is_quiet)
+						update_quiet_history(get_worker(board)->history, board, depth,
+							bestmove, quiets, qcount, ss);
+					break ;
+				}
+			}
 		}
 		else
 			cur->score = -INF_SCORE;
+
+		if (qcount < 64 && is_quiet)
+			quiets[qcount++] = cur->move;
 	}
-	return ;
+
+	if (entry && (entry->key != board->stack->board_key || entry->depth <= depth))
+	{
+		int	bound = (best_value >= beta) ? LOWER_BOUND
+			: bestmove ? EXACT_BOUND : UPPER_BOUND;
+
+		tt_save(entry, board->stack->board_key, score_to_tt(best_value, 0),
+			evaluate(board), depth, bound, bestmove);
+	}
 }
