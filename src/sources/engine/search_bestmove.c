@@ -63,8 +63,6 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 
 	move_t	bestmove = NO_MOVE;
 	score_t	best_value = -INF_SCORE;
-	move_t	quiets[64];
-	int		qcount = 0;
 
 	for (extmove_t *extmove = list.moves; extmove < list.last; ++extmove)
 	{
@@ -90,7 +88,6 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 		score_t			next;
 		int				reduction;
 		int				new_depth = depth - 1;
-		bool			is_quiet = !is_capture_or_promotion(board, cur->move);
 
 		do_move(board, cur->move, &stack);
 
@@ -137,19 +134,11 @@ void	search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 				bestmove = cur->move;
 				alpha = best_value;
 				if (alpha >= beta)
-				{
-					if (is_quiet)
-						update_quiet_history(get_worker(board)->history, board, depth,
-							bestmove, quiets, qcount, ss);
 					break ;
-				}
 			}
 		}
 		else
 			cur->score = -INF_SCORE;
-
-		if (qcount < 64 && is_quiet)
-			quiets[qcount++] = cur->move;
 	}
 
 	if (entry && (entry->key != board->stack->board_key || entry->depth <= depth))
