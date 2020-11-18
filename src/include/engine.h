@@ -19,6 +19,7 @@
 #ifndef ENGINE_H
 # define ENGINE_H
 
+# include <math.h>
 # include <time.h>
 # include "board.h"
 # include "history.h"
@@ -59,6 +60,8 @@ enum
 
 	MAX_PLIES = 240
 };
+
+extern int	Reductions[64][64];
 
 void		sort_root_moves(root_move_t *begin, root_move_t *end);
 root_move_t	*find_root_move(root_move_t *begin, root_move_t *end, move_t move);
