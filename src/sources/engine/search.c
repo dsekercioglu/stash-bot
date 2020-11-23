@@ -66,10 +66,11 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	score_t		tt_score = NO_SCORE;
 	move_t		tt_move = NO_MOVE;
 	bool		found;
-	tt_entry_t	*entry = tt_probe(board->stack->board_key, &found);
+	hashkey_t	key = board->stack->board_key ^ ((hashkey_t)ss->excluded_move << 16);
+	tt_entry_t	*entry = tt_probe(key, &found);
 	score_t		eval;
 
-	if (found && !ss->excluded_move)
+	if (found)
 	{
 		tt_score = score_from_tt(entry->score, ss->plies);
 		tt_bound = entry->genbound & 3;
@@ -191,7 +192,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		bool			is_quiet = !is_capture_or_promotion(board, currmove);
 		bool			gives_check = move_gives_check(board, currmove);
 
-		if (depth >= 8 && currmove == tt_move && !ss->excluded_move
+		if (depth >= 9 && currmove == tt_move && !ss->excluded_move
 			&& abs(tt_score) < VICTORY && (tt_bound & LOWER_BOUND)
 			&& tt_depth >= depth - 2)
 		{
@@ -278,16 +279,17 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	// Checkmate/Stalemate ?
 
 	if (move_count == 0)
-		best_value = (board->stack->checkers) ? mated_in(ss->plies) : 0;
+		best_value = ss->excluded_move ? alpha
+			: (board->stack->checkers) ? mated_in(ss->plies) : 0;
 
 	// Do not erase entries with higher depth for same position.
 
-	if (!ss->excluded_move && (entry->key != board->stack->board_key || entry->depth <= depth))
+	if (entry->key != key || entry->depth <= depth)
 	{
 		int bound = (best_value >= beta) ? LOWER_BOUND
 			: (pv_node && bestmove) ? EXACT_BOUND : UPPER_BOUND;
 
-		tt_save(entry, board->stack->board_key, score_to_tt(best_value, ss->plies),
+		tt_save(entry, key, score_to_tt(best_value, ss->plies),
 			ss->static_eval, depth, bound, bestmove);
 	}
 
