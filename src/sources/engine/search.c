@@ -195,7 +195,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 			&& abs(tt_score) < VICTORY && (tt_bound & LOWER_BOUND)
 			&& tt_depth >= depth - 2)
 		{
-			score_t		sg_beta = tt_score - depth;
+			score_t		sg_beta = tt_score - depth * 2;
 			int			sg_depth = (depth / 2) - 1;
 
 			ss->excluded_move = tt_move;
@@ -210,8 +210,6 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 		}
 		else if (gives_check)
 			extension = 1;
-
-		extension = gives_check ? 1 : 0;
 
 		do_move_gc(board, currmove, &stack, gives_check);
 
