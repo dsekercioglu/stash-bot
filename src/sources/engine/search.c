@@ -207,16 +207,6 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 			else if (sg_beta >= beta)
 				return (sg_beta);
-
-			else if (tt_score >= beta)
-			{
-				ss->excluded_move = tt_move;
-				sg_score = search(board, sg_depth + 1, beta - 1, beta, ss, false);
-				ss->excluded_move = NO_MOVE;
-
-				if (sg_score >= beta)
-					return (beta);
-			}
 		}
 		else if (gives_check)
 			extension = 1;
