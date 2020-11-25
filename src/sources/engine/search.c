@@ -92,6 +92,9 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	(ss + 1)->plies = ss->plies + 1;
 	(ss + 2)->killers[0] = (ss + 2)->killers[1] = NO_MOVE;
 
+	if (board->stack->checkers)
+		goto __skip_pruning;
+
 	// Razoring.
 
 	if (!pv_node && ss->static_eval + Razor_LightMargin < beta)
@@ -116,8 +119,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	// Null move pruning.
 
-	if (!pv_node && depth >= NMP_MinDepth && !board->stack->checkers
-		&& ss->plies >= worker->verif_plies
+	if (!pv_node && depth >= NMP_MinDepth && ss->plies >= worker->verif_plies
 		&& eval >= beta && eval >= ss->static_eval)
 	{
 		boardstack_t	stack;
@@ -158,6 +160,8 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 				return (score);
 		}
 	}
+
+__skip_pruning:
 
 	if (depth > 7 && !tt_move)
 		--depth;
