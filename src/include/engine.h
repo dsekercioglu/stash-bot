@@ -76,5 +76,6 @@ void	update_quiet_history(history_t hist, const board_t *board, int depth,
 		move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss);
 
 score_t	evaluate(const board_t *board);
+score_t	eval_rmob(const board_t *board);
 
 #endif

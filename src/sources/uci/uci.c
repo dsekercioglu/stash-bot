@@ -87,9 +87,33 @@ void	on_thread_set(void *data)
 	wpool_init((int)*(long *)data);
 }
 
+void	on_komi_set(void *data)
+{
+	// Divide komi by two so that it is compatible with our internal values
+
+	*(long *)data /= 2;
+}
+
+void	on_variant_set(void *data)
+{
+	extern ucioptions_t	g_options;
+
+	char	*variant = *((char **)data);
+
+	if (!strcmp(variant, "rmobility"))
+		g_options.variant = Rmob;
+	else if (!strcmp(variant, "rmobilityarmaggeddon"))
+		g_options.variant = RmobArmaggeddon;
+	else
+		g_options.variant = Chess;
+}
+
 void	uci_loop(int argc, char **argv)
 {
 	extern ucioptions_t	g_options;
+	const char	*supported_variants[] = {
+		"chess", "rmobility", "rmobilityarmaggeddon", NULL
+	};
 
 	init_option_list(&g_opthandler);
 	add_option_spin_int(&g_opthandler, "Threads", &g_options.threads, 1, 1, 256, &on_thread_set);
@@ -98,6 +122,10 @@ void	uci_loop(int argc, char **argv)
 	add_option_spin_int(&g_opthandler, "MultiPV", &g_options.multi_pv, 1, 1, 500, NULL);
 	add_option_check(&g_opthandler, "UCI_Chess960", &g_options.chess960, false, NULL);
 	add_option_button(&g_opthandler, "Clear Hash", &on_clear_hash);
+
+	add_option_combo(&g_opthandler, "UCI_Variant", &g_options.variant_string,
+		supported_variants[0], supported_variants, &on_variant_set);
+	add_option_spin_int(&g_opthandler, "UCI_komi", &g_options.komi, 2, -1023, 1023, &on_komi_set);
 
 	uci_position("startpos");
 

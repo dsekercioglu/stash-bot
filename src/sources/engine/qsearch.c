@@ -37,10 +37,10 @@ score_t	qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
 
 	if (g_engine_send == DO_EXIT || g_engine_send == DO_ABORT
 		|| is_draw(board, ss->plies))
-		return (0);
+		return (eval_rmob(board));
 
 	if (ss->plies >= MAX_PLIES)
-		return (!board->stack->checkers ? evaluate(board) : 0);
+		return (!board->stack->checkers ? evaluate(board) : eval_rmob(board));
 
 	// Mate pruning.
 

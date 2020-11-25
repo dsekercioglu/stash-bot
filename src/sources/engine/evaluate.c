@@ -262,33 +262,7 @@ score_t		evaluate(const board_t *board)
 
 	score_t		mg = midgame_score(tapered);
 	score_t		eg = endgame_score(tapered);
-	int			piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
 	score_t		score;
-
-	if (piece_count <= 7)
-	{
-		// Insufficient material check.
-
-		int		pieces = popcount(board->color_bits[WHITE]);
-
-		if (eg > 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, WHITE, KNIGHT, BISHOP))
-				return (0);
-		}
-
-		pieces = piece_count - pieces;
-
-		if (eg < 0)
-		{
-			if (pieces == 1)
-				return (0);
-			else if (pieces == 2 && board_colored_pieces(board, BLACK, KNIGHT, BISHOP))
-				return (0);
-		}
-	}
 
 	{
 		int		phase = QueenPhase * popcount(board->piecetype_bits[QUEEN])

@@ -59,13 +59,23 @@ typedef struct	goparams_s
 	clock_t		optimal_time;
 }				goparams_t;
 
+enum	e_variant
+{
+	Chess,
+	Rmob,
+	RmobArmaggeddon
+};
+
 typedef struct	ucioptions_s
 {
-	long		threads;
-	long		hash;
-	long		move_overhead;
-	long		multi_pv;
-	bool		chess960;
+	long			threads;
+	long			hash;
+	long			komi;
+	long			move_overhead;
+	long			multi_pv;
+	char			*variant_string;
+	enum e_variant	variant;
+	bool			chess960;
 }				ucioptions_t;
 
 extern pthread_mutex_t	g_engine_mutex;

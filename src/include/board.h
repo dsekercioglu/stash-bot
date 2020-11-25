@@ -40,6 +40,7 @@ struct	boardstack_s
 	square_t		en_passant_square;
 	hashkey_t		board_key;
 	hashkey_t		pawn_key;
+	int				rmobility[COLOR_NB];
 	bitboard_t		checkers;
 	piece_t			captured_piece;
 	boardstack_t	*prev;
@@ -256,6 +257,11 @@ INLINED void		remove_piece(board_t *board, square_t square)
 INLINED void		do_move(board_t *board, move_t move, boardstack_t *stack)
 {
 	do_move_gc(board, move, stack, move_gives_check(board, move));
+}
+
+INLINED void		reset_rmobility(board_t *board)
+{
+	board->stack->rmobility[WHITE] = board->stack->rmobility[BLACK] = 256;
 }
 
 #endif

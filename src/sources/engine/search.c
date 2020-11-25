@@ -46,10 +46,10 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	if (g_engine_send == DO_EXIT || g_engine_send == DO_ABORT
 		|| is_draw(board, ss->plies))
-		return (0);
+		return (eval_rmob(board));
 
 	if (ss->plies >= MAX_PLIES)
-		return (!board->stack->checkers ? evaluate(board) : 0);
+		return (!board->stack->checkers ? evaluate(board) : eval_rmob(board));
 
 	// Mate pruning.
 
@@ -162,7 +162,20 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	if (depth > 7 && !tt_move)
 		--depth;
 
-	list_pseudo(&list, board);
+	{
+		extern ucioptions_t		g_options;
+
+		// Using r-mobility rules ?
+		if (g_options.variant != Chess)
+		{
+			list_all(&list, board);
+			int		*rmob = &board->stack->rmobility[board->side_to_move];
+
+			*rmob = min(*rmob, movelist_size(&list) * 2 + !board->stack->checkers);
+		}
+		else
+			list_pseudo(&list, board);
+	}
 	generate_move_values(&list, board, tt_move, ss->killers);
 
 	move_t	bestmove = NO_MOVE;
@@ -256,7 +269,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	// Checkmate/Stalemate ?
 
 	if (move_count == 0)
-		best_value = (board->stack->checkers) ? mated_in(ss->plies) : 0;
+		best_value = (board->stack->checkers) ? mated_in(ss->plies) : eval_rmob(board);
 
 	// Do not erase entries with higher depth for same position.
 

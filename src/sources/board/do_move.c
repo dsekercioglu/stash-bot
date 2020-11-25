@@ -83,6 +83,7 @@ void	do_move_gc(board_t *board, move_t move, boardstack_t *next,
 		key ^= ZobristPsq[captured_piece][captured_square];
 
 		board->stack->rule50 = 0;
+		reset_rmobility(board);
 	}
 
 	key ^= ZobristPsq[piece][from];
@@ -129,6 +130,7 @@ void	do_move_gc(board_t *board, move_t move, boardstack_t *next,
 			^ ZobristPsq[piece][to];
 
 		board->stack->rule50 = 0;
+		reset_rmobility(board);
 	}
 
 	board->stack->captured_piece = captured_piece;

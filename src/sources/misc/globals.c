@@ -46,5 +46,8 @@ void __attribute__((constructor))	init_globals(void)
 	g_options.multi_pv = 1;
 	g_options.chess960 = false;
 
+	g_options.variant = Chess;
+	g_options.variant_string = NULL;
+
 	g_seed = 1048592ul;
 }
