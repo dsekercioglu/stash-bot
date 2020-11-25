@@ -261,7 +261,7 @@ INLINED void		do_move(board_t *board, move_t move, boardstack_t *stack)
 
 INLINED void		reset_rmobility(board_t *board)
 {
-	board->stack->rmobility[WHITE] = board->stack->rmobility[BLACK] = 256;
+	board->stack->rmobility[WHITE] = board->stack->rmobility[BLACK] = 512;
 }
 
 #endif

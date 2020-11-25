@@ -34,6 +34,8 @@ void	do_move_gc(board_t *board, move_t move, boardstack_t *next,
 	next->plies_from_null_move = board->stack->plies_from_null_move;
 	next->en_passant_square = board->stack->en_passant_square;
 	next->pawn_key = board->stack->pawn_key;
+	next->rmobility[WHITE] = board->stack->rmobility[WHITE];
+	next->rmobility[BLACK] = board->stack->rmobility[BLACK];
 
 	next->prev = board->stack;
 	board->stack = next;

@@ -19,7 +19,7 @@ const score_t	RmobScores[31] = {
 	0, 0, 0, 0, 0
 };
 
-score_t	eval_rmob(const board_t *board)
+score_t	eval_rmob(const board_t *board, int plies)
 {
 	extern ucioptions_t		g_options;
 
@@ -44,9 +44,19 @@ score_t	eval_rmob(const board_t *board)
 	}
 
 	// In r-mobility Armaggeddon, return a large positive score if we're winning
-	// our bet, and a large negative score if we're losing it
+	// our bet, a large negative score if we're losing it, or draw if we're doing
+	// exactly our bet
 
-	score_t		komi_score = (G < g_options.komi) ? -MATE_FOUND + 1 : MATE_FOUND - 1;
+	G = G * 2 + (G > 0) - (G < 0);
+
+	score_t		komi_score;
+
+	if (g_options.komi > 0)
+		komi_score = (G < 0 || G > g_options.komi) ? mated_in(plies)
+			: (G == g_options.komi) ? 0 : mate_in(plies);
+	else
+		komi_score = (G > 0 || G < g_options.komi) ? mate_in(plies)
+			: (G == g_options.komi) ? 0 : mated_in(plies);
 
 	return (board->side_to_move == WHITE ? komi_score : -komi_score);
 }

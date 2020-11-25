@@ -62,6 +62,7 @@ void		*engine_go(void *ptr)
 	const size_t		root_move_count = movelist_size(&g_searchmoves);
 	board_t				*board = ptr;
 	worker_t			*worker = get_worker(board);
+	score_t				komi_score = -INF_SCORE;
 
 	if (g_goparams.perft)
 	{
@@ -86,6 +87,12 @@ void		*engine_go(void *ptr)
 			printf("info depth 0 score cp 0\nbestmove 0000\n");
 		fflush(stdout);
 		return (NULL);
+	}
+
+	if (g_goparams.komi)
+	{
+		// Disable r-mobility Armaggeddon rules when estimating komi
+		g_options.variant = Rmob;
 	}
 
 	// Init root move struct here
@@ -241,6 +248,9 @@ __retry:
 						score_t		root_score = (searched) ? root_moves[i].score
 						: root_moves[i].previous_score;
 
+						if (i == 0)
+							komi_score = root_score;
+
 						printf("info depth %d seldepth %d multipv %d nodes %" FMT_INFO
 							" nps %" FMT_INFO " hashfull %d time %" FMT_INFO " score %s%s pv",
 							max(iter_depth + (int)searched, 1), root_moves[i].seldepth, i + 1,
@@ -309,7 +319,30 @@ __retry:
 
 	if (!worker->idx)
 	{
-		printf("bestmove %s\n", move_to_str(root_moves->move, board->chess960));
+		printf("bestmove %s", move_to_str(root_moves->move, board->chess960));
+		if (g_goparams.komi)
+		{
+			extern score_t	RmobScores[31];
+			int				G;
+
+			if (komi_score > 0)
+			{
+				G = 1;
+				while (RmobScores[G + 15] > komi_score)
+					G++;
+				printf(" komi %d", G * 2 + 1);
+			}
+			else if (komi_score < 0)
+			{
+				G = -1;
+				while (RmobScores[G + 15] < komi_score)
+					G--;
+				printf(" komi %d", G * 2 - 1);
+			}
+			else
+				printf(" komi 1");
+		}
+		puts("");
 		fflush(stdout);
 
 		if (g_engine_send != DO_ABORT)
@@ -321,6 +354,15 @@ __retry:
 			for (int i = 1; i < WPool.size; ++i)
 				pthread_join(WPool.list[i].thread, NULL);
 		}
+	}
+
+	if (g_goparams.komi)
+	{
+		// Enable back r-mobility Armaggeddon rules after estimating komi.
+		// Also clear TT, since the Rmob scores are different from
+		// our Armaggeddon scoring
+		g_options.variant = RmobArmaggeddon;
+		tt_bzero();
 	}
 
 	free(root_moves);

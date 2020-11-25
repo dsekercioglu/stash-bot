@@ -51,6 +51,7 @@ typedef struct	goparams_s
 	size_t		nodes;
 	int			mate;
 	int			infinite;
+	int			komi;
 	int			perft;
 	clock_t		movetime;
 

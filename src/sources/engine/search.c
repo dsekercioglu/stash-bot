@@ -46,10 +46,10 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 
 	if (g_engine_send == DO_EXIT || g_engine_send == DO_ABORT
 		|| is_draw(board, ss->plies))
-		return (eval_rmob(board));
+		return (eval_rmob(board, ss->plies));
 
 	if (ss->plies >= MAX_PLIES)
-		return (!board->stack->checkers ? evaluate(board) : eval_rmob(board));
+		return (!board->stack->checkers ? evaluate(board) : eval_rmob(board, ss->plies));
 
 	// Mate pruning.
 
@@ -269,7 +269,7 @@ score_t	search(board_t *board, int depth, score_t alpha, score_t beta,
 	// Checkmate/Stalemate ?
 
 	if (move_count == 0)
-		best_value = (board->stack->checkers) ? mated_in(ss->plies) : eval_rmob(board);
+		best_value = (board->stack->checkers) ? mated_in(ss->plies) : eval_rmob(board, ss->plies);
 
 	// Do not erase entries with higher depth for same position.
 

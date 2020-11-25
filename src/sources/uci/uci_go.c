@@ -115,6 +115,8 @@ void	uci_go(const char *args)
 			if (token)
 				g_goparams.movetime = (clock_t)atoll(token);
 		}
+		else if (strcmp(token, "komi") == 0)
+			g_goparams.komi = 1;
 		else if (strcmp(token, "infinite") == 0)
 			g_goparams.infinite = 1;
 

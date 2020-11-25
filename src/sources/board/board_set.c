@@ -196,4 +196,5 @@ void	board_set(board_t *board, char *fen, bool is_chess960,
 	board->chess960 = is_chess960;
 
 	set_boardstack(board, board->stack);
+	reset_rmobility(board);
 }

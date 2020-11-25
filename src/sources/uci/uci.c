@@ -87,13 +87,6 @@ void	on_thread_set(void *data)
 	wpool_init((int)*(long *)data);
 }
 
-void	on_komi_set(void *data)
-{
-	// Divide komi by two so that it is compatible with our internal values
-
-	*(long *)data /= 2;
-}
-
 void	on_variant_set(void *data)
 {
 	extern ucioptions_t	g_options;
@@ -125,7 +118,7 @@ void	uci_loop(int argc, char **argv)
 
 	add_option_combo(&g_opthandler, "UCI_Variant", &g_options.variant_string,
 		supported_variants[0], supported_variants, &on_variant_set);
-	add_option_spin_int(&g_opthandler, "UCI_komi", &g_options.komi, 2, -1023, 1023, &on_komi_set);
+	add_option_spin_int(&g_opthandler, "UCI_komi", &g_options.komi, 2, -1023, 1023, NULL);
 
 	uci_position("startpos");
 
