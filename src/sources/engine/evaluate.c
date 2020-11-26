@@ -265,7 +265,10 @@ score_t		evaluate(const board_t *board)
 	int			piece_count = popcount(board->piecetype_bits[ALL_PIECES]);
 	score_t		score;
 
-	if (piece_count <= 7)
+	// Only check for draw material when the losing side has 2 pawns or
+	// less, otherwise it's too dangerous to assume a draw
+
+	if (piece_count <= 5)
 	{
 		// Insufficient material check.
 
@@ -273,9 +276,17 @@ score_t		evaluate(const board_t *board)
 
 		if (eg > 0)
 		{
+
+			// KvK draw
 			if (pieces == 1)
 				return (0);
+
+			// KMvK draw + KMvKP and KMvKPP likely draws
 			else if (pieces == 2 && board_colored_pieces(board, WHITE, KNIGHT, BISHOP))
+				return (0);
+
+			// KNNvK draw
+			else if (pieces == 3 && piece_count == 4 && more_than_one(board->piecetype_bits[KNIGHT]))
 				return (0);
 		}
 
@@ -283,9 +294,16 @@ score_t		evaluate(const board_t *board)
 
 		if (eg < 0)
 		{
+			// KvK draw
 			if (pieces == 1)
 				return (0);
+
+			// KMvK draw + KMvKP and KMvKPP likely draws
 			else if (pieces == 2 && board_colored_pieces(board, BLACK, KNIGHT, BISHOP))
+				return (0);
+
+			// KNNvK draw
+			else if (pieces == 3 && piece_count == 4 && more_than_one(board->piecetype_bits[KNIGHT]))
 				return (0);
 		}
 	}
