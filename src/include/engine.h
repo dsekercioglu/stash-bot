@@ -19,6 +19,7 @@
 #ifndef ENGINE_H
 # define ENGINE_H
 
+# include <math.h>
 # include <time.h>
 # include "board.h"
 # include "history.h"
@@ -59,6 +60,11 @@ enum
 
     MAX_PLIES = 240
 };
+
+INLINED int lmr_value(int depth, int move_count, bool is_quiet)
+{
+    return ((sqrt(depth) + sqrt(move_count)) / (3 - is_quiet));
+}
 
 void        sort_root_moves(root_move_t *begin, root_move_t *end);
 root_move_t *find_root_move(root_move_t *begin, root_move_t *end, move_t move);

@@ -71,12 +71,13 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
         score_t         next;
         int             reduction;
         int             new_depth = depth - 1;
+        bool            is_quiet = !is_capture_or_promotion(board, cur->move);
 
         do_move(board, cur->move, &stack);
 
         // Can we apply LMR ?
         if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
-            reduction = (depth + move_count) / 10 + 1;
+            reduction = lmr_value(depth, move_count, is_quiet);
         else
             reduction = 0;
 
