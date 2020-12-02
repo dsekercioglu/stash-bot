@@ -23,6 +23,9 @@
 void    generate_move_values(movelist_t *movelist, const board_t *board,
         move_t tt_move, move_t *killers)
 {
+    static const score_t MVV_Table[PIECETYPE_NB] = {
+        0, 0, 64, 64, 128, 256, 0, 0
+    };
     worker_t *const     worker = get_worker(board);
     extmove_t *const    end = movelist->last;
 
@@ -32,37 +35,37 @@ void    generate_move_values(movelist_t *movelist, const board_t *board,
 
         if (move == tt_move)
         {
-            extmove->score = 8192;
+            extmove->score = 16384;
             continue ;
         }
 
-        switch (type_of_move(move))
+        square_t  from = move_from_square(move);
+        piece_t   moved_piece = piece_on(board, from);
+
+        if (is_capture_or_promotion(board, move))
         {
-            case PROMOTION:
-                extmove->score = promotion_type(move) == QUEEN ? 4096 : -4096;
-                break ;
+            square_t    to = move_to_square(move);
+            piecetype_t captured = type_of_piece(piece_on(board, to));
 
-            case EN_PASSANT:
-                extmove->score = 2048 + PAWN * 8 - PAWN;
-                break ;
+            if (type_of_move(move) == PROMOTION)
+            {
+                captured = PAWN;
+                extmove->score = promotion_type(move) == QUEEN ? 8192 : -8192;
+            }
+            else if (type_of_move(move) == EN_PASSANT)
+            {
+                captured = PAWN;
+                extmove->score = 4096;
+            }
+            else
+                extmove->score = see_greater_than(board, move, 0) ? 4096 : 1024;
 
-            default: ; // Statement issue
-                const square_t  from = move_from_square(move);
-                const square_t  to = move_to_square(move);
-                const piece_t   moved_piece = piece_on(board, from);
-                const piece_t   captured_piece = piece_on(board, to);
-
-                if (captured_piece != NO_PIECE)
-                {
-                    extmove->score = see_greater_than(board, move, -30) ? 2048 : 1024;
-                    extmove->score += type_of_piece(captured_piece) * 8
-                        - type_of_piece(moved_piece);
-                }
-                else if (move == killers[0] || move == killers[1])
-                    extmove->score = 1536;
-                else
-                    extmove->score = get_history_score(worker->history, moved_piece, move);
-                break ;
+            extmove->score += MVV_Table[captured];
+            extmove->score += get_chistory_score(worker->chistory, moved_piece, to, captured);
         }
+        else if (move == killers[0] || move == killers[1])
+            extmove->score = 2048;
+        else
+            extmove->score = get_qhistory_score(worker->qhistory, moved_piece, move);
     }
 }

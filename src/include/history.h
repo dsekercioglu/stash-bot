@@ -31,18 +31,36 @@ enum
     HistoryResolution = HistoryMaxScore * HistoryScale
 };
 
-typedef int32_t history_t[PIECE_NB][SQUARE_NB * SQUARE_NB];
+typedef int32_t qhistory_t[PIECE_NB][SQUARE_NB * SQUARE_NB];
+typedef int32_t chistory_t[PIECE_NB][SQUARE_NB][PIECETYPE_NB];
 
-INLINED void    add_history(history_t hist, piece_t piece, move_t move, int32_t bonus)
+INLINED int     history_bonus(int depth)
+{
+    return (depth <= 12 ? 16 * depth * depth : 20);
+}
+
+INLINED void    add_qhistory(qhistory_t hist, piece_t piece, move_t move, int32_t bonus)
 {
     int32_t        *entry = &hist[piece][move_squares(move)];
 
     *entry += bonus - *entry * abs(bonus) / HistoryResolution;
 }
 
-INLINED score_t get_history_score(history_t hist, piece_t piece, move_t move)
+INLINED score_t get_qhistory_score(qhistory_t hist, piece_t piece, move_t move)
 {
     return (hist[piece][move_squares(move)] / HistoryScale);
+}
+
+INLINED void    add_chistory(chistory_t hist, piece_t piece, square_t to, piece_t captured, int32_t bonus)
+{
+    int32_t         *entry = &hist[piece][to][captured];
+
+    *entry += bonus - *entry * abs(bonus) / HistoryResolution;
+}
+
+INLINED score_t get_chistory_score(chistory_t hist, piece_t piece, square_t to, piece_t captured)
+{
+    return (hist[piece][to][captured] / HistoryScale);
 }
 
 #endif

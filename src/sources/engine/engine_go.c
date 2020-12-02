@@ -98,7 +98,8 @@ void        *engine_go(void *ptr)
         root_moves[i].pv[0] = NO_MOVE;
     }
 
-    memset(worker->history, 0, sizeof(history_t));
+    memset(worker->qhistory, 0, sizeof(qhistory_t));
+    memset(worker->chistory, 0, sizeof(chistory_t));
     memset(worker->pawns_cache, 0, sizeof(pawns_table_t));
     worker->verif_plies = 0;
 

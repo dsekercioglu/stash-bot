@@ -72,8 +72,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
 void    check_time(void);
 
-void    update_quiet_history(history_t hist, const board_t *board, int depth,
+void    update_quiet_history(qhistory_t hist, const board_t *board, int depth,
         move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss);
+
+void    update_capture_history(chistory_t hist, const board_t *board, int depth,
+        move_t bestmove, const move_t captures[64], int ccount);
 
 score_t evaluate(const board_t *board);
 

@@ -175,6 +175,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     int     move_count = 0;
     move_t  quiets[64];
     int     qcount = 0;
+    move_t  captures[64];
+    int     ccount = 0;
 
     for (extmove_t *extmove = list.moves; extmove < list.last; ++extmove)
     {
@@ -245,8 +247,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
                 if (alpha >= beta)
                 {
                     if (is_quiet)
-                        update_quiet_history(worker->history, board, depth,
+                        update_quiet_history(worker->qhistory, board, depth,
                             bestmove, quiets, qcount, ss);
+                    else if (move_count != 1)
+                        update_capture_history(worker->chistory, board,
+                            depth, bestmove, captures, ccount);
                     break ;
                 }
             }
@@ -254,6 +259,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
+        else if (ccount < 64 && !is_quiet)
+            captures[ccount++] = currmove;
 
         if (depth < 4 && qcount > depth * 8)
             break ;
