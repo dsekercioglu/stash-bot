@@ -249,7 +249,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
                     if (is_quiet)
                         update_quiet_history(worker->qhistory, board, depth,
                             bestmove, quiets, qcount, ss);
-                    else
+                    else if (move_count != 1)
                         update_capture_history(worker->chistory, board,
                             depth, bestmove, captures, ccount);
                     break ;
