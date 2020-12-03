@@ -24,7 +24,7 @@ void    generate_move_values(movelist_t *movelist, const board_t *board,
         move_t tt_move, move_t *killers)
 {
     static const score_t MVV_Table[PIECETYPE_NB] = {
-        0, 0, 72, 72, 144, 288, 0, 0
+        0, 0, 80, 80, 160, 320, 0, 0
     };
     worker_t *const     worker = get_worker(board);
     extmove_t *const    end = movelist->last;
