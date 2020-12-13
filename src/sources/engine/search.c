@@ -116,11 +116,12 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     }
 
     bool    in_check = !!board->stack->checkers;
+    bool    improving = (ss->plies > 2) && (ss->static_eval > (ss + 2)->static_eval);
 
     // Futility Pruning.
 
     if (!pv_node && !in_check && depth <= 8
-        && eval - 80 * depth >= beta && eval < VICTORY)
+        && eval - 120 * (depth - improving) >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
