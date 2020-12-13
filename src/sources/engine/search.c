@@ -116,7 +116,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     }
 
     bool    in_check = !!board->stack->checkers;
-    bool    improving = (ss->plies > 2) && (ss->static_eval > (ss + 2)->static_eval);
+    bool    improving = (ss->plies > 2) && (ss->static_eval > (ss - 2)->static_eval);
 
     // Futility Pruning.
 
