@@ -42,6 +42,7 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 
     movelist_t  list;
     int         move_count = 0;
+    score_t     static_eval = evaluate(board);
 
     list_pseudo(&list, board);
     generate_move_values(&list, board, begin->move, sstack[0].killers);
@@ -68,11 +69,13 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
         score_t         next = -NO_SCORE;
         int             reduction;
         int             new_depth = depth - 1;
+        bool            is_quiet = !is_capture_or_promotion(board, cur->move);
 
         do_move(board, cur->move, &stack);
 
         // Can we apply LMR ?
-        if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
+        if (depth >= LMR_MinDepth && move_count > 3
+            && (is_quiet || static_eval + PieceScores[ENDGAME][board->stack->captured_piece] <= alpha))
             reduction = max(0, Reductions[min(depth, 63)][min(move_count, 63)]);
         else
             reduction = 0;
