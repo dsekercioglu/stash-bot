@@ -77,10 +77,6 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
 };
 
-const int   AttackRescale[8] = {
-    1, 1, 2, 4, 8, 16, 32, 64
-};
-
 typedef struct
 {
     bitboard_t  king_zone[COLOR_NB];
@@ -231,14 +227,17 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t c)
 {
-    scorepair_t bonus = eval->weights[c];
+    if (eval->attackers[c] >= 2 - !piece_bb(board, not_color(c), QUEEN))
+    {
+        scorepair_t bonus = eval->weights[c];
+        score_t     mg = midgame_score(bonus);
+        score_t     eg = endgame_score(bonus);
 
-    if (eval->attackers[c] < 8)
-        bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
-
-    return (bonus);
+        return (create_scorepair((int32_t)mg * mg / 128, eg));
+    }
+    return (0);
 }
 
 score_t evaluate(const board_t *board)
@@ -264,8 +263,8 @@ score_t evaluate(const board_t *board)
     tapered += evaluate_queens(board, &eval, WHITE);
     tapered -= evaluate_queens(board, &eval, BLACK);
 
-    tapered += evaluate_safety(&eval, WHITE);
-    tapered -= evaluate_safety(&eval, BLACK);
+    tapered += evaluate_safety(board, &eval, WHITE);
+    tapered -= evaluate_safety(board, &eval, BLACK);
 
     tapered += Initiative * (eval.tempos[WHITE] * eval.tempos[WHITE] - eval.tempos[BLACK] * eval.tempos[BLACK]);
 
