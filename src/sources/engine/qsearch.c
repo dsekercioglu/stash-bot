@@ -67,6 +67,17 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
             return (alpha);
     }
 
+    // Delta pruning: parent node
+
+    score_t     delta_max = QUEEN_EG_SCORE;
+
+    if (piece_bb(board, board->side_to_move, PAWN)
+            & (board->side_to_move == WHITE ? RANK_7_BITS : RANK_2_BITS))
+        delta_max += QUEEN_EG_SCORE - PAWN_EG_SCORE;
+
+    if (delta_max < alpha - eval)
+        return (eval);
+
     if (found)
     {
         int     bound = entry->genbound & 3;
@@ -88,8 +99,6 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
     move_t  bestmove = NO_MOVE;
     int     move_count = 0;
 
-    // Check if delta pruning is possible.
-
     const bool      delta_pruning = (!board->stack->checkers
         && popcount(board->piecetype_bits[ALL_PIECES]) > 6);
     const score_t   delta_base = eval + PAWN_EG_SCORE * 2;
@@ -105,6 +114,8 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
         move_count++;
 
         bool    gives_check = move_gives_check(board, currmove);
+
+        // Delta pruning: child node
 
         if (delta_pruning && !gives_check
             && type_of_move(currmove) == NORMAL_MOVE)
