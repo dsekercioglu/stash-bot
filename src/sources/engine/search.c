@@ -193,17 +193,21 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         score_t         next;
         int             reduction;
         int             extension;
-        int             new_depth = depth - 1;
+        int             new_depth;
         bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
 
         extension = gives_check ? 1 : 0;
+        new_depth = depth + extension - 1;
 
         do_move_gc(board, currmove, &stack, gives_check);
 
         // Can we apply LMR ?
         if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
-            reduction = max(0, Reductions[min(depth, 63)][min(move_count, 63)]);
+        {
+            reduction = Reductions[min(depth, 63)][min(move_count, 63)];
+            reduction = clamp(reduction, 0, new_depth - 1);
+        }
         else
             reduction = 0;
 
@@ -212,12 +216,12 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         // If LMR is not possible, or our LMR failed, do a search with no reductions
         if ((reduction && next > alpha) || (!reduction && !(pv_node && move_count == 1)))
-            next = -search(board, new_depth + extension, -alpha - 1, -alpha, ss + 1, false);
+            next = -search(board, new_depth, -alpha - 1, -alpha, ss + 1, false);
 
         if (pv_node && (move_count == 1 || next > alpha))
         {
             pv[0] = NO_MOVE;
-            next = -search(board, new_depth + extension, -beta, -alpha, ss + 1, true);
+            next = -search(board, new_depth, -beta, -alpha, ss + 1, true);
         }
 
         undo_move(board, currmove);
