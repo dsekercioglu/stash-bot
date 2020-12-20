@@ -34,6 +34,7 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 {
     searchstack_t       sstack[512];
     move_t              pv[512];
+    worker_t            *worker = get_worker(board);
 
     memset(sstack, 0, sizeof(sstack));
 
@@ -56,7 +57,7 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
 
         move_count++;
 
-        if (!get_worker(board)->idx && chess_clock() - Timeman.start > 3000)
+        if (!worker->idx && chess_clock() - Timeman.start > 3000)
         {
             printf("info depth %d currmove %s currmovenumber %d\n",
                 depth, move_to_str(cur->move, board->chess960),
@@ -68,12 +69,22 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
         score_t         next = -NO_SCORE;
         int             reduction;
         int             new_depth = depth - 1;
+        bool            is_quiet = !is_capture_or_promotion(board, cur->move);
 
         do_move(board, cur->move, &stack);
 
         // Can we apply LMR ?
         if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && !board->stack->checkers)
-            reduction = max(0, Reductions[min(depth, 63)][min(move_count, 63)]);
+        {
+            reduction = Reductions[min(depth, 63)][min(move_count, 63)];
+
+            // Adjust LMR based on history
+            if (is_quiet)
+                reduction -= get_history_score(worker->history,
+                    piece_on(board, move_from_square(cur->move)), cur->move) / 220;
+
+            reduction = max(0, reduction);
+        }
         else
             reduction = 0;
 
@@ -101,7 +112,7 @@ void    search_bestmove(board_t *board, int depth, score_t alpha, score_t beta,
         {
             cur->score = next;
             alpha = max(alpha, next);
-            cur->seldepth = get_worker(board)->seldepth;
+            cur->seldepth = worker->seldepth;
             cur->pv[0] = cur->move;
 
             size_t  j;
