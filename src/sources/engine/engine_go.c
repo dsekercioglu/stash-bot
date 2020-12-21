@@ -157,7 +157,7 @@ void        *engine_go(void *ptr)
 
             score_t _alpha, _beta, _delta;
 
-            if (iter_depth <= 9)
+            if (iter_depth <= 7)
             {
                 _delta = 0;
                 _alpha = -INF_SCORE;
