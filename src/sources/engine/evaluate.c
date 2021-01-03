@@ -27,10 +27,11 @@ enum
     CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(7, 10),
 
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
+    KnightWeight = SPAIR(53, 17),
+    BishopWeight = SPAIR(40, 0),
+    RookWeight = SPAIR(65, 6),
+    QueenWeight = SPAIR(89, 21),
+    KS_Offset = SPAIR(-65, -5),
 
     BishopPairBonus = SPAIR(12, 103),
     KnightPairPenalty = SPAIR(-7, 7),
@@ -283,16 +284,24 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t bonus = eval->weights[c];
 
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
-    if (eval->attackers[c] < 8)
-        bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+    if (eval->attackers[c] >= 2 - !!piece_bb(board, c, QUEEN))
+    {
+        bonus += KS_Offset;
 
-    return (bonus);
+        // Might add some more terms for KS here
+
+        score_t mg = midgame_score(bonus);
+        score_t eg = endgame_score(bonus);
+
+        return (create_scorepair(max(0, mg) * mg / 1024, max(0, eg) / 32));
+    }
+    return (0);
 }
 
 score_t evaluate(const board_t *board)
@@ -328,8 +337,8 @@ score_t evaluate(const board_t *board)
 
     // Add the King Safety evaluation
 
-    tapered += evaluate_safety(&eval, WHITE);
-    tapered -= evaluate_safety(&eval, BLACK);
+    tapered += evaluate_safety(board, &eval, WHITE);
+    tapered -= evaluate_safety(board, &eval, BLACK);
 
     // Compute Initiative based on how many tempos each side have. The scaling
     // is quadratic so that hanging pieces that can be captured are easily spotted
