@@ -27,11 +27,6 @@ enum
     CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(7, 10),
 
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
-
     BishopPairBonus = SPAIR(12, 103),
     KnightPairPenalty = SPAIR(-7, 7),
     RookPairPenalty = SPAIR(-39, 24),
@@ -46,6 +41,14 @@ enum
 
     MidgamePhase = 24,
 };
+
+scorepair_t
+    KnightWeight = SPAIR(0, 0),
+    BishopWeight = SPAIR(0, 0),
+    RookWeight = SPAIR(0, 0),
+    QueenWeight = SPAIR(0, 0),
+    AttackWeight = SPAIR(0, 0),
+    KS_Offset = SPAIR(0, 0);
 
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
@@ -77,15 +80,12 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
 };
 
-const int   AttackRescale[8] = {
-    1, 1, 2, 4, 8, 16, 32, 64
-};
-
 typedef struct
 {
     bitboard_t  king_zone[COLOR_NB];
     bitboard_t  mobility_zone[COLOR_NB];
     int         attackers[COLOR_NB];
+    int         attacks[COLOR_NB];
     scorepair_t weights[COLOR_NB];
     int         tempos[COLOR_NB];
 }
@@ -94,6 +94,7 @@ evaluation_t;
 void        eval_init(const board_t *board, evaluation_t *eval)
 {
     eval->attackers[WHITE] = eval->attackers[BLACK]
+        = eval->attacks[WHITE] = eval->attacks[BLACK]
         = eval->weights[WHITE] = eval->weights[BLACK] = 0;
 
     // Set the King Attack zone as the 3x4 square surrounding the king
@@ -158,7 +159,8 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, color_t c
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * KnightWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += KnightWeight;
         }
 
         // Tempo bonus for a Knight attacking the opponent's major pieces
@@ -195,7 +197,8 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * BishopWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += BishopWeight;
         }
 
         // Tempo bonus for a Bishop attacking the opponent's major pieces
@@ -245,7 +248,8 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * RookWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += RookWeight;
         }
 
         // Tempo bonus for a Rook attacking the opponent's Queen(s)
@@ -277,7 +281,8 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * QueenWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += QueenWeight;
         }
     }
     return (ret);
@@ -285,14 +290,21 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
 
 scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
 {
-    scorepair_t bonus = eval->weights[c];
-
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
-    if (eval->attackers[c] < 8)
-        bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+    if (eval->attackers[c] >= 2)
+    {
+        scorepair_t bonus = eval->weights[c] + eval->attacks[c] * AttackWeight
+            + KS_Offset;
 
-    return (bonus);
+
+        score_t mg = midgame_score(bonus);
+        score_t eg = endgame_score(bonus);
+
+        return (create_scorepair(max(mg, 0) * mg / 1024, max(eg, 0) / 32));
+    }
+
+    return (0);
 }
 
 score_t evaluate(const board_t *board)

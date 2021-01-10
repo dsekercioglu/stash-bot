@@ -96,6 +96,10 @@ void    on_thread_set(void *data)
 void    uci_loop(int argc, char **argv)
 {
     extern ucioptions_t g_options;
+    extern scorepair_t  KnightWeight, BishopWeight, RookWeight, QueenWeight, AttackWeight, KS_Offset;
+    scorepair_t         smin = SPAIR(-1000, -1000), smax = SPAIR(1000, 1000);
+
+#define TUNE(x) add_option_scorepair(&g_opthandler, #x, &x, smin, smax, NULL)
 
     init_option_list(&g_opthandler);
     add_option_spin_int(&g_opthandler, "Threads", &g_options.threads, 1, 256, &on_thread_set);
@@ -104,6 +108,13 @@ void    uci_loop(int argc, char **argv)
     add_option_spin_int(&g_opthandler, "MultiPV", &g_options.multi_pv, 1, 500, NULL);
     add_option_check(&g_opthandler, "UCI_Chess960", &g_options.chess960, NULL);
     add_option_button(&g_opthandler, "Clear Hash", &on_clear_hash);
+
+    TUNE(KnightWeight);
+    TUNE(BishopWeight);
+    TUNE(RookWeight);
+    TUNE(QueenWeight);
+    TUNE(AttackWeight);
+    TUNE(KS_Offset);
 
     uci_position("startpos");
 
