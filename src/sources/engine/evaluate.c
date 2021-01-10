@@ -27,6 +27,13 @@ enum
     CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(7, 10),
 
+    KnightWeight = SPAIR(26, 17),
+    BishopWeight = SPAIR(18, 14),
+    RookWeight = SPAIR(8, 30),
+    QueenWeight = SPAIR(29, 20),
+    AttackWeight = SPAIR(51, 26),
+    KS_Offset = SPAIR(-5, -1),
+
     BishopPairBonus = SPAIR(12, 103),
     KnightPairPenalty = SPAIR(-7, 7),
     RookPairPenalty = SPAIR(-39, 24),
@@ -41,14 +48,6 @@ enum
 
     MidgamePhase = 24,
 };
-
-scorepair_t
-    KnightWeight = SPAIR(0, 0),
-    BishopWeight = SPAIR(0, 0),
-    RookWeight = SPAIR(0, 0),
-    QueenWeight = SPAIR(0, 0),
-    AttackWeight = SPAIR(0, 0),
-    KS_Offset = SPAIR(0, 0);
 
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
