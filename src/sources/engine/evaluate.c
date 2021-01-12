@@ -172,9 +172,9 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, color_t c
 scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES];
     bitboard_t          bb = piece_bb(board, c, BISHOP);
     bitboard_t          targets = pieces_bb(board, not_color(c), ROOK, QUEEN);
+    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES] ^ bb ^ piece_bb(board, c, QUEEN);
 
     // Bonus for the Bishop pair
 
@@ -209,11 +209,11 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
 scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES];
     const bitboard_t    my_pawns = piece_bb(board, c, PAWN);
     const bitboard_t    their_pawns = piecetype_bb(board, PAWN) & ~my_pawns;
     const bitboard_t    their_queens = piece_bb(board, not_color(c), QUEEN);
     bitboard_t          bb = piece_bb(board, c, ROOK);
+    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES] ^ bb ^ piece_bb(board, c, QUEEN);
 
     // Penalty for the Rook pair
 
@@ -259,8 +259,8 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
 scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES];
     bitboard_t          bb = piece_bb(board, c, QUEEN);
+    const bitboard_t    occupancy = board->piecetype_bits[ALL_PIECES] ^ bb ^ pieces_bb(board, c, BISHOP, ROOK);
 
     while (bb)
     {
