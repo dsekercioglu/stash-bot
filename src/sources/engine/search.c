@@ -192,7 +192,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         if (best_value > -MATE_FOUND && is_quiet)
         {
             // Late Move Pruning.
-            if (depth > 4 && move_count > depth * 8)
+            if (depth < 4 && move_count > depth * 8)
                 continue ;
         }
 
