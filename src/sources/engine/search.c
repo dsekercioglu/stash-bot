@@ -185,13 +185,22 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             continue ;
 
         move_count++;
+        bool            is_quiet = !is_capture_or_promotion(board, currmove);
+
+        // Don't prune if the score still suggets we're getting mated
+
+        if (best_value > -MATE_FOUND && is_quiet)
+        {
+            // Late Move Pruning.
+            if (depth > 4 && move_count > depth * 8)
+                continue ;
+        }
 
         boardstack_t    stack;
         score_t         next;
         int             reduction;
         int             extension;
         int             new_depth = depth - 1;
-        bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
 
         extension = gives_check ? 1 : 0;
@@ -262,9 +271,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
-
-        if (depth < 4 && best_value > -MATE_FOUND && qcount > depth * 8)
-            break ;
     }
 
     // Checkmate/Stalemate ?
