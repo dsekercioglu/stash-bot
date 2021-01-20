@@ -16,6 +16,7 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <string.h>
 #include <stdlib.h>
 #include "engine.h"
 #include "imath.h"
@@ -26,11 +27,6 @@ enum
 {
     CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(7, 10),
-
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
 
     BishopPairBonus = SPAIR(12, 103),
     KnightPairPenalty = SPAIR(-7, 7),
@@ -46,6 +42,18 @@ enum
 
     MidgamePhase = 24,
 };
+
+scorepair_t
+    KS_KnightWeight = SPAIR(0, 0),
+    KS_BishopWeight = SPAIR(0, 0),
+    KS_RookWeight = SPAIR(0, 0),
+    KS_QueenWeight = SPAIR(0, 0),
+	KS_AttackWeight = SPAIR(0, 0),
+	KS_SafeKnightCheck = SPAIR(0, 0),
+	KS_SafeBishopCheck = SPAIR(0, 0),
+	KS_SafeRookCheck = SPAIR(0, 0),
+	KS_SafeQueenCheck = SPAIR(0, 0),
+	KS_Offset = SPAIR(0, 0);
 
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
@@ -77,30 +85,31 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
 };
 
-const int   AttackRescale[8] = {
-    0, 0, 2, 4, 8, 16, 32, 64
-};
-
 typedef struct
 {
     bitboard_t  king_zone[COLOR_NB];
     bitboard_t  mobility_zone[COLOR_NB];
-    int         attackers[COLOR_NB];
-    scorepair_t weights[COLOR_NB];
+	bitboard_t	attacked[COLOR_NB];
+	bitboard_t	attacked_by[COLOR_NB][PIECETYPE_NB];
+	bitboard_t	attacked_twice[COLOR_NB];
+	int			ks_attacks[COLOR_NB];
+	int			ks_attackers[COLOR_NB];
+    scorepair_t ks_weights[COLOR_NB];
     int         tempos[COLOR_NB];
 }
 evaluation_t;
 
 void        eval_init(const board_t *board, evaluation_t *eval)
 {
-    eval->attackers[WHITE] = eval->attackers[BLACK]
-        = eval->weights[WHITE] = eval->weights[BLACK] = 0;
+	memset(eval, 0, sizeof(evaluation_t));
 
     // Set the King Attack zone as the 3x4 square surrounding the king
     // (counting an additional rank in front of the king)
 
     eval->king_zone[WHITE] = king_moves(get_king_square(board, BLACK));
     eval->king_zone[BLACK] = king_moves(get_king_square(board, WHITE));
+	eval->attacked_by[WHITE][KING] = eval->king_zone[WHITE];
+	eval->attacked_by[BLACK][KING] = eval->king_zone[BLACK];
     eval->king_zone[WHITE] |= shift_down(eval->king_zone[WHITE]);
     eval->king_zone[BLACK] |= shift_up(eval->king_zone[BLACK]);
 
@@ -148,6 +157,10 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, color_t c
         square_t    sq = bb_pop_first_sq(&bb);
         bitboard_t  b = knight_moves(sq);
 
+		eval->attacked_twice[c] |= b & eval->attacked[c];
+		eval->attacked[c] |= b;
+		eval->attacked_by[c][KNIGHT] |= b;
+
         // Bonus for Knight mobility
 
         ret += MobilityN[popcount(b & eval->mobility_zone[c])];
@@ -156,8 +169,9 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, color_t c
 
         if (b & eval->king_zone[c])
         {
-            eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * KnightWeight;
+            eval->ks_attackers[c] += 1;
+			eval->ks_attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->ks_weights[c] += KS_KnightWeight;
         }
 
         // Tempo bonus for a Knight attacking the opponent's major pieces
@@ -185,6 +199,10 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
         square_t    sq = bb_pop_first_sq(&bb);
         bitboard_t  b = bishop_moves_bb(sq, occupancy);
 
+		eval->attacked_twice[c] |= b & eval->attacked[c];
+		eval->attacked[c] |= b;
+		eval->attacked_by[c][BISHOP] |= b;
+
         // Bonus for Bishop mobility
 
         ret += MobilityB[popcount(b & eval->mobility_zone[c])];
@@ -193,8 +211,9 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
 
         if (b & eval->king_zone[c])
         {
-            eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * BishopWeight;
+            eval->ks_attackers[c] += 1;
+			eval->ks_attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->ks_weights[c] += KS_BishopWeight;
         }
 
         // Tempo bonus for a Bishop attacking the opponent's major pieces
@@ -225,6 +244,10 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
         bitboard_t  rook_file = sq_file_bb(sq);
         bitboard_t  b = rook_moves_bb(sq, occupancy);
 
+		eval->attacked_twice[c] |= b & eval->attacked[c];
+		eval->attacked[c] |= b;
+		eval->attacked_by[c][ROOK] |= b;
+
         // Bonus for a Rook on an open (or semi-open) file
 
         if (!(rook_file & my_pawns))
@@ -243,8 +266,9 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
 
         if (b & eval->king_zone[c])
         {
-            eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * RookWeight;
+            eval->ks_attackers[c] += 1;
+			eval->ks_attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->ks_weights[c] += KS_RookWeight;
         }
 
         // Tempo bonus for a Rook attacking the opponent's Queen(s)
@@ -266,6 +290,10 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
         square_t    sq = bb_pop_first_sq(&bb);
         bitboard_t  b = bishop_moves_bb(sq, occupancy) | rook_moves_bb(sq, occupancy);
 
+		eval->attacked_twice[c] |= b & eval->attacked[c];
+		eval->attacked[c] |= b;
+		eval->attacked_by[c][QUEEN] |= b;
+
         // Bonus for Queen mobility
 
         ret += MobilityQ[popcount(b & eval->mobility_zone[c])];
@@ -274,25 +302,43 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
 
         if (b & eval->king_zone[c])
         {
-            eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * QueenWeight;
+            eval->ks_attackers[c] += 1;
+			eval->ks_attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->ks_weights[c] += KS_QueenWeight;
         }
     }
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t c)
 {
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
-    if (eval->attackers[c] >= 2)
+    if (eval->ks_attackers[c] >= 2)
     {
-        scorepair_t bonus = eval->weights[c];
+        scorepair_t bonus = eval->ks_weights[c];
+		color_t		them = not_color(c);
 
-        if (eval->attackers[c] < 8)
-            bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+		bitboard_t	weak = eval->attacked[c] & ~eval->attacked_twice[them]
+			& (~eval->attacked[them] | eval->attacked_by[them][QUEEN] | eval->attacked_by[them][KING]);
+		bitboard_t	safe = ~color_bb(board, c) & (~eval->attacked[them] | (weak & eval->attacked_twice[c]));
 
-        return (bonus);
+		bitboard_t	checkN = board->stack->check_squares[KNIGHT] & safe & eval->attacked_by[them][KNIGHT];
+		bitboard_t	checkB = board->stack->check_squares[BISHOP] & safe & eval->attacked_by[them][BISHOP];
+		bitboard_t	checkR = board->stack->check_squares[ROOK] & safe & eval->attacked_by[them][ROOK];
+		bitboard_t	checkQ = board->stack->check_squares[QUEEN] & safe & eval->attacked_by[them][QUEEN];
+
+		bonus += KS_SafeKnightCheck * popcount(checkN);
+		bonus += KS_SafeBishopCheck * popcount(checkB);
+		bonus += KS_SafeRookCheck * popcount(checkR);
+		bonus += KS_SafeQueenCheck * popcount(checkQ);
+		bonus += KS_AttackWeight * eval->ks_attacks[c];
+		bonus -= KS_Offset;
+
+		score_t	mg = midgame_score(bonus);
+		score_t	eg = endgame_score(bonus);
+
+        return (create_scorepair(max(mg, 0) * mg / 1024, max(eg, 0) / 32));
     }
     return (0);
 }
@@ -330,8 +376,8 @@ score_t evaluate(const board_t *board)
 
     // Add the King Safety evaluation
 
-    tapered += evaluate_safety(&eval, WHITE);
-    tapered -= evaluate_safety(&eval, BLACK);
+    tapered += evaluate_safety(board, &eval, WHITE);
+    tapered -= evaluate_safety(board, &eval, BLACK);
 
     // Compute Initiative based on how many tempos each side have. The scaling
     // is quadratic so that hanging pieces that can be captured are easily spotted
