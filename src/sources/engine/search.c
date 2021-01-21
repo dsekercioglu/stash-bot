@@ -72,10 +72,12 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (entry->depth >= depth && !pv_node)
         {
-            if (bound == EXACT_BOUND
-                || (bound == LOWER_BOUND && tt_score >= beta)
-                || (bound == UPPER_BOUND && tt_score <= alpha))
+            if (((bound & LOWER_BOUND) && tt_score >= beta) || ((bound & UPPER_BOUND) && tt_score <= alpha))
+			{
+				if (tt_score >= beta && !is_capture_or_promotion(board, tt_move))
+					update_quiet_history(board, depth, tt_move, NULL, 0, ss);
                 return (tt_score);
+			}
         }
 
         tt_move = entry->bestmove;
