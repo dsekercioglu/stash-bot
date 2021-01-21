@@ -59,9 +59,8 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
         int     bound = entry->genbound & 3;
         score_t tt_score = score_from_tt(entry->score, ss->plies);
 
-        if (bound == EXACT_BOUND
-            || (bound == LOWER_BOUND && tt_score >= beta)
-            || (bound == UPPER_BOUND && tt_score <= alpha))
+        if (((bound & LOWER_BOUND) && tt_score >= beta)
+            || ((bound & UPPER_BOUND) && tt_score <= alpha))
             return (tt_score);
     }
 
