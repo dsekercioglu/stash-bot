@@ -25,35 +25,33 @@
 
 enum
 {
-    CastlingBonus = SPAIR(85, -43),
-    Initiative = SPAIR(7, 10),
+    CastlingBonus = SPAIR( 85,-43),
+    Initiative    = SPAIR(  7, 10),
 
-    BishopPairBonus = SPAIR(12, 103),
-    KnightPairPenalty = SPAIR(-7, 7),
-    RookPairPenalty = SPAIR(-39, 24),
+    KS_KnightWeight    = SPAIR(24,17),
+    KS_BishopWeight    = SPAIR( 5,11),
+    KS_RookWeight      = SPAIR(26,18),
+    KS_QueenWeight     = SPAIR(27,12),
+	KS_AttackWeight    = SPAIR(53,17),
+	KS_SafeKnightCheck = SPAIR(15,15),
+	KS_SafeBishopCheck = SPAIR(14, 9),
+	KS_SafeRookCheck   = SPAIR(20,24),
+	KS_SafeQueenCheck  = SPAIR(17,20),
+	KS_Offset          = SPAIR( 2, 3),
 
-    RookOnSemiOpenFile = SPAIR(19, 17),
-    RookOnOpenFile = SPAIR(38, 16),
-    RookXrayQueen = SPAIR(7, 9),
+    BishopPairBonus   = SPAIR( 12,103),
+    KnightPairPenalty = SPAIR( -7,  7),
+    RookPairPenalty   = SPAIR(-39, 24),
 
-    QueenPhase = 4,
-    RookPhase = 2,
-    MinorPhase = 1,
+    RookOnSemiOpenFile = SPAIR(19,17),
+    RookOnOpenFile     = SPAIR(38,16),
+    RookXrayQueen      = SPAIR( 7, 9),
 
+    QueenPhase   = 4,
+    RookPhase    = 2,
+    MinorPhase   = 1,
     MidgamePhase = 24,
 };
-
-scorepair_t
-    KS_KnightWeight = SPAIR(0, 0),
-    KS_BishopWeight = SPAIR(0, 0),
-    KS_RookWeight = SPAIR(0, 0),
-    KS_QueenWeight = SPAIR(0, 0),
-	KS_AttackWeight = SPAIR(0, 0),
-	KS_SafeKnightCheck = SPAIR(0, 0),
-	KS_SafeBishopCheck = SPAIR(0, 0),
-	KS_SafeRookCheck = SPAIR(0, 0),
-	KS_SafeQueenCheck = SPAIR(0, 0),
-	KS_Offset = SPAIR(0, 0);
 
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),

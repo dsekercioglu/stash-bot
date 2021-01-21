@@ -94,14 +94,6 @@ void    on_thread_set(void *data)
 
 void    uci_loop(int argc, char **argv)
 {
-	extern scorepair_t KS_KnightWeight, KS_BishopWeight, KS_RookWeight, KS_QueenWeight,
-		KS_AttackWeight, KS_SafeKnightCheck, KS_SafeBishopCheck, KS_SafeRookCheck,
-		KS_SafeQueenCheck, KS_Offset;
-
-#define TUNE(x)	add_option_scorepair(&OptionList, #x, &x, -smax, smax, NULL)
-
-	scorepair_t		smax = create_scorepair(1000, 1000);
-
     init_option_list(&OptionList);
     add_option_spin_int(&OptionList, "Threads", &Options.threads, 1, 256, &on_thread_set);
     add_option_spin_int(&OptionList, "Hash", &Options.hash, 1, MAX_HASH, &on_hash_set);
@@ -109,17 +101,6 @@ void    uci_loop(int argc, char **argv)
     add_option_spin_int(&OptionList, "MultiPV", &Options.multi_pv, 1, 500, NULL);
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
-
-	TUNE(KS_KnightWeight);
-	TUNE(KS_BishopWeight);
-	TUNE(KS_RookWeight);
-	TUNE(KS_QueenWeight);
-	TUNE(KS_AttackWeight);
-	TUNE(KS_SafeKnightCheck);
-	TUNE(KS_SafeBishopCheck);
-	TUNE(KS_SafeRookCheck);
-	TUNE(KS_SafeQueenCheck);
-	TUNE(KS_Offset);
 
     uci_position("startpos");
 
