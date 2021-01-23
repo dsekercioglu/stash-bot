@@ -40,10 +40,10 @@ enum
 
     KnightPairPenalty = SPAIR(-7, 7),
     KnightShielded = SPAIR(10, 10),
-    KnightOutpost = SPAIR(10, 6),
-    KnightFarOutpost = SPAIR(10, 6),
-    KnightCenterOutpost = SPAIR(10, 6),
-    KnightSolidOutpost = SPAIR(10, 6),
+    KnightOutpost = SPAIR(12, 4),
+    KnightFarOutpost = SPAIR(8, 4),
+    KnightCenterOutpost = SPAIR(11, 0),
+    KnightSolidOutpost = SPAIR(10, 3),
 
     // Bishop eval terms
 
