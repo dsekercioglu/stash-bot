@@ -62,7 +62,12 @@ INLINED void        tt_clear(void)
 
 INLINED void        tt_bzero(void)
 {
-    memset(TT.table, 0, sizeof(cluster_t) * TT.cluster_count);
+    tt_entry_t  zero_entry = {0, NO_SCORE, NO_SCORE, 0, 0, NO_MOVE};
+    TT.generation = 0;
+
+    for (size_t i = 0; i < TT.cluster_count; ++i)
+        for (size_t k = 0; k < ClusterSize; ++k)
+            TT.table[i][k] = zero_entry;
 }
 
 INLINED score_t     score_to_tt(score_t s, int plies)
