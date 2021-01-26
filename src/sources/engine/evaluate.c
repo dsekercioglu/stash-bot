@@ -94,10 +94,6 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
 };
 
-const int   AttackRescale[8] = {
-    0, 0, 2, 4, 8, 16, 32, 64
-};
-
 typedef struct
 {
     bitboard_t  king_zone[COLOR_NB];
@@ -331,7 +327,7 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const evaluation_t *eval, color_t c)
 {
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
@@ -339,8 +335,7 @@ scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
     {
         scorepair_t bonus = eval->weights[c];
 
-        if (eval->attackers[c] < 8)
-            bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+        bonus -= scorepair_divide(bonus, 1 << (eval->attackers[c] - 1));
 
         return (bonus);
     }
