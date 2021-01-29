@@ -31,7 +31,6 @@ int main(int argc, char **argv)
     zobrist_init();
     tt_resize(16);
     wpool_init(1);
-    init_reduction_table();
 
     pthread_t   engine_pt;
 
