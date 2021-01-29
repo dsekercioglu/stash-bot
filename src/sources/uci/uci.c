@@ -94,8 +94,6 @@ void    on_thread_set(void *data)
 
 void    uci_loop(int argc, char **argv)
 {
-    extern double   LMR_B, LMR_K;
-
     init_option_list(&OptionList);
     add_option_spin_int(&OptionList, "Threads", &Options.threads, 1, 256, &on_thread_set);
     add_option_spin_int(&OptionList, "Hash", &Options.hash, 1, MAX_HASH, &on_hash_set);
@@ -103,9 +101,6 @@ void    uci_loop(int argc, char **argv)
     add_option_spin_int(&OptionList, "MultiPV", &Options.multi_pv, 1, 500, NULL);
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
-
-    add_option_spin_flt(&OptionList, "LMR_B", &LMR_B, -2, 2, NULL);
-    add_option_spin_flt(&OptionList, "LMR_K", &LMR_K, 0.5, 5, NULL);
 
     uci_position("startpos");
 
