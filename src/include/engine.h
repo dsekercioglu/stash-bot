@@ -56,7 +56,6 @@ enum
     NMP_TrustDepth = 10,
 
     LMR_MinDepth = 3,
-    LMR_MinMoves = 4,
 
     MAX_PLIES = 240
 };
