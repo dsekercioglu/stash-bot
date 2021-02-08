@@ -210,7 +210,7 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
 scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = occupancy_bb(board);
+    const bitboard_t    occupancy = occupancy_bb(board) ^ piece_bb(board, c, QUEEN);
     bitboard_t          bb = piece_bb(board, c, BISHOP);
     bitboard_t          our_pawns = piece_bb(board, c, PAWN);
     bitboard_t          targets = pieces_bb(board, not_color(c), ROOK, QUEEN);
@@ -253,7 +253,7 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
 scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = occupancy_bb(board);
+    const bitboard_t    occupancy = occupancy_bb(board) ^ pieces_bb(board, c, ROOK, QUEEN);
     const bitboard_t    my_pawns = piece_bb(board, c, PAWN);
     const bitboard_t    their_pawns = piece_bb(board, not_color(c), PAWN);
     const bitboard_t    their_queens = piece_bb(board, not_color(c), QUEEN);
