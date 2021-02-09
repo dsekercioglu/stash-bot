@@ -16,6 +16,8 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include "imath.h"
 #include "lazy_smp.h"
 #include "pawns.h"
 
@@ -25,6 +27,7 @@ enum
     StragglerPenalty = SPAIR(-18, -14),
     DoubledPenalty = SPAIR(-21, -35),
     IsolatedPenalty = SPAIR(-12, -18),
+    PassedFile = SPAIR(5, 5),
 };
 
 const scorepair_t   PassedBonus[RANK_NB] = {
@@ -50,7 +53,13 @@ scorepair_t evaluate_passed(pawn_entry_t *entry, color_t us, bitboard_t our_pawn
         if ((queening & their_pawns) == 0
             && (queening & entry->attacks[not_color(us)] & ~entry->attacks[us]) == 0
             && (queening & entry->attacks2[not_color(us)] & ~entry->attacks2[us]) == 0)
+        {
             ret += PassedBonus[relative_sq_rank(sq, us)];
+
+            file_t  file = sq_file(sq);
+            file = min(file, file ^ 7);
+            ret -= PassedFile * file;
+        }
     }
 
     return (ret);
