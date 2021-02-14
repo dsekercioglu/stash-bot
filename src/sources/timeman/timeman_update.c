@@ -33,8 +33,8 @@ double  TimemanStabMin = 0.5;
 
 double  score_difference_scale(score_t s)
 {
-    const score_t   X = 104;
-    const double    T = 4.6;
+    const score_t   X = 101;
+    const double    T = 2.07;
 
     // Clamp score to the range [-X, X], and convert it to a time scale [1/T, T]
     // Examples:
@@ -65,7 +65,7 @@ void    timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, sco
     // Scale the time usage based on how long this bestmove has held
     // through search iterations
     // double  scale = fmax(TimemanStabMax * pow(1.0 - TimemanStabPow, (tm->stability / TimemanStabPly) * TimemanStabPly), TimemanStabMin);
-    double  scale = fmax(2.82 * pow(0.945, (tm->stability / 2) * 2), 0.73);
+    double  scale = fmax(1.59 * pow(0.947, (tm->stability / 2) * 2), 0.62);
 
     // Do we only have one legal move ? Don't burn much time on these
     movelist_t  list;
