@@ -21,43 +21,28 @@
 #include "imath.h"
 #include "timeman.h"
 #include "movelist.h"
+/*
+score_t TimemanX = 100;
+double  TimemanT = 2.0;
 
-// Scaling table based on the move type
-
-const double   BestmoveTypeScale[BM_TYPE_NB] = {
-    0.20, // One legal move
-    0.35, // Mating / getting mated
-    0.45, // Promoting a piece
-    0.50, // Capture with a very high SEE
-    0.85, // Check not throwing away material
-    0.95, // Capture
-    1.00, // Quiet move not throwing away material
-    1.20, // Check losing material
-    1.40, // Quiet losing material
-};
-
-// Scaling table based on the number of consecutive iterations the bestmove held
-
-const double    BestmoveStabilityScale[5] = {
-    2.50,
-    1.20,
-    0.90,
-    0.80,
-    0.75
-};
+double  TimemanStabMax = 1.4;
+long    TimemanStabPly = 1;
+double  TimemanStabPow = 0.05;
+double  TimemanStabMin = 0.5;
+*/
 
 double  score_difference_scale(score_t s)
 {
-    const score_t   X = 100;
-    const double    T = 2.0;
+    const score_t   X = 104;
+    const double    T = 4.6;
 
-    // Clamp score to the range [-100, 100], and convert it to a time scale [0.5, 2.0]
+    // Clamp score to the range [-X, X], and convert it to a time scale [1/T, T]
     // Examples:
-    // -100 -> 2.000x time
-    //  -50 -> 1.414x time
-    //    0 -> 1.000x time
-    //  +50 -> 0.707x time
-    // +100 -> 0.500x time
+    //   -X -> T x time
+    // -X/2 -> sqrt(T) x time
+    //    0 -> 1 x time
+    // +X/2 -> 1/sqrt(T) x time
+    //   +X -> 1/T x time
 
     return (pow(T, clamp(s, -X, X) / (double)X));
 }
@@ -71,53 +56,22 @@ void    timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, sco
     // Update bestmove + stability statistics
     if (tm->prev_bestmove != bestmove)
     {
-        movelist_t  list;
-        bool        is_quiet = !is_capture_or_promotion(board, bestmove);
-        bool        gives_check = move_gives_check(board, bestmove);
-
         tm->prev_bestmove = bestmove;
         tm->stability = 0;
-
-        // Do we only have one legal move ? Don't burn much time on these
-        list_all(&list, board);
-        if (movelist_size(&list) == 1)
-            tm->type = OneLegalMove;
-
-        else if (move_type(bestmove) == PROMOTION)
-            tm->type = Promotion;
-
-        else if (!is_quiet && see_greater_than(board, bestmove, KNIGHT_MG_SCORE))
-            tm->type = SoundCapture;
-
-        else if (gives_check && see_greater_than(board, bestmove, 0))
-            tm->type = SoundCheck;
-
-        else if (!is_quiet)
-            tm->type = Capture;
-
-        else if (see_greater_than(board, bestmove, 0))
-            tm->type = Quiet;
-
-        else if (gives_check)
-            tm->type = WeirdCheck;
-
-        else
-            tm->type = WeirdQuiet;
     }
     else
-        tm->stability = min(tm->stability + 1, 4);
-
-    // Does the move mates, or are we getting mated ? We use very small
-    // thinking times for these, because the game result is already known.
-    if (abs(score) > MATE_FOUND)
-        tm->type = MatingMove;
-
-    // Scale the time usage based on the type of bestmove we have
-    double  scale = BestmoveTypeScale[tm->type];
+        tm->stability++;
 
     // Scale the time usage based on how long this bestmove has held
     // through search iterations
-    scale *= BestmoveStabilityScale[tm->stability];
+    // double  scale = fmax(TimemanStabMax * pow(1.0 - TimemanStabPow, (tm->stability / TimemanStabPly) * TimemanStabPly), TimemanStabMin);
+    double  scale = fmax(2.82 * pow(0.945, (tm->stability / 2) * 2), 0.73);
+
+    // Do we only have one legal move ? Don't burn much time on these
+    movelist_t  list;
+    list_all(&list, board);
+    if (movelist_size(&list) == 1)
+        scale /= 5.0;
 
     // Scale the time usage based on how the score changed from the
     // previous iteration (the higher it goes, the quicker we stop searching)

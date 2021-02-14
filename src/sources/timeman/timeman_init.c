@@ -54,5 +54,4 @@ void    timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, cl
     tm->prev_score = NO_SCORE;
     tm->prev_bestmove = NO_MOVE;
     tm->stability = 0;
-    tm->type = NO_BM_TYPE;
 }

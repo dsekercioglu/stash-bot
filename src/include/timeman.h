@@ -41,25 +41,6 @@ INLINED clock_t chess_clock(void)
 
 typedef enum
 {
-    NO_BM_TYPE = -1,
-    OneLegalMove,
-    MatingMove,
-    Promotion,
-    SoundCapture,
-    SoundCheck,
-    Capture,
-    Quiet,
-    WeirdCheck,
-    WeirdQuiet,
-    BM_TYPE_NB
-}
-bestmove_type_t;
-
-extern const double BestmoveTypeScale[BM_TYPE_NB];
-extern const double BestmoveStabilityScale[5];
-
-typedef enum
-{
     Tournament,
     Movetime,
     NoTimeman
@@ -75,10 +56,9 @@ typedef struct
     clock_t     maximal_time;
     clock_t     optimal_time;
 
-    score_t         prev_score;
-    move_t          prev_bestmove;
-    int             stability;
-    bestmove_type_t type;
+    score_t     prev_score;
+    move_t      prev_bestmove;
+    int         stability;
 }
 timeman_t;
 
