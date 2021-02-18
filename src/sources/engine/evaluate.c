@@ -430,6 +430,7 @@ score_t evaluate(const board_t *board)
     scorepair_t     tapered = board->psq_scorepair;
     pawn_entry_t    *pe;
     score_t         mg, eg, score;
+    int             factor;
 
     // Bonus for having castling rights in the middlegame
     // (castled King bonus values more than castling right bonus to incite
@@ -469,10 +470,18 @@ score_t evaluate(const board_t *board)
 
     tapered += Initiative * (eval.tempos[WHITE] * eval.tempos[WHITE] - eval.tempos[BLACK] * eval.tempos[BLACK]);
 
-    mg = midgame_score(tapered);
+    eg = endgame_score(tapered);
 
     // Scale endgame score based on remaining material + pawns
-    eg = scale_endgame(board, endgame_score(tapered));
+    // We return 0 if the game is already known to be drawn
+    factor = endgame_factor(board, eg);
+
+    if (!factor)
+        return 0;
+
+    mg = midgame_score(tapered);
+    eg = (score_t)((int32_t)eg * factor / 128);
+
 
     // Compute the eval by interpolating between the middlegame and endgame scores
 

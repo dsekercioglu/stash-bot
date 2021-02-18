@@ -37,7 +37,7 @@ bool    ocb_endgame(const board_t *board)
     return (!!dsq_mask && !more_than_one(dsq_mask));
 }
 
-score_t scale_endgame(const board_t *board, score_t eg)
+int     endgame_factor(const board_t *board, score_t eg)
 {
     // Only detect scalable endgames from the side with a positive evaluation.
     // This allows us to quickly filter out positions which shouldn't be scaled,
@@ -67,7 +67,7 @@ score_t scale_endgame(const board_t *board, score_t eg)
     else if (!strong_pawns && weak_mat)
     {
         score_t s = strong_mat, w = weak_mat + popcount(weak_pawns) * PAWN_MG_SCORE;
-        factor = clamp((s + s - w) / 25, 16, 128);
+        factor = clamp((s - w) / 4, 16, 128);
     }
 
     // OCB endgames: scale based on the number of remaining pieces of the strong side.
@@ -87,7 +87,5 @@ score_t scale_endgame(const board_t *board, score_t eg)
     else
         factor = 128;
 
-    eg = (score_t)((int32_t)eg * factor / 128);
-
-    return (eg);
+    return (factor);
 }
