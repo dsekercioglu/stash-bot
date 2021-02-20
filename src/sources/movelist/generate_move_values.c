@@ -80,7 +80,7 @@ void    generate_move_values(movelist_t *movelist, const board_t *board,
                     extmove->score = 3072;
 
                 else
-                    extmove->score = get_bf_history_score(worker->bf_history, moved_piece, move)
+                    extmove->score = get_bf_history_score(worker->bf_history, board->side_to_move, move)
                         + get_ct_history_score(worker->ct_history, moved_piece, to, lpc, lto);
                 break ;
         }

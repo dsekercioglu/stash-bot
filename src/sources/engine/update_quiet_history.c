@@ -42,7 +42,7 @@ void    update_quiet_history(const board_t *board, int depth,
     pc = piece_on(board, from_sq(bestmove));
     to = to_sq(bestmove);
 
-    add_bf_history(*bf_hist, pc, bestmove, bonus);
+    add_bf_history(*bf_hist, board->side_to_move, bestmove, bonus);
     add_ct_history(*ct_hist, pc, to, lpc, lto, bonus);
 
     if (ss->killers[0] == NO_MOVE)
@@ -54,7 +54,7 @@ void    update_quiet_history(const board_t *board, int depth,
     {
         pc = piece_on(board, from_sq(quiets[i]));
         to = to_sq(quiets[i]);
-        add_bf_history(*bf_hist, pc, quiets[i], -bonus);
+        add_bf_history(*bf_hist, board->side_to_move, quiets[i], -bonus);
         add_ct_history(*ct_hist, pc, to, lpc, lto, -bonus);
     }
 }

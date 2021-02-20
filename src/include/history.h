@@ -31,20 +31,20 @@ enum
     HistoryResolution = HistoryMaxScore * HistoryScale
 };
 
-typedef int32_t bf_history_t[PIECE_NB][SQUARE_NB * SQUARE_NB];
+typedef int32_t bf_history_t[COLOR_NB][SQUARE_NB * SQUARE_NB];
 typedef int32_t ct_history_t[PIECE_NB][SQUARE_NB][PIECETYPE_NB][SQUARE_NB];
 typedef move_t  cm_history_t[PIECE_NB][SQUARE_NB];
 
-INLINED void    add_bf_history(bf_history_t hist, piece_t piece, move_t move, int32_t bonus)
+INLINED void    add_bf_history(bf_history_t hist, color_t color, move_t move, int32_t bonus)
 {
-    int32_t *entry = &hist[piece][square_mask(move)];
+    int32_t *entry = &hist[color][square_mask(move)];
 
     *entry += bonus - *entry * abs(bonus) / HistoryResolution;
 }
 
-INLINED score_t get_bf_history_score(bf_history_t hist, piece_t piece, move_t move)
+INLINED score_t get_bf_history_score(bf_history_t hist, color_t color, move_t move)
 {
-    return (hist[piece][square_mask(move)] / HistoryScale);
+    return (hist[color][square_mask(move)] / HistoryScale);
 }
 
 INLINED void    add_ct_history(ct_history_t hist, piece_t pc, square_t to,
