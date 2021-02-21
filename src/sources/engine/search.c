@@ -265,7 +265,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             reduction += !pv_node;
 
             // Increase/decrease based on history
-            reduction -= hist_score / 1000;
+            reduction -= hist_score / 900;
 
             reduction = max(reduction, 0);
         }
