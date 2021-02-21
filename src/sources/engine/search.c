@@ -40,6 +40,23 @@ void    update_pv(move_t *pv, move_t bestmove, move_t *sub_pv)
     pv[i + 1] = NO_MOVE;
 }
 
+int     get_history_score(board_t *board, worker_t *worker, move_t last_move, move_t move)
+{
+    piece_t piece = piece_on(board, from_sq(move));
+    int     hist_score = get_bf_history_score(worker->bf_history, piece, move);
+
+    if (is_valid_move(last_move))
+    {
+        square_t    to = to_sq(move);
+        square_t    last_to = to_sq(last_move);
+        piece_t     last_piece = piece_on(board, last_to);
+
+        hist_score += get_ct_history_score(worker->ct_history, piece, to, last_piece, last_to);
+    }
+
+    return (hist_score);
+}
+
 score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         searchstack_t *ss, bool pv_node)
 {
@@ -185,8 +202,10 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     if (!root_node && depth > 7 && !tt_move)
         --depth;
 
+    move_t  last_move = (ss - 1)->current_move;
+
     list_pseudo(&list, board);
-    generate_move_values(&list, board, tt_move, ss->killers, (ss - 1)->current_move);
+    generate_move_values(&list, board, tt_move, ss->killers, last_move);
 
     move_t  bestmove = NO_MOVE;
     int     move_count = 0;
@@ -228,8 +247,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         int             new_depth = depth - 1;
         bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
-        int             hist_score = is_quiet ? get_bf_history_score(worker->bf_history,
-            piece_on(board, from_sq(currmove)), currmove) : 0;
+        int             hist_score = is_quiet
+            ? get_history_score(board, worker, last_move, currmove) : 0;
 
         extension = !root_node && gives_check ? 1 : 0;
 
@@ -246,7 +265,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             reduction += !pv_node;
 
             // Increase/decrease based on history
-            reduction -= hist_score / 500;
+            reduction -= hist_score / 1000;
 
             reduction = max(reduction, 0);
         }
