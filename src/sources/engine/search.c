@@ -229,7 +229,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
         int             hist_score = is_quiet ? get_bf_history_score(worker->bf_history,
-            piece_on(board, from_sq(currmove)), currmove) : 0;
+            board->side_to_move, currmove) : 0;
 
         extension = !root_node && gives_check ? 1 : 0;
 
