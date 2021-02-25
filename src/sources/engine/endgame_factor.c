@@ -22,11 +22,17 @@
 
 bool    ocb_endgame(const board_t *board)
 {
-    if (board->stack->material[WHITE] != BISHOP_MG_SCORE
-        || board->stack->material[BLACK] != BISHOP_MG_SCORE)
+    bitboard_t  wbishop = piece_bb(board, WHITE, BISHOP);
+
+    if (!wbishop || more_than_one(wbishop))
         return (false);
 
-    bitboard_t  dsq_mask = piecetype_bb(board, BISHOP) & DARK_SQUARES;
+    bitboard_t  bbishop = piece_bb(board, BLACK, BISHOP);
+
+    if (!bbishop || more_than_one(bbishop))
+        return (false);
+
+    bitboard_t  dsq_mask = (wbishop | bbishop) & DARK_SQUARES;
 
     return (!!dsq_mask && !more_than_one(dsq_mask));
 }
@@ -66,7 +72,7 @@ int     endgame_factor(const board_t *board, score_t eg)
 
     // OCB endgames: scale based on the number of remaining pieces of the strong side.
     else if (ocb_endgame(board))
-        factor = 32 + popcount(piece_bb(board, strong_side, PAWN)) * 12;
+        factor = 36 + popcount(piece_bb(board, strong_side, PAWN)) * 6;
 
     // Rook endgames: drawish if the pawn advantage is small, and all strong side pawns
     // are on the same side of the board. Don't scale if the defending king is far from
