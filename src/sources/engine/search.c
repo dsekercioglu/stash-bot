@@ -254,6 +254,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
                 if (singular_score < singular_beta)
                     extension = 1;
+                else if (singular_beta >= beta)
+                    return (singular_beta);
             }
         }
         else if (gives_check)
