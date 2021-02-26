@@ -188,7 +188,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         }
     }
 
-    if (!root_node && depth > 7 && !tt_move)
+    if (!root_node && depth > 6 && !tt_move)
         --depth;
 
     list_pseudo(&list, board);
