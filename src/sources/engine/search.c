@@ -198,25 +198,21 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     int     move_count = 0;
     move_t  quiets[64];
     int     qcount = 0;
+    bool    prune_quiets = false;
 
     for (extmove_t *extmove = list.moves; extmove < list.last; ++extmove)
     {
         place_top_move(extmove, list.last);
         const move_t    currmove = extmove->move;
 
-        if (root_node)
-        {
-            // Exclude already searched PV lines for root nodes
+        // Exclude already searched PV lines for root nodes
+        if (root_node && find_root_move(worker->root_moves + worker->pv_line,
+            worker->root_moves + worker->root_count, currmove) == NULL)
+            continue ;
 
-            if (find_root_move(worker->root_moves + worker->pv_line,
-                worker->root_moves + worker->root_count, currmove) == NULL)
-                continue ;
-        }
-        else
-        {
-            if (!move_is_legal(board, currmove) || currmove == ss->excluded_move)
-                continue ;
-        }
+        // Exclude illegal moves and TT moves from singular search
+        if (!root_node && (!move_is_legal(board, currmove) || currmove == ss->excluded_move))
+            continue ;
 
         move_count++;
 
@@ -229,12 +225,22 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             fflush(stdout);
         }
 
+        bool    is_quiet = !is_capture_or_promotion(board, currmove);
+
+        if (!root_node && best_value > -MATE_FOUND)
+        {
+            if (depth < 5 && move_count > depth * 8)
+                prune_quiets = true;
+
+            if (prune_quiets && is_quiet)
+                continue ;
+        }
+
         boardstack_t    stack;
         score_t         next = -NO_SCORE;
         int             reduction;
         int             extension = 0;
         int             new_depth = depth - 1;
-        bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
         int             hist_score = is_quiet ? get_bf_history_score(worker->bf_history,
             piece_on(board, from_sq(currmove)), currmove) : 0;
@@ -340,9 +346,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
-
-        if (!root_node && depth < 4 && best_value > -MATE_FOUND && qcount > depth * 8)
-            break ;
     }
 
     // Checkmate/Stalemate ?
