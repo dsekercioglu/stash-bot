@@ -216,6 +216,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
                 continue ;
         }
 
+        if (!root_node && best_value > -MATE_FOUND)
+        {
+            // Late Move Pruning.
+
+            if (depth < 4 && qcount > depth * 8)
+                skip_quiets = true;
+        }
+
         move_count++;
 
         // Report currmove info if enough time has passed
@@ -338,9 +346,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
-
-        if (!root_node && depth < 4 && best_value > -MATE_FOUND && qcount > depth * 8)
-            break ;
     }
 
     // Checkmate/Stalemate ?
