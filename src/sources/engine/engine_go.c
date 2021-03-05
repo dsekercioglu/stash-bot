@@ -165,6 +165,7 @@ void        *engine_go(void *ptr)
         {
             worker->seldepth = 0;
 
+            int     _depth = iter_depth;
             score_t _alpha, _beta, _delta;
             score_t pv_score = worker->root_moves[worker->pv_line].previous_score;
 
@@ -185,7 +186,7 @@ void        *engine_go(void *ptr)
             }
 
 __retry:
-            search(board, iter_depth + 1, _alpha, _beta, &sstack[1], true);
+            search(board, _depth + 1, _alpha, _beta, &sstack[1], true);
 
             // Catch search aborting
 
@@ -230,6 +231,7 @@ __retry:
 
             if (bound == UPPER_BOUND)
             {
+                _depth = iter_depth;
                 _beta = (_alpha + _beta) / 2;
                 _alpha = max(-INF_SCORE, (int)pv_score - _delta);
                 _delta += _delta / 4;
@@ -237,6 +239,7 @@ __retry:
             }
             else if (bound == LOWER_BOUND)
             {
+                _depth -= !!_depth;
                 _beta = min(INF_SCORE, (int)pv_score + _delta);
                 _delta += _delta / 4;
                 goto __retry;
