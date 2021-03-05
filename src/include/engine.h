@@ -58,7 +58,7 @@ void    update_quiet_history(const board_t *board, int depth,
         move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss);
 
 score_t evaluate(const board_t *board);
-score_t scale_endgame(const board_t *board, score_t eg);
+int     endgame_factor(const board_t *board, score_t eg);
 
 void    print_pv(const board_t *board, root_move_t *root_move, int multi_pv,
         int depth, clock_t time, int bound);
