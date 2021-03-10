@@ -84,7 +84,7 @@ static void score_quiet(movepick_t *mp, extmove_t *begin, extmove_t *end)
         begin->score = get_bf_history_score(mp->worker->bf_history, moved, begin->move);
 
         if (mp->pc_history[0] != NULL)
-            begin->score += get_pc_history_score(*mp->pc_history[0], moved, to);
+            begin->score += get_pc_history_score(*mp->pc_history[0], moved, to) * 2;
         if (mp->pc_history[1] != NULL)
             begin->score += get_pc_history_score(*mp->pc_history[1], moved, to);
 
@@ -111,7 +111,7 @@ static void score_evasions(movepick_t *mp, extmove_t *begin, extmove_t *end)
             begin->score = get_bf_history_score(mp->worker->bf_history, moved, begin->move);
 
             if (mp->pc_history[0] != NULL)
-                begin->score += get_pc_history_score(*mp->pc_history[0], moved, to);
+                begin->score += get_pc_history_score(*mp->pc_history[0], moved, to) * 2;
             if (mp->pc_history[1] != NULL)
                 begin->score += get_pc_history_score(*mp->pc_history[1], moved, to);
         }
