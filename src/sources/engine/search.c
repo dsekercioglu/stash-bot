@@ -24,7 +24,7 @@
 #include "imath.h"
 #include "info.h"
 #include "lazy_smp.h"
-#include "movelist.h"
+#include "movepick.h"
 #include "timeman.h"
 #include "tt.h"
 #include "uci.h"
@@ -47,7 +47,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         return (qsearch(board, alpha, beta, ss));
 
     worker_t    *worker = get_worker(board);
-    movelist_t  list;
+    movepick_t  mp;
     move_t      pv[256];
     score_t     best_value = -INF_SCORE;
     bool        root_node = (ss->plies == 0);
@@ -120,18 +120,18 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
     // Razoring.
 
-    if (!pv_node && ss->static_eval + Razor_LightMargin < beta)
+    if (!pv_node && ss->static_eval + 150 <= alpha)
     {
         if (depth == 1)
         {
             score_t max_score = qsearch(board, alpha, beta, ss);
-            return (max(ss->static_eval + Razor_LightMargin, max_score));
+            return (max(ss->static_eval + 150, max_score));
         }
-        if (ss->static_eval + Razor_HeavyMargin < beta && depth <= 3)
+        if (ss->static_eval + 300 <= alpha && depth <= 3)
         {
             score_t max_score = qsearch(board, alpha, beta, ss);
             if (max_score < beta)
-                return (max(ss->static_eval + Razor_HeavyMargin, max_score));
+                return (max(ss->static_eval + 300, max_score));
         }
     }
 
@@ -144,18 +144,17 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
     // Null move pruning.
 
-    if (!pv_node && depth >= NMP_MinDepth && !in_check
+    if (!pv_node && depth >= 3 && !in_check
         && ss->plies >= worker->verif_plies && !ss->excluded_move
         && eval >= beta && eval >= ss->static_eval
         && board->stack->material[board->side_to_move])
     {
         boardstack_t    stack;
 
-        int    nmp_reduction = NMP_BaseReduction
-            + min((eval - beta) / NMP_EvalScale, NMP_MaxEvalReduction)
-            + (depth / 4);
+        int    nmp_reduction = 3 + min((eval - beta) / 128, 3) + (depth / 4);
 
         ss->current_move = NULL_MOVE;
+        ss->pc_history = NULL;
 
         do_null_move(board, &stack);
 
@@ -172,7 +171,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
             // Do not trust win claims.
 
-            if (worker->verif_plies || (depth <= NMP_TrustDepth && abs(beta) < VICTORY))
+            if (worker->verif_plies || (depth <= 10 && abs(beta) < VICTORY))
                 return (score);
 
             // Zugzwang checking.
@@ -188,22 +187,20 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         }
     }
 
-    if (!root_node && depth > 7 && !tt_move)
+    if (!root_node && depth >= 8 && !tt_move)
         --depth;
 
-    list_pseudo(&list, board);
-    generate_move_values(&list, board, tt_move, ss->killers, (ss - 1)->current_move);
+    movepick_init(&mp, false, board, worker, tt_move, ss);
 
+    move_t  currmove;
     move_t  bestmove = NO_MOVE;
     int     move_count = 0;
     move_t  quiets[64];
     int     qcount = 0;
+    bool    skip_quiets = false;
 
-    for (extmove_t *extmove = list.moves; extmove < list.last; ++extmove)
+    while ((currmove = movepick_next_move(&mp, skip_quiets)) != NO_MOVE)
     {
-        place_top_move(extmove, list.last);
-        const move_t    currmove = extmove->move;
-
         if (root_node)
         {
             // Exclude already searched PV lines for root nodes
@@ -220,6 +217,22 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         move_count++;
 
+        bool    is_quiet = !is_capture_or_promotion(board, currmove);
+
+        if (!root_node && best_value > -MATE_FOUND)
+        {
+            // Late Move Pruning.
+
+            if (depth <= 3 && move_count > depth * 8)
+                skip_quiets = true;
+
+            // SEE Pruning.
+
+            if (depth <= 4 && !see_greater_than(board, currmove,
+                (is_quiet ? -80 * depth : -25 * depth * depth)))
+                continue ;
+        }
+
         // Report currmove info if enough time has passed
 
         if (root_node && !worker->idx && chess_clock() - Timeman.start > 3000)
@@ -234,7 +247,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         int             reduction;
         int             extension = 0;
         int             new_depth = depth - 1;
-        bool            is_quiet = !is_capture_or_promotion(board, currmove);
         bool            gives_check = move_gives_check(board, currmove);
         int             hist_score = is_quiet ? get_bf_history_score(worker->bf_history,
             piece_on(board, from_sq(currmove)), currmove) : 0;
@@ -260,11 +272,15 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             extension = 1;
 
         ss->current_move = currmove;
+        {
+            square_t    to = to_sq(currmove);
+            ss->pc_history = &worker->ct_history[piece_on(board, to)][to];
+        }
 
         do_move_gc(board, currmove, &stack, gives_check);
 
         // Can we apply LMR ?
-        if (depth >= LMR_MinDepth && move_count > LMR_MinMoves && is_quiet)
+        if (depth >= 3 && move_count > 4 && is_quiet)
         {
             reduction = Reductions[min(depth, 63)][min(move_count, 63)];
 
@@ -340,9 +356,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
-
-        if (!root_node && depth < 4 && best_value > -MATE_FOUND && qcount > depth * 8)
-            break ;
     }
 
     // Checkmate/Stalemate ?

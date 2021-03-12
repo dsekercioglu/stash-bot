@@ -22,45 +22,9 @@
 # include <time.h>
 # include "board.h"
 # include "history.h"
+# include "movepick.h"
 
-typedef struct
-{
-    int     plies;
-    score_t static_eval;
-    move_t  killers[2];
-    move_t  excluded_move;
-    move_t  current_move;
-    move_t  *pv;
-}
-searchstack_t;
-
-typedef struct
-{
-    move_t  move;
-    int     seldepth;
-    score_t previous_score;
-    score_t score;
-    move_t  pv[512];
-}
-root_move_t;
-
-// All search components are here
-enum
-{
-    Razor_LightMargin = 150,
-    Razor_HeavyMargin = 300,
-
-    NMP_MinDepth = 3,
-    NMP_BaseReduction = 3,
-    NMP_EvalScale = 128,
-    NMP_MaxEvalReduction = 3,
-    NMP_TrustDepth = 10,
-
-    LMR_MinDepth = 3,
-    LMR_MinMoves = 4,
-
-    MAX_PLIES = 240
-};
+enum { MAX_PLIES = 240 };
 
 extern int  Reductions[64][64];
 
