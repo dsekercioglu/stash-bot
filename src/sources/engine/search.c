@@ -120,20 +120,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
     // Razoring.
 
-    if (!pv_node && ss->static_eval + 150 <= alpha)
-    {
-        if (depth == 1)
-        {
-            score_t max_score = qsearch(board, alpha, beta, ss);
-            return (max(ss->static_eval + 150, max_score));
-        }
-        if (ss->static_eval + 300 <= alpha && depth <= 3)
-        {
-            score_t max_score = qsearch(board, alpha, beta, ss);
-            if (max_score < beta)
-                return (max(ss->static_eval + 300, max_score));
-        }
-    }
+    if (!pv_node && depth == 1 && ss->static_eval + 150 <= alpha)
+        return (max(ss->static_eval + 150, qsearch(board, alpha, beta, ss)));
 
     bool    in_check = !!board->stack->checkers;
 
