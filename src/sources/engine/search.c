@@ -248,8 +248,19 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         int             extension = 0;
         int             new_depth = depth - 1;
         bool            gives_check = move_gives_check(board, currmove);
-        int             hist_score = is_quiet ? get_bf_history_score(worker->bf_history,
-            piece_on(board, from_sq(currmove)), currmove) : 0;
+        int             hist_score = 0;
+
+        if (is_quiet)
+        {
+            piece_t     moved = piece_on(board, from_sq(currmove));
+            square_t    to = to_sq(currmove);
+
+            hist_score += get_bf_history_score(worker->bf_history, moved, currmove);
+            if (mp.pc_history[0] != NULL)
+                hist_score += get_pc_history_score(*mp.pc_history[0], moved, to);
+            if (mp.pc_history[1] != NULL)
+                hist_score += get_pc_history_score(*mp.pc_history[1], moved, to);
+        }
 
         if (!root_node)
         {
@@ -288,7 +299,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             reduction += !pv_node;
 
             // Increase/decrease based on history
-            reduction -= hist_score / 500;
+            reduction -= hist_score / 1500;
 
             reduction = max(reduction, 0);
         }
