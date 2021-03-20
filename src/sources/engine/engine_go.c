@@ -171,7 +171,7 @@ void        *engine_go(void *ptr)
             // Don't set aspiration window bounds for low depths, as the scores are
             // very volatile
 
-            if (iter_depth <= 9 || abs(pv_score) >= 1000)
+            if (iter_depth <= 9)
             {
                 _delta = 0;
                 _alpha = -INF_SCORE;
@@ -179,7 +179,7 @@ void        *engine_go(void *ptr)
             }
             else
             {
-                _delta = 15;
+                _delta = 15 + abs(pv_score) / 32;
                 _alpha = max(-INF_SCORE, pv_score - _delta);
                 _beta = min(INF_SCORE, pv_score + _delta);
             }
