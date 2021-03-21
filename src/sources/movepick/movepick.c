@@ -55,7 +55,7 @@ void    movepick_init(movepick_t *mp, bool in_qsearch, const board_t *board,
 static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
     static const score_t    VictimBonus[PIECETYPE_NB] = {
-        0, 0, 128, 128, 256, 512, 0, 0
+        0, 0, 256, 512, 512, 1024, 0, 0
     };
 
     while (begin < end)
@@ -155,7 +155,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->tt_move && mp->cur->score >= -2048 && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->tt_move && see_greater_than(mp->board, mp->cur->move, 0))
                     return ((mp->cur++)->move);
 
                 *(mp->bad_captures++) = *(mp->cur++);
