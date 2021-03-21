@@ -44,9 +44,10 @@ typedef struct
 
     board_t         board;
     boardstack_t    *stack;
-    butterfly_history_t    bf_history;
-    continuation_history_t    ct_history;
-    countermove_history_t    cm_history;
+    butterfly_history_t     bf_history;
+    capture_history_t       cp_history;
+    continuation_history_t  ct_history;
+    countermove_history_t   cm_history;
     pawn_entry_t    *pawn_table;
 
     int                 seldepth;

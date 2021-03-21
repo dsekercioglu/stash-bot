@@ -112,6 +112,7 @@ void        *engine_go(void *ptr)
     // Reset all history related stuff.
 
     memset(worker->bf_history, 0, sizeof(butterfly_history_t));
+    memset(worker->cp_history, 0, sizeof(capture_history_t));
     memset(worker->ct_history, 0, sizeof(continuation_history_t));
     memset(worker->cm_history, 0, sizeof(countermove_history_t));
     worker->verif_plies = 0;

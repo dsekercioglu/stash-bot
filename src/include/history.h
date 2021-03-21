@@ -33,6 +33,7 @@ enum
 
 typedef int32_t         butterfly_history_t[COLOR_NB][SQUARE_NB * SQUARE_NB];
 typedef int32_t         piece_history_t[PIECE_NB][SQUARE_NB];
+typedef int32_t         capture_history_t[PIECE_NB][SQUARE_NB][PIECETYPE_NB];
 typedef piece_history_t continuation_history_t[PIECE_NB][SQUARE_NB];
 typedef move_t          countermove_history_t[PIECE_NB][SQUARE_NB];
 
@@ -58,6 +59,20 @@ INLINED void    add_pc_history(piece_history_t hist, piece_t pc, square_t to, in
 INLINED score_t get_pc_history_score(const piece_history_t hist, piece_t pc, square_t to)
 {
     return (hist[pc][to] / HistoryScale);
+}
+
+INLINED void    add_cp_history(capture_history_t hist, piece_t pc, square_t to,
+                piecetype_t captured, int32_t bonus)
+{
+    int32_t *entry = &hist[pc][to][captured];
+
+    *entry += bonus - *entry * abs(bonus) / HistoryResolution;
+}
+
+INLINED score_t get_cp_history_score(const capture_history_t hist, piece_t pc, square_t to,
+                piecetype_t captured)
+{
+    return (hist[pc][to][captured] / HistoryScale);
 }
 
 #endif

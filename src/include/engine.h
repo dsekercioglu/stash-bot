@@ -40,6 +40,8 @@ void    check_time(void);
 
 void    update_quiet_history(const board_t *board, int depth,
         move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss);
+void    update_capture_history(const board_t *board, int depth,
+        move_t bestmove, const move_t captures[32], int ccount);
 
 score_t evaluate(const board_t *board);
 score_t scale_endgame(const board_t *board, score_t eg);

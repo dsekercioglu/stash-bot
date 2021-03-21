@@ -197,6 +197,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     int     move_count = 0;
     move_t  quiets[64];
     int     qcount = 0;
+    move_t  captures[32];
+    int     ccount = 0;
     bool    skip_quiets = false;
 
     while ((currmove = movepick_next_move(&mp, skip_quiets)) != NO_MOVE)
@@ -349,6 +351,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
                 {
                     if (is_quiet)
                         update_quiet_history(board, depth, bestmove, quiets, qcount, ss);
+                    else
+                        update_capture_history(board, depth, bestmove, captures, ccount);
                     break ;
                 }
             }
@@ -356,6 +360,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
         if (qcount < 64 && is_quiet)
             quiets[qcount++] = currmove;
+        else if (ccount < 32 && !is_quiet)
+            captures[ccount++] = currmove;
     }
 
     // Checkmate/Stalemate ?
