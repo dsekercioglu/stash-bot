@@ -351,8 +351,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
                 {
                     if (is_quiet)
                         update_quiet_history(board, depth, bestmove, quiets, qcount, ss);
-                    else
-                        update_capture_history(board, depth, bestmove, captures, ccount);
+                    update_capture_history(board, depth, bestmove, captures, ccount);
                     break ;
                 }
             }
