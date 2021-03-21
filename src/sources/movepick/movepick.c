@@ -155,7 +155,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->tt_move && mp->cur->score >= 0 && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->tt_move && mp->cur->score >= -2048 && see_greater_than(mp->board, mp->cur->move, 0))
                     return ((mp->cur++)->move);
 
                 *(mp->bad_captures++) = *(mp->cur++);
