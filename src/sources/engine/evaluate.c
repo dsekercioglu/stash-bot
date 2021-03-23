@@ -189,13 +189,12 @@ void        eval_init(const board_t *board, evaluation_t *eval)
     eval->attackers[WHITE] = eval->attackers[BLACK]
         = eval->weights[WHITE] = eval->weights[BLACK] = 0;
 
-    // Set the King Attack zone as the 3x4 square surrounding the king
-    // (counting an additional rank in front of the king)
+    // Set the King Attack zone as the 3x3 square surrounding the king
 
     eval->king_zone[WHITE] = king_moves(get_king_square(board, BLACK));
     eval->king_zone[BLACK] = king_moves(get_king_square(board, WHITE));
-    eval->king_zone[WHITE] |= shift_down(eval->king_zone[WHITE]);
-    eval->king_zone[BLACK] |= shift_up(eval->king_zone[BLACK]);
+    eval->king_zone[WHITE] |= piece_bb(board, BLACK, KING);
+    eval->king_zone[BLACK] |= piece_bb(board, WHITE, KING);
 
     bitboard_t  occupied = occupancy_bb(board);
     bitboard_t  wpawns = piece_bb(board, WHITE, PAWN);
