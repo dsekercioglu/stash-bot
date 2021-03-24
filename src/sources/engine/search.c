@@ -145,6 +145,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     // Null move pruning.
 
     if (!pv_node && depth >= 3 && !in_check
+        && (ss - 1)->current_move != NULL_MOVE
         && ss->plies >= worker->verif_plies && !ss->excluded_move
         && eval >= beta && eval >= ss->static_eval
         && board->stack->material[board->side_to_move])
