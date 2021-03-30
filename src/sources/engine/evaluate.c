@@ -29,12 +29,16 @@ enum
     CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(21, 15),
 
-    // King Safety eval terms
+    // Safety terms
 
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
+    KnightWeight = -6,
+    BishopWeight = -6,
+    RookWeight = 21,
+    QueenWeight = -5,
+    AttackWeight = 76,
+    MissingShelter = 15,
+    QueenlessAttack = -1,
+    SafetyOffset = 12,
 
 	// Knight eval terms
 
@@ -60,7 +64,17 @@ enum
 
     MidgamePhase = 24,
 };
-
+/*
+score_t
+    KnightWeight = -6,
+    BishopWeight = -6,
+    RookWeight = 21,
+    QueenWeight = -5,
+    AttackWeight = 76,
+    MissingShelter = 15,
+    QueenlessAttack = -1,
+    SafetyOffset = 12;
+*/
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
     SPAIR(  -4,  32), SPAIR(  -3,  49), SPAIR(   4,  53), SPAIR(  13,  48),
@@ -91,16 +105,13 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
 };
 
-const int   AttackRescale[8] = {
-    0, 0, 2, 4, 8, 16, 32, 64
-};
-
 typedef struct
 {
     bitboard_t  king_zone[COLOR_NB];
     bitboard_t  mobility_zone[COLOR_NB];
     int         attackers[COLOR_NB];
-    scorepair_t weights[COLOR_NB];
+    int         attacks[COLOR_NB];
+    score_t     weights[COLOR_NB];
     int         tempos[COLOR_NB];
 }
 evaluation_t;
@@ -185,6 +196,7 @@ score_t     eval_kxk(const board_t *board, color_t c)
 void        eval_init(const board_t *board, evaluation_t *eval)
 {
     eval->attackers[WHITE] = eval->attackers[BLACK]
+        = eval->attacks[WHITE] = eval->attacks[BLACK]
         = eval->weights[WHITE] = eval->weights[BLACK] = 0;
 
     // Set the King Attack zone as the 3x4 square surrounding the king
@@ -269,7 +281,8 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * KnightWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += KnightWeight;
         }
 
         // Tempo bonus for a Knight attacking the opponent's major pieces
@@ -316,7 +329,8 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * BishopWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += BishopWeight;
         }
 
         // Tempo bonus for a Bishop attacking the opponent's major pieces
@@ -365,7 +379,8 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * RookWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += RookWeight;
         }
 
         // Tempo bonus for a Rook attacking the opponent's Queen(s)
@@ -400,24 +415,34 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
         if (b & eval->king_zone[c])
         {
             eval->attackers[c] += 1;
-            eval->weights[c] += popcount(b & eval->king_zone[c]) * QueenWeight;
+            eval->attacks[c] += popcount(b & eval->king_zone[c]);
+            eval->weights[c] += QueenWeight;
         }
     }
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t c)
 {
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
-    if (eval->attackers[c] >= 2)
+    bool    queenless = !piece_bb(board, c, QUEEN);
+
+    if (eval->attackers[c] >= 2 - !queenless)
     {
-        scorepair_t bonus = eval->weights[c];
+        square_t ksq = get_king_square(board, not_color(c));
+        score_t safety = eval->weights[c];
 
-        if (eval->attackers[c] < 8)
-            bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+        safety += (eval->attacks[c] * 12 / popcount(eval->king_zone[c])) * AttackWeight;
+        safety += queenless * QueenlessAttack;
+        safety += SafetyOffset;
 
-        return (bonus);
+        for (file_t file = max(FILE_A, sq_file(ksq) - 1); file <= min(FILE_H, sq_file(ksq) + 1); ++file)
+            if ((file_bb(file) & piece_bb(board, not_color(c), PAWN)) == 0)
+                safety += MissingShelter;
+
+        if (safety >= 16)
+            return (create_scorepair((int32_t)safety * safety / 4096, safety / 16));
     }
     return (0);
 }
@@ -463,8 +488,8 @@ score_t evaluate(const board_t *board)
 
     // Add the King Safety evaluation
 
-    tapered += evaluate_safety(&eval, WHITE);
-    tapered -= evaluate_safety(&eval, BLACK);
+    tapered += evaluate_safety(board, &eval, WHITE);
+    tapered -= evaluate_safety(board, &eval, BLACK);
 
     // Compute Initiative based on how many tempos each side have. The scaling
     // is quadratic so that hanging pieces that can be captured are easily spotted

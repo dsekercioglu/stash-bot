@@ -22,6 +22,11 @@ option_type_t;
 
 // Some helper macros for tuning stuff
 
+#define TUNE_SCORE(x, minval, maxval) do { \
+    extern score_t x; \
+    add_option_score(&OptionList, #x, &x, minval, maxval, NULL); \
+} while (0);
+
 #define TUNE_SP(x, minval, maxval) do { \
     extern scorepair_t x; \
     add_option_scorepair(&OptionList, #x, &x, SPAIR(minval, minval), SPAIR(maxval, maxval), NULL); \

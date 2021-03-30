@@ -101,7 +101,16 @@ void    uci_loop(int argc, char **argv)
     add_option_spin_int(&OptionList, "MultiPV", &Options.multi_pv, 1, 500, NULL);
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
-
+/*
+    TUNE_SCORE(KnightWeight, -1000, 1000);
+    TUNE_SCORE(BishopWeight, -1000, 1000);
+    TUNE_SCORE(RookWeight, -1000, 1000);
+    TUNE_SCORE(QueenWeight, -1000, 1000);
+    TUNE_SCORE(AttackWeight, -1000, 1000);
+    TUNE_SCORE(MissingShelter, -1000, 1000);
+    TUNE_SCORE(QueenlessAttack, -1000, 1000);
+    TUNE_SCORE(SafetyOffset, -1000, 1000);
+*/
     uci_position("startpos");
 
     if (argc > 1)
