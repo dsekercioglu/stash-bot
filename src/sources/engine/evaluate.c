@@ -31,14 +31,14 @@ enum
 
     // Safety terms
 
-    KnightWeight = -6,
-    BishopWeight = -6,
-    RookWeight = 21,
-    QueenWeight = -5,
-    AttackWeight = 76,
-    MissingShelter = 15,
-    QueenlessAttack = -1,
-    SafetyOffset = 12,
+    KnightWeight = -14,
+    BishopWeight = 16,
+    RookWeight = 12,
+    QueenWeight = 2,
+    AttackWeight = 75,
+    MissingShelter = 25,
+    QueenlessAttack = -14,
+    SafetyOffset = 10,
 
 	// Knight eval terms
 
@@ -66,14 +66,14 @@ enum
 };
 /*
 score_t
-    KnightWeight = -6,
-    BishopWeight = -6,
-    RookWeight = 21,
-    QueenWeight = -5,
-    AttackWeight = 76,
-    MissingShelter = 15,
-    QueenlessAttack = -1,
-    SafetyOffset = 12;
+    KnightWeight = -14,
+    BishopWeight = 16,
+    RookWeight = 12,
+    QueenWeight = 2,
+    AttackWeight = 75,
+    MissingShelter = 25,
+    QueenlessAttack = -14,
+    SafetyOffset = 10;
 */
 const scorepair_t   MobilityN[9] = {
     SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
