@@ -59,7 +59,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         worker->seldepth = ss->plies + 1;
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
         return (!board->stack->checkers ? evaluate(board) : 0);

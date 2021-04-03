@@ -36,7 +36,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
         check_time();
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
         return (!board->stack->checkers ? evaluate(board) : 0);
