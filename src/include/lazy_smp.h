@@ -86,6 +86,11 @@ INLINED uint64_t    get_node_count(void)
     return (result);
 }
 
+INLINED score_t     draw_score(const worker_t *worker)
+{
+    return (1 - (worker->nodes & 2));
+}
+
 void    wpool_init(int threads);
 void    wpool_reset(void);
 void    wpool_quit(void);
