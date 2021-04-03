@@ -31,10 +31,10 @@ enum
 
     // King Safety eval terms
 
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
+    KnightWeight = SPAIR(22, 6),
+    BishopWeight = SPAIR(24, 1),
+    RookWeight = SPAIR(47, -3),
+    QueenWeight = SPAIR(53, 73),
 
 	// Knight eval terms
 
@@ -62,33 +62,33 @@ enum
 };
 
 const scorepair_t   MobilityN[9] = {
-    SPAIR( -83, -76), SPAIR( -40, -74), SPAIR( -24, -15), SPAIR( -16,  26),
-    SPAIR(  -4,  32), SPAIR(  -3,  49), SPAIR(   4,  53), SPAIR(  13,  48),
-    SPAIR(  26,  31)
+    SPAIR( -79, -68), SPAIR( -43, -71), SPAIR( -27, -16), SPAIR( -27,  26),
+    SPAIR(  -4,  31), SPAIR(  -3,  49), SPAIR(   9,  51), SPAIR(  17,  49),
+    SPAIR(  24,  32)
 };
 
 const scorepair_t   MobilityB[14] = {
-    SPAIR( -96, -80), SPAIR( -51,-100), SPAIR( -16, -66), SPAIR( -15, -24),
-    SPAIR(  -5,  -1), SPAIR(   1,  16), SPAIR(   4,  33), SPAIR(   4,  41),
-    SPAIR(   4,  49), SPAIR(   5,  54), SPAIR(   8,  52), SPAIR(  19,  44),
-    SPAIR(  44,  43), SPAIR(  46,  26)
+    SPAIR( -90, -82), SPAIR( -57,-100), SPAIR( -18, -63), SPAIR( -15, -27),
+    SPAIR(  -4,   2), SPAIR(   4,  14), SPAIR(   6,  35), SPAIR(   5,  44),
+    SPAIR(   5,  50), SPAIR(   7,  53), SPAIR(   1,  45), SPAIR(  16,  40),
+    SPAIR(  50,  35), SPAIR(  47,  26)
 };
 
 const scorepair_t   MobilityR[15] = {
-    SPAIR( -43, -11), SPAIR( -56, -14), SPAIR( -37,  -6), SPAIR( -35,  22),
-    SPAIR( -34,  59), SPAIR( -33,  69), SPAIR( -31,  84), SPAIR( -28,  91),
-    SPAIR( -24,  94), SPAIR( -19,  98), SPAIR( -15, 104), SPAIR( -13, 105),
-    SPAIR(  -8, 105), SPAIR(   7,  95), SPAIR(  54,  64)
+    SPAIR( -40, -13), SPAIR( -55, -18), SPAIR( -33,   4), SPAIR( -27,  27),
+    SPAIR( -29,  59), SPAIR( -31,  72), SPAIR( -29,  90), SPAIR( -32,  90),
+    SPAIR( -23,  92), SPAIR( -16,  98), SPAIR( -20,  99), SPAIR( -14, 107),
+    SPAIR(  -9, 105), SPAIR(   1,  95), SPAIR(  57,  62)
 };
 
 const scorepair_t   MobilityQ[28] = {
-    SPAIR(  -8,-144), SPAIR(  -6,-117), SPAIR(  -5, -90), SPAIR(  -7, -63),
-    SPAIR( -13, -38), SPAIR(  -6, -11), SPAIR(   5,  26), SPAIR(   7,  74),
-    SPAIR(  12, 101), SPAIR(  15, 125), SPAIR(  19, 137), SPAIR(  21, 159),
-    SPAIR(  25, 170), SPAIR(  30, 173), SPAIR(  30, 183), SPAIR(  30, 189),
-    SPAIR(  29, 191), SPAIR(  25, 197), SPAIR(  24, 198), SPAIR(  21, 196),
-    SPAIR(  33, 186), SPAIR(  33, 183), SPAIR(  31, 171), SPAIR(  31, 167),
-    SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
+    SPAIR(  -8,-144), SPAIR(  -2,-114), SPAIR(   2, -89), SPAIR(  -7, -67),
+    SPAIR( -18, -45), SPAIR(  -9, -14), SPAIR(   6,  32), SPAIR(  13,  76),
+    SPAIR(  15, 106), SPAIR(  14, 125), SPAIR(  16, 135), SPAIR(  19, 160),
+    SPAIR(  21, 170), SPAIR(  26, 172), SPAIR(  23, 180), SPAIR(  30, 189),
+    SPAIR(  28, 191), SPAIR(  25, 199), SPAIR(  30, 203), SPAIR(  19, 199),
+    SPAIR(  36, 195), SPAIR(  38, 185), SPAIR(  36, 174), SPAIR(  31, 161),
+    SPAIR(  21, 165), SPAIR(  20, 154), SPAIR(  21, 144), SPAIR(  12, 148)
 };
 
 const int   AttackRescale[8] = {
@@ -283,7 +283,7 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
 scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = occupancy_bb(board);
+    const bitboard_t    occupancy = occupancy_bb(board) ^ piece_bb(board, c, QUEEN);
     bitboard_t          bb = piece_bb(board, c, BISHOP);
     bitboard_t          our_pawns = piece_bb(board, c, PAWN);
     bitboard_t          targets = pieces_bb(board, not_color(c), ROOK, QUEEN);
@@ -330,7 +330,7 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t c
 scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t c)
 {
     scorepair_t         ret = 0;
-    const bitboard_t    occupancy = occupancy_bb(board);
+    const bitboard_t    occupancy = occupancy_bb(board) ^ pieces_bb(board, c, ROOK, QUEEN);
     const bitboard_t    my_pawns = piece_bb(board, c, PAWN);
     const bitboard_t    their_pawns = piece_bb(board, not_color(c), PAWN);
     const bitboard_t    their_queens = piece_bb(board, not_color(c), QUEEN);
