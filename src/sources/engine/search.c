@@ -289,7 +289,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
             // Increase/decrease based on history
             reduction -= hist_score / 500;
 
-            reduction = max(reduction, 0);
+            reduction = clamp(reduction, 0, new_depth - 1);
         }
         else
             reduction = 0;
