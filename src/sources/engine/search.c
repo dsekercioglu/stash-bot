@@ -187,6 +187,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         }
     }
 
+    // Reduce PV nodes by one ply if no TT entry is found and the depth is high.
+
+    if (!found && pv_node && depth >= 9)
+        --depth;
+
     movepick_init(&mp, false, board, worker, tt_move, ss);
 
     move_t  currmove;
