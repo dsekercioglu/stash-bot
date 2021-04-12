@@ -136,6 +136,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     }
 
     bool    in_check = !!board->stack->checkers;
+    bool    improving = ss->plies >= 2 && ss->static_eval > (ss - 2)->static_eval;
 
     // Futility Pruning.
 
@@ -283,11 +284,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         {
             reduction = Reductions[min(depth, 63)][min(move_count, 63)];
 
-            // Increase for non-PV nodes
-            reduction += !pv_node;
+            // Increase for non-PV and non-improving nodes
+            reduction += !pv_node + !improving;
 
             // Increase/decrease based on history
-            reduction -= hist_score / 500;
+            reduction -= hist_score / 280;
 
             reduction = max(reduction, 0);
         }
