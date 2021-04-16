@@ -32,10 +32,11 @@ enum
 
     // King Safety eval terms
 
-    KnightWeight = SPAIR(26, 8),
-    BishopWeight = SPAIR(18, 5),
-    RookWeight = SPAIR(51, -4),
-    QueenWeight = SPAIR(51, 72),
+    KnightWeight = SPAIR(5, -6),
+    BishopWeight = SPAIR(11, 8),
+    RookWeight = SPAIR(21, 4),
+    QueenWeight = SPAIR(45, 0),
+    KS_Offset = SPAIR(10, 2),
 
 	// Knight eval terms
 
@@ -90,10 +91,6 @@ const scorepair_t   MobilityQ[28] = {
     SPAIR(  29, 191), SPAIR(  25, 197), SPAIR(  24, 198), SPAIR(  21, 196),
     SPAIR(  33, 186), SPAIR(  33, 183), SPAIR(  31, 171), SPAIR(  31, 167),
     SPAIR(  21, 156), SPAIR(  15, 151), SPAIR(  15, 145), SPAIR(  17, 146)
-};
-
-const int   AttackRescale[8] = {
-    0, 0, 2, 4, 8, 16, 32, 64
 };
 
 typedef struct
@@ -391,12 +388,12 @@ scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
 
     if (eval->attackers[c] >= 2)
     {
-        scorepair_t bonus = eval->weights[c];
+        scorepair_t bonus = eval->weights[c] + KS_Offset;
 
-        if (eval->attackers[c] < 8)
-            bonus -= scorepair_divide(bonus, AttackRescale[eval->attackers[c]]);
+        score_t mg = midgame_score(bonus);
+        score_t eg = endgame_score(bonus);
 
-        return (bonus);
+        return (create_scorepair((int32_t)max(mg, 0) * mg / 256, max(eg, 0) / 16));
     }
     return (0);
 }
