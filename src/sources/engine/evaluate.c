@@ -32,11 +32,11 @@ enum
 
     // King Safety eval terms
 
-    KnightWeight = SPAIR(14, 1),
-    BishopWeight = SPAIR(22, -4),
-    RookWeight = SPAIR(30, -9),
-    QueenWeight = SPAIR(49, 3),
-    KS_Offset = SPAIR(-19, -2),
+    KnightWeight = SPAIR(15, 13),
+    BishopWeight = SPAIR(23, -2),
+    RookWeight = SPAIR(35, -14),
+    QueenWeight = SPAIR(50, -8),
+    KS_Offset = SPAIR(-24, -5),
 
 	// Knight eval terms
 
