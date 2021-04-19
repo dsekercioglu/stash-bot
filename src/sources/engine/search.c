@@ -136,6 +136,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
     }
 
     bool    in_check = !!board->stack->checkers;
+    bool    tt_capture = !!tt_move && is_capture_or_promotion(board, tt_move);
 
     // Futility Pruning.
 
@@ -285,6 +286,9 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
             // Increase for non-PV nodes
             reduction += !pv_node;
+
+            // Increase if TT move is a capture
+            reduction += tt_capture;
 
             // Increase/decrease based on history
             reduction -= hist_score / 500;
