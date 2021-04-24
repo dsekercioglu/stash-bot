@@ -31,12 +31,12 @@ enum
     Initiative = SPAIR(21, 15),
 
     // King Safety eval terms
-
-    KnightWeight = SPAIR(15, 13),
-    BishopWeight = SPAIR(23, -2),
-    RookWeight = SPAIR(35, -14),
-    QueenWeight = SPAIR(50, -8),
-    KS_Offset = SPAIR(-24, -5),
+    KnightWeight = SPAIR(26, 26),
+    BishopWeight = SPAIR(27, 1),
+    RookWeight = SPAIR(28, -28),
+    QueenWeight = SPAIR(53, 24),
+    MissingShelter = SPAIR(0, 13),
+    KS_Offset = SPAIR(-24, 21),
 
 	// Knight eval terms
 
@@ -382,13 +382,20 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t c)
     return (ret);
 }
 
-scorepair_t evaluate_safety(evaluation_t *eval, color_t c)
+scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t c)
 {
     // Add a bonus if we have 2 pieces (or more) on the King Attack zone
 
     if (eval->attackers[c] >= 2)
     {
         scorepair_t bonus = eval->weights[c] + KS_Offset;
+        square_t    ksq = get_king_square(board, not_color(c));
+        file_t      file = sq_file(ksq);
+        bitboard_t  shelter_pawns = piece_bb(board, not_color(c), PAWN);
+
+        for (file_t f = max(file - 1, FILE_A); f <= min(file + 1, FILE_H); ++f)
+            if (!(file_bb(f) & shelter_pawns))
+                bonus += MissingShelter;
 
         score_t mg = midgame_score(bonus);
         score_t eg = endgame_score(bonus);
@@ -450,8 +457,8 @@ score_t evaluate(const board_t *board)
 
     // Add the King Safety evaluation
 
-    tapered += evaluate_safety(&eval, WHITE);
-    tapered -= evaluate_safety(&eval, BLACK);
+    tapered += evaluate_safety(board, &eval, WHITE);
+    tapered -= evaluate_safety(board, &eval, BLACK);
 
     // Compute Initiative based on how many tempos each side have. The scaling
     // is quadratic so that hanging pieces that can be captured are easily spotted
