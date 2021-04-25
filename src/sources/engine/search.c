@@ -256,7 +256,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
         if (!root_node)
         {
             if (depth >= 9 && currmove == tt_move && !ss->excluded_move
-                && (tt_bound & LOWER_BOUND) && tt_depth >= depth - 2)
+                && (tt_bound & LOWER_BOUND) && abs(tt_score) && tt_depth >= depth - 2)
             {
                 score_t singular_beta = tt_score - depth;
                 int     singular_depth = depth / 2;
@@ -268,6 +268,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta,
 
                 if (singular_score < singular_beta)
                     extension = 1;
+                else if (singular_beta >= beta)
+                    return (singular_beta);
             }
             else if (gives_check)
                 extension = 1;
