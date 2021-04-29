@@ -429,11 +429,6 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
     move_t bestmove = NO_MOVE;
     int moveCount = 0;
 
-    // Check if delta pruning is possible.
-
-    const bool deltaPruning = (!board->stack->checkers && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t deltaBase = bestScore + PAWN_EG_SCORE * 2;
-
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
         if (!move_is_legal(board, currmove))
@@ -442,16 +437,6 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
         moveCount++;
 
         bool givesCheck = move_gives_check(board, currmove);
-
-        if (bestScore > -MATE_FOUND && deltaPruning && !givesCheck && move_type(currmove) == NORMAL_MOVE)
-        {
-            score_t delta = deltaBase + PieceScores[ENDGAME][piece_on(board, to_sq(currmove))];
-
-            // Check if the move is very unlikely to improve alpha.
-
-            if (delta < alpha)
-                continue ;
-        }
 
         // Only analyse good capture moves.
 
