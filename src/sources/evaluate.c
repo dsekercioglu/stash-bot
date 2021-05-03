@@ -52,8 +52,8 @@ enum
     RookOnSemiOpenFile = SPAIR(19, 17),
     RookOnOpenFile = SPAIR(38, 16),
     RookXrayQueen = SPAIR(7, 9),
-    TrappedRook = SPAIR(20, 5),
-    DeadRook = SPAIR(50, 10),
+    TrappedRook = SPAIR(-20, -5),
+    DeadRook = SPAIR(-50, -10),
 
     QueenPhase = 4,
     RookPhase = 2,
