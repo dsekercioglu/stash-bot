@@ -26,7 +26,6 @@ enum
 {
     // Special eval terms
 
-    CastlingBonus = SPAIR(85, -43),
     Initiative = SPAIR(21, 15),
 
     // King Safety eval terms
@@ -53,6 +52,8 @@ enum
     RookOnSemiOpenFile = SPAIR(19, 17),
     RookOnOpenFile = SPAIR(38, 16),
     RookXrayQueen = SPAIR(7, 9),
+    TrappedRook = SPAIR(20, 5),
+    DeadRook = SPAIR(50, 10),
 
     QueenPhase = 4,
     RookPhase = 2,
@@ -382,7 +383,8 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
     {
         square_t sq = bb_pop_first_sq(&bb);
         bitboard_t sqbb = square_bb(sq);
-        bitboard_t rookFile = sq_file_bb(sq);
+        file_t rookFile = sq_file(sq);
+        bitboard_t rookFileBB = file_bb(rookFile);
         bitboard_t b = rook_moves_bb(sq, occupancy);
 
         // If the Rook is pinned, reduce its mobility to all the squares
@@ -393,17 +395,28 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
 
         // Bonus for a Rook on an open (or semi-open) file
 
-        if (!(rookFile & ourPawns))
-            ret += (rookFile & theirPawns) ? RookOnSemiOpenFile : RookOnOpenFile;
+        if (!(rookFileBB & ourPawns))
+            ret += (rookFileBB & theirPawns) ? RookOnSemiOpenFile : RookOnOpenFile;
 
         // Bonus for a Rook on the same file as the opponent's Queen(s)
 
-        if (rookFile & theirQueens)
+        if (rookFileBB & theirQueens)
             ret += RookXrayQueen;
 
         // Bonus for Rook mobility
 
-        ret += MobilityR[popcount(b & eval->mobilityZone[us])];
+        int mobility = popcount(b & eval->mobilityZone[us]);
+
+        ret += MobilityR[mobility];
+
+        // Penalty for a Rook stuck in the corner in the opening, higher if we
+        // lost castling rights.
+        if (mobility <= 3)
+        {
+            file_t kingFile = sq_file(get_king_square(board, us));
+            if ((kingFile >= FILE_E) == (rookFile >= kingFile))
+                ret += has_castling(us, board->stack->castlings) ? TrappedRook : DeadRook;
+        }
 
         // Bonus for a Rook on King Attack zone
 
@@ -496,11 +509,6 @@ score_t evaluate(const board_t *board)
     // Bonus for having castling rights in the middlegame
     // (castled King bonus values more than castling right bonus to incite
     // castling in the opening and quick attacks on an uncastled King)
-
-    if (board->stack->castlings & WHITE_CASTLING)
-        tapered += CastlingBonus;
-    if (board->stack->castlings & BLACK_CASTLING)
-        tapered -= CastlingBonus;
 
     eval_init(board, &eval);
 
