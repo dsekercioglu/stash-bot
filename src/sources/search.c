@@ -282,6 +282,10 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
             R -= histScore / 4000;
 
+            // Decrease for extended nodes
+
+            R -= extension;
+
             R = max(R, 0);
         }
         else
