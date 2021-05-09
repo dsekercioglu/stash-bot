@@ -57,10 +57,10 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         worker->seldepth = ss->plies + 1;
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
-        return (!board->stack->checkers ? evaluate(board) : 0);
+        return (!board->stack->checkers ? evaluate(board) : draw_score(worker));
 
     // Mate pruning.
 
@@ -373,10 +373,10 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss)
         check_time();
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
-        return (!board->stack->checkers ? evaluate(board) : 0);
+        return (!board->stack->checkers ? evaluate(board) : draw_score(worker));
 
     // Mate pruning.
 
