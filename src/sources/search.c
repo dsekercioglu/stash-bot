@@ -366,7 +366,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, bool pvNode)
 {
     worker_t *worker = get_worker(board);
-    const score_t oldAlpha = alpha;
     movepick_t mp;
     move_t pv[256];
 
@@ -503,10 +502,6 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     if (moveCount == 0 && board->stack->checkers)
         bestScore = mated_in(ss->plies);
-
-    int bound = (bestScore >= beta) ? LOWER_BOUND : (bestScore <= oldAlpha) ? UPPER_BOUND : EXACT_BOUND;
-
-    tt_save(entry, board->stack->boardKey, score_to_tt(bestScore, ss->plies), eval, 0, bound, bestmove);
 
     return (bestScore);
 }
