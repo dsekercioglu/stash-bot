@@ -208,7 +208,7 @@ score_t scale_endgame(const board_t *board, score_t eg)
     // Other endgames. Decrease the endgame score as the number of pawns of the strong
     // side gets lower.
     else
-        factor = min(128, 88 + 10 * popcount(strongPawns));
+        factor = min(128, 80 + 12 * popcount(strongPawns));
 
     // Be careful to cast to 32-bit integer here before multiplying to avoid overflows
 
