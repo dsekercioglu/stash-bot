@@ -179,6 +179,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         }
     }
 
+    // If the position is not in TT, reduce overall depth
+
+    if (!rootNode && !ttMove && depth >= 9)
+        --depth;
+
     movepick_init(&mp, false, board, worker, ttMove, ss);
 
     move_t currmove;
