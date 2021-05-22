@@ -135,9 +135,12 @@ void init_base_values(tp_vector_t base)
     INIT_BASE_SP(IDX_KNIGHT_OUTPOST, KnightOutpost);
     INIT_BASE_SP(IDX_KNIGHT_CENTER_OUTPOST, KnightCenterOutpost);
     INIT_BASE_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
+    INIT_BASE_SPA(IDX_CLOSED_KNIGHT, ClosedPosKnight, 9);
 
     INIT_BASE_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     INIT_BASE_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    INIT_BASE_SPA(IDX_CLOSED_BISHOP, ClosedPosBishop, 9);
+    INIT_BASE_SPA(IDX_BISHOP_PAWN_COLOR, BishopPawnColor, 9);
 
     INIT_BASE_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);
     INIT_BASE_SP(IDX_ROOK_OPEN, RookOnOpenFile);
@@ -467,10 +470,13 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KNIGHT_OUTPOST, KnightOutpost);
     PRINT_SP(IDX_KNIGHT_CENTER_OUTPOST, KnightCenterOutpost);
     PRINT_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
+    PRINT_SPA(IDX_CLOSED_KNIGHT, ClosedKnight, 9);
     putchar('\n');
 
     PRINT_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     PRINT_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    PRINT_SPA(IDX_CLOSED_BISHOP, ClosedBishop, 9);
+    PRINT_SPA(IDX_BISHOP_PAWN_COLOR, BishopPawnColor, 9);
     putchar('\n');
 
     PRINT_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);

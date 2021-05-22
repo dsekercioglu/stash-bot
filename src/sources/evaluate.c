@@ -87,6 +87,24 @@ const scorepair_t MobilityQ[28] = {
     SPAIR(  43, 169), SPAIR(  16, 175), SPAIR(  37, 187), SPAIR(  55, 184)
 };
 
+scorepair_t ClosedPosKnight[9] = {
+    SPAIR( -11,  -9), SPAIR(  -9,   8), SPAIR(  -5,  21), SPAIR(   0,  25),
+    SPAIR(   0,  34), SPAIR(   2,  34), SPAIR(  11,  34), SPAIR(  12,  34),
+    SPAIR(  12,  34)
+};
+
+scorepair_t ClosedPosBishop[9] = {
+    SPAIR(  -6,   9), SPAIR(  -7,  15), SPAIR(  -5,  10), SPAIR(  -1,  -3),
+    SPAIR(   3, -10), SPAIR(  -5, -12), SPAIR(  -9, -16), SPAIR( -14, -20),
+    SPAIR( -14, -20)
+};
+
+scorepair_t BishopPawnColor[9] = {
+    SPAIR(  13,  34), SPAIR(   5,  20), SPAIR(   2,   6), SPAIR(  -2,  -4),
+    SPAIR(  -5, -14), SPAIR(  -8, -22), SPAIR( -11, -27), SPAIR( -13, -23),
+    SPAIR( -18, -23)
+};
+
 const int AttackRescale[8] = {
     0, 0, 2, 4, 8, 16, 32, 64
 };
@@ -98,6 +116,7 @@ typedef struct evaluation_s
     int attackers[COLOR_NB];
     scorepair_t weights[COLOR_NB];
     int tempos[COLOR_NB];
+    int rammedPawns;
 }
 evaluation_t;
 
@@ -254,6 +273,10 @@ void eval_init(const board_t *board, evaluation_t *eval)
     eval->mobilityZone[WHITE] &= ~(wpawns & (shift_down(occupied) | RANK_2_BITS | RANK_3_BITS));
     eval->mobilityZone[BLACK] &= ~(bpawns & (shift_up(occupied) | RANK_6_BITS | RANK_7_BITS));
 
+    // Get the number of rammed pawns on the board (note that we count them by pairs)
+
+    eval->rammedPawns = popcount(shift_up(wpawns) & bpawns);
+
     // Add pawn attacks on opponent's pieces as tempos
 
     eval->tempos[WHITE] = popcount(color_bb(board, BLACK) & ~piecetype_bb(board, PAWN) & wattacks);
@@ -280,6 +303,12 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
 
         TRACE_ADD(IDX_PIECE + KNIGHT - PAWN, us, 1);
         TRACE_ADD(IDX_PSQT + 48 + (KNIGHT - KNIGHT) * 32 + to_sq32(relative_sq(sq, us)), us, 1);
+
+        // Bonus for Knight in closed positions
+
+        ret += ClosedPosKnight[eval->rammedPawns];
+
+        TRACE_ADD(IDX_CLOSED_KNIGHT + eval->rammedPawns, us, 1);
 
         // If the Knight is pinned, it has no Mobility squares
 
@@ -361,6 +390,20 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
 
         TRACE_ADD(IDX_PIECE + BISHOP - PAWN, us, 1);
         TRACE_ADD(IDX_PSQT + 48 + (BISHOP - KNIGHT) * 32 + to_sq32(relative_sq(sq, us)), us, 1);
+
+        // Penalty for Bishop in closed positions
+
+        ret += ClosedPosBishop[eval->rammedPawns];
+
+        TRACE_ADD(IDX_CLOSED_BISHOP + eval->rammedPawns, us, 1);
+
+        // Penalty for Bishop on the same color as our pawns
+
+        int pawnsOnSameColor = popcount(ourPawns & ((sqbb & DARK_SQUARES) ? DARK_SQUARES : ~DARK_SQUARES));
+
+        ret += BishopPawnColor[pawnsOnSameColor];
+
+        TRACE_ADD(IDX_BISHOP_PAWN_COLOR + pawnsOnSameColor, us, 1);
 
         // If the Bishop is pinned, reduce its mobility to all the squares
         // between the King and the pinner
