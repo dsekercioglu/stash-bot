@@ -125,7 +125,7 @@ score_t eval_kxk(const board_t *board, color_t us)
 
     square_t winningKsq = get_king_square(board, us);
     square_t losingKsq = get_king_square(board, not_color(us));
-    score_t score = board->stack->material[us] + popcount(piecetype_bb(board, PAWN)) * PAWN_MG_SCORE;
+    score_t score = board->stack->material[us] + board->pieceCount[create_piece(us, PAWN)] * PAWN_MG_SCORE;
 
     // Push the weak king to the corner
 
@@ -159,19 +159,12 @@ bool ocb_endgame(const board_t *board)
 {
     // Check if there is exactly one White Bishop and one Black Bishop
 
-    bitboard_t wbishop = piece_bb(board, WHITE, BISHOP);
-
-    if (!wbishop || more_than_one(wbishop))
-        return (false);
-
-    bitboard_t bbishop = piece_bb(board, BLACK, BISHOP);
-
-    if (!bbishop || more_than_one(bbishop))
+    if (board->pieceCount[WHITE_BISHOP] != 1 || board->pieceCount[BLACK_BISHOP] != 1)
         return (false);
 
     // Then check that the Bishops are on opposite colored squares
 
-    bitboard_t dsqMask = (wbishop | bbishop) & DARK_SQUARES;
+    bitboard_t dsqMask = piecetype_bb(board, BISHOP) & DARK_SQUARES;
 
     return (!!dsqMask && !more_than_one(dsqMask));
 }
@@ -194,7 +187,7 @@ score_t scale_endgame(const board_t *board, score_t eg)
 
     // OCB endgames: scale based on the number of remaining pieces of the strong side.
     else if (ocb_endgame(board))
-        factor = 36 + popcount(color_bb(board, strongSide)) * 6;
+        factor = 36 + board->pieceCount[create_piece(strongSide, ALL_PIECES)] * 6;
 
     // Rook endgames: drawish if the pawn advantage is small, and all strong side pawns
     // are on the same side of the board. Don't scale if the defending king is far from
