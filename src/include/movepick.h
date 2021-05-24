@@ -48,7 +48,11 @@ enum
 
     CHECK_PICK_TT,
     CHECK_GEN_ALL,
-    CHECK_PICK_ALL
+    CHECK_PICK_ALL,
+
+    ROOT_PICK_TT,
+    ROOT_GEN_ALL,
+    ROOT_PICK_ALL
 };
 
 typedef struct movepick_s
@@ -67,7 +71,7 @@ typedef struct movepick_s
 }
 movepick_t;
 
-void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
+void movepick_init(movepick_t *mp, bool inQsearch, bool rootNode, const board_t *board,
     const worker_t *worker, move_t ttMove, searchstack_t *ss);
 
 move_t  movepick_next_move(movepick_t *mp, bool skipQuiets);
