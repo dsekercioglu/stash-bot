@@ -32,9 +32,13 @@ typedef struct rootMove_s
     int seldepth;
     score_t prevScore;
     score_t score;
+    uint64_t nodes;
     move_t  pv[512];
 }
 root_move_t;
+
+void sort_root_moves(root_move_t *begin, root_move_t *end);
+root_move_t *find_root_move(root_move_t *begin, root_move_t *end, move_t move);
 
 // Struct for worker thread data.
 

@@ -182,7 +182,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         }
     }
 
-    movepick_init(&mp, false, board, worker, ttMove, ss);
+    movepick_init(&mp, false, rootNode, board, worker, ttMove, ss);
 
     move_t currmove;
     move_t bestmove = NO_MOVE;
@@ -240,6 +240,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
         boardstack_t stack;
         score_t score = -NO_SCORE;
+        uint64_t rootNodes = worker->nodes;
         int R;
         int extension = 0;
         int newDepth = depth - 1;
@@ -313,6 +314,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         {
             root_move_t *cur = find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove);
+
+            cur->nodes += worker->nodes - rootNodes;
 
             // Update PV for root
 
@@ -431,7 +434,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     (ss + 1)->plies = ss->plies + 1;
 
-    movepick_init(&mp, true, board, worker, ttMove, ss);
+    movepick_init(&mp, true, false, board, worker, ttMove, ss);
 
     move_t currmove;
     move_t bestmove = NO_MOVE;

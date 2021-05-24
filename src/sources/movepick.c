@@ -16,14 +16,18 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <math.h>
 #include "movepick.h"
 
-void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
+void movepick_init(movepick_t *mp, bool inQsearch, bool rootNode, const board_t *board,
     const worker_t *worker, move_t ttMove, searchstack_t *ss)
 {
     mp->inQsearch = inQsearch;
 
-    if (board->stack->checkers)
+    if (rootNode)
+        mp->stage = ROOT_PICK_TT + !(ttMove && move_is_pseudo_legal(board, ttMove));
+
+    else if (board->stack->checkers)
         mp->stage = CHECK_PICK_TT + !(ttMove && move_is_pseudo_legal(board, ttMove));
 
     else
@@ -91,6 +95,25 @@ static void score_quiet(movepick_t *mp, extmove_t *begin, extmove_t *end)
     }
 }
 
+static void score_root(movepick_t *mp, extmove_t *begin, extmove_t *end)
+{
+    while (begin < end)
+    {
+        root_move_t *cur = find_root_move(mp->worker->rootMoves, mp->worker->rootMoves + mp->worker->rootCount,
+            begin->move);
+
+        // Can happen when "go searchmoves" is used
+        if (cur == NULL)
+            begin->score = -NO_SCORE;
+        else
+        {
+            // Transform the node count via a logarithm into a score.
+            begin->score = (log((double)cur->nodes + 1.0) - 20.0) * 1000.0;
+        }
+        ++begin;
+    }
+}
+
 static void score_evasions(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
     while (begin < end)
@@ -127,6 +150,7 @@ __top:
     {
         case PICK_TT:
         case CHECK_PICK_TT:
+        case ROOT_PICK_TT:
             ++mp->stage;
             return (mp->ttMove);
 
@@ -229,6 +253,7 @@ __top:
             // Fallthrough
 
         case CHECK_PICK_ALL:
+        case ROOT_PICK_ALL:
             while (mp->cur < mp->list.last)
             {
                 place_top_move(mp->cur, mp->list.last);
@@ -239,6 +264,13 @@ __top:
                 mp->cur++;
             }
             break ;
+
+        case ROOT_GEN_ALL:
+            ++mp->stage;
+            mp->list.last = generate_all(mp->list.moves, mp->board);
+            score_root(mp, mp->list.moves, mp->list.last);
+            mp->cur = mp->list.moves;
+            goto __top;
     }
     return (NO_MOVE);
 }
