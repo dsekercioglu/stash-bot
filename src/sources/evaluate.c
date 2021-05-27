@@ -57,6 +57,7 @@ const scorepair_t KnightSolidOutpost = SPAIR(14, 43);
 
 const scorepair_t BishopPairBonus = SPAIR(15, 110);
 const scorepair_t BishopShielded = SPAIR(10, 28);
+const scorepair_t BishopLongDiagonal = SPAIR(13, 21);
 
 // Rook eval terms
 
@@ -412,6 +413,14 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
         {
             ret += BishopShielded;
             TRACE_ADD(IDX_BISHOP_SHIELDED, us, 1);
+        }
+
+        // Bonus for Bishop on long diagonal
+
+        if (more_than_one(b & SMALL_CENTER_BITS))
+        {
+            ret += BishopLongDiagonal;
+            TRACE_ADD(IDX_BISHOP_LONG_DIAG, us, 1);
         }
 
         // Bonus for a Bishop on King Attack zone

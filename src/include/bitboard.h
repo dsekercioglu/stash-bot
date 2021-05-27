@@ -59,6 +59,8 @@ typedef uint64_t bitboard_t;
 # define QUEENSIDE_BITS 0x0F0F0F0F0F0F0F0Full
 # define CENTER_FILES_BITS 0x3C3C3C3C3C3C3C3Cull
 
+# define SMALL_CENTER_BITS 0x0000001818000000ull
+
 extern bitboard_t SquareBits[SQUARE_NB];
 extern bitboard_t LineBits[SQUARE_NB][SQUARE_NB];
 extern bitboard_t PseudoMoves[PIECETYPE_NB][SQUARE_NB];
