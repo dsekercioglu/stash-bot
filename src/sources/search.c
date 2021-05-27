@@ -220,7 +220,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
             // Futility Pruning.
 
-            if (depth <= 4 && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= 5 && isQuiet && eval + 240 + 80 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
