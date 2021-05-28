@@ -273,11 +273,6 @@ void eval_init(const board_t *board, evaluation_t *eval)
     eval->mobilityZone[WHITE] &= ~(wpawns & (shift_down(occupied) | RANK_2_BITS | RANK_3_BITS));
     eval->mobilityZone[BLACK] &= ~(bpawns & (shift_up(occupied) | RANK_6_BITS | RANK_7_BITS));
 
-    // Add pawn attacks on opponent's pieces as tempos
-
-    eval->tempos[WHITE] = popcount(color_bb(board, BLACK) & ~piecetype_bb(board, PAWN) & wattacks);
-    eval->tempos[BLACK] = popcount(color_bb(board, WHITE) & ~piecetype_bb(board, PAWN) & battacks);
-
     // If not in check, add one tempo to the side to move
 
     eval->tempos[board->sideToMove] += !board->stack->checkers;
@@ -287,7 +282,6 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
 {
     scorepair_t ret = 0;
     bitboard_t bb = piece_bb(board, us, KNIGHT);
-    bitboard_t targets = pieces_bb(board, not_color(us), ROOK, QUEEN);
     bitboard_t ourPawns = piece_bb(board, us, PAWN);
     bitboard_t outpost = RANK_4_BITS | RANK_5_BITS | (us == WHITE ? RANK_6_BITS : RANK_3_BITS);
 
@@ -355,11 +349,6 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
             TRACE_ADD(IDX_KS_KNIGHT, us, 1);
             TRACE_ADD(IDX_KS_ATTACK, us, popcount(b & eval->kingZone[us]));
         }
-
-        // Tempo bonus for a Knight attacking the opponent's major pieces
-
-        if (b & targets)
-            eval->tempos[us] += popcount(b & targets);
     }
     return (ret);
 }
@@ -370,7 +359,6 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
     const bitboard_t occupancy = occupancy_bb(board);
     bitboard_t bb = piece_bb(board, us, BISHOP);
     bitboard_t ourPawns = piece_bb(board, us, PAWN);
-    bitboard_t targets = pieces_bb(board, not_color(us), ROOK, QUEEN);
 
     // Bonus for the Bishop pair
 
@@ -424,11 +412,6 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
             TRACE_ADD(IDX_KS_BISHOP, us, 1);
             TRACE_ADD(IDX_KS_ATTACK, us, popcount(b & eval->kingZone[us]));
         }
-
-        // Tempo bonus for a Bishop attacking the opponent's major pieces
-
-        if (b & targets)
-            eval->tempos[us] += popcount(b & targets);
     }
     return (ret);
 }
@@ -495,11 +478,6 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
             TRACE_ADD(IDX_KS_ROOK, us, 1);
             TRACE_ADD(IDX_KS_ATTACK, us, popcount(b & eval->kingZone[us]));
         }
-
-        // Tempo bonus for a Rook attacking the opponent's Queen(s)
-
-        if (b & theirQueens)
-            eval->tempos[us] += popcount(b & theirQueens);
     }
     return (ret);
 }
@@ -604,6 +582,28 @@ scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t us
     return (0);
 }
 
+void evaluate_initiative(const board_t *board, evaluation_t *eval, color_t us)
+{
+    color_t them = not_color(us);
+    bitboard_t attackedSquares;
+    bitboard_t threatened;
+
+    // Pawn attacks on Minors
+    attackedSquares = eval->attackedBy[us][PAWN];
+    threatened = pieces_bb(board, them, KNIGHT, BISHOP) & attackedSquares;
+
+    // Minor + Pawn attacks on Rooks
+    attackedSquares |= eval->attackedBy[us][KNIGHT] | eval->attackedBy[us][BISHOP];
+    threatened |= piece_bb(board, them, ROOK) & attackedSquares;
+
+    // Rook + Minor + Pawn attacks on Queens
+    attackedSquares |= eval->attackedBy[us][ROOK];
+    threatened |= piece_bb(board, them, QUEEN) & attackedSquares;
+
+    // Increase tempo counter by the number of attacked pieces
+    eval->tempos[us] += popcount(threatened);
+}
+
 score_t evaluate(const board_t *board)
 {
     TRACE_INIT;
@@ -667,6 +667,9 @@ score_t evaluate(const board_t *board)
     // Compute Initiative based on how many tempos each side have. The scaling
     // is quadratic so that hanging pieces that can be captured are easily spotted
     // by the eval
+
+    evaluate_initiative(board, &eval, WHITE);
+    evaluate_initiative(board, &eval, BLACK);
 
     int tempoValue = (eval.tempos[WHITE] * eval.tempos[WHITE] - eval.tempos[BLACK] * eval.tempos[BLACK]);
     tapered += Initiative * tempoValue;
