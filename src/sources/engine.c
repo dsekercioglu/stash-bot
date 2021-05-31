@@ -218,7 +218,7 @@ void *engine_go(void *ptr)
             // very volatile. We also disable them when the search score is high
             // to improve mate search.
 
-            if (iterDepth <= 9 || abs(pvScore) >= 1000)
+            if (iterDepth <= 9)
             {
                 delta = 0;
                 alpha = -INF_SCORE;
@@ -226,7 +226,7 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = 15;
+                delta = max(15, sqrt(abs(pvScore)));
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
