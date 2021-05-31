@@ -148,7 +148,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = 3 + min((eval - beta) / 128, 3) + (depth / 4);
+        int R = (1336 + depth * 93) / 256;
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
