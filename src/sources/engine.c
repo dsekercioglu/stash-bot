@@ -226,7 +226,7 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = max(15, sqrt(abs(pvScore)));
+                delta = max(10, sqrt(abs(pvScore)));
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
