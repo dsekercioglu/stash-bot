@@ -283,6 +283,10 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
                 R += !pvNode;
 
+                // Increase for non-improving nodes with high reductions
+
+                R += !improving && R >= 4;
+
                 // Increase/decrease based on history
 
                 R -= histScore / 4000;
