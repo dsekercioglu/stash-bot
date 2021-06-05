@@ -66,7 +66,7 @@ static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
         if (move_type(begin->move) == PROMOTION)
         {
             captured = PAWN;
-            begin->score = promotion_type(begin->move) == QUEEN ? 4096 : 0;
+            begin->score = promotion_type(begin->move) == QUEEN ? 16384 : 0;
         }
         else if (move_type(begin->move) == EN_PASSANT)
         {
