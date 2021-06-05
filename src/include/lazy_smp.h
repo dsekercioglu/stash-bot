@@ -45,6 +45,7 @@ typedef struct worker_s
     board_t board;
     boardstack_t *stack;
     butterfly_history_t bfHistory;
+    capture_history_t cpHistory;
     continuation_history_t ctHistory;
     countermove_history_t cmHistory;
     pawn_entry_t *pawnTable;

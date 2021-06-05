@@ -53,21 +53,33 @@ void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
 
 static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
+    static const score_t VictimBonus[PIECETYPE_NB] = {
+        0, 0, 1024, 1024, 2048, 4096, 0, 0
+    };
+
     while (begin < end)
     {
+        piece_t piece = piece_on(mp->board, from_sq(begin->move));
+        square_t to = to_sq(begin->move);
+        piecetype_t captured;
+
         if (move_type(begin->move) == PROMOTION)
-            begin->score = promotion_type(begin->move) == QUEEN ? 4096 : -1;
-
+        {
+            captured = PAWN;
+            begin->score = promotion_type(begin->move) == QUEEN ? 4096 : 0;
+        }
         else if (move_type(begin->move) == EN_PASSANT)
-            begin->score = PAWN * 8 - PAWN;
-
+        {
+            captured = PAWN;
+            begin->score = 0;
+        }
         else
         {
-            piecetype_t moved = piece_type(piece_on(mp->board, from_sq(begin->move)));
-            piecetype_t captured = piece_type(piece_on(mp->board, to_sq(begin->move)));
-
-            begin->score = captured * 8 - moved;
+            captured = piece_type(piece_on(mp->board, to));
+            begin->score = VictimBonus[captured];
         }
+
+        begin->score += get_cp_history_score(mp->worker->cpHistory, piece, to, captured);
 
         ++begin;
     }
@@ -142,7 +154,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && mp->cur->score >= 0 && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, 0))
                     return ((mp->cur++)->move);
 
                 *(mp->badCaptures++) = *(mp->cur++);

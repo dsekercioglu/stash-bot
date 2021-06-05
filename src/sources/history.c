@@ -70,3 +70,29 @@ void    update_quiet_history(const board_t *board, int depth,
             add_pc_history(*(ss - 2)->pieceHistory, piece, to, -bonus);
     }
 }
+
+void update_capture_history(const board_t *board, int depth,
+    move_t bestmove, const move_t captures[32], int ccount)
+{
+    capture_history_t  *cpHist = &get_worker(board)->cpHistory;
+    int bonus = (depth <= 12) ? 32 * depth * depth : 40;
+    piece_t piece;
+    square_t to;
+    piecetype_t captured;
+
+    if (is_capture_or_promotion(board, bestmove))
+    {
+        piece = piece_on(board, from_sq(bestmove));
+        to = to_sq(bestmove);
+        captured = (move_type(bestmove) == NORMAL_MOVE) ? piece_type(piece_on(board, to)) : PAWN;
+        add_cp_history(*cpHist, piece, to, captured, bonus);
+    }
+
+    for (int i = 0; i < ccount; ++i)
+    {
+        piece = piece_on(board, from_sq(captures[i]));
+        to = to_sq(captures[i]);
+        captured = (move_type(captures[i]) == NORMAL_MOVE) ? piece_type(piece_on(board, to)) : PAWN;
+        add_cp_history(*cpHist, piece, to, captured, -bonus);
+    }
+}
