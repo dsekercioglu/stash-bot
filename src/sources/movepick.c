@@ -54,7 +54,7 @@ void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
 static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
     static const score_t VictimBonus[PIECETYPE_NB] = {
-        0, 0, 1024, 1024, 2048, 4096, 0, 0
+        0, 0, 768, 768, 1536, 3072, 0, 0
     };
 
     while (begin < end)
