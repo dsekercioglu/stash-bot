@@ -253,7 +253,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
                 && (ttBound & LOWER_BOUND) && ttDepth >= depth - 2)
             {
                 score_t singularBeta = ttScore - depth;
-                int singularDepth = depth / 2;
+                int singularDepth = depth / 2 + 1;
 
                 ss->excludedMove = ttMove;
                 score_t singularScore = search(board, singularDepth, singularBeta - 1, singularBeta, ss, false);
