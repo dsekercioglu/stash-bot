@@ -84,7 +84,7 @@ void update_capture_history(const board_t *board, int depth,
     {
         piece = piece_on(board, from_sq(bestmove));
         to = to_sq(bestmove);
-        captured = (move_type(bestmove) == NORMAL_MOVE) ? piece_type(piece_on(board, to)) : PAWN;
+        captured = piece_type(piece_on(board, to));
         add_cp_history(*cpHist, piece, to, captured, bonus);
     }
 
@@ -92,7 +92,7 @@ void update_capture_history(const board_t *board, int depth,
     {
         piece = piece_on(board, from_sq(captures[i]));
         to = to_sq(captures[i]);
-        captured = (move_type(captures[i]) == NORMAL_MOVE) ? piece_type(piece_on(board, to)) : PAWN;
+        captured = piece_type(piece_on(board, to));
         add_cp_history(*cpHist, piece, to, captured, -bonus);
     }
 }

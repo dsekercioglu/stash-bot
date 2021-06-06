@@ -61,24 +61,12 @@ static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
     {
         piece_t piece = piece_on(mp->board, from_sq(begin->move));
         square_t to = to_sq(begin->move);
-        piecetype_t captured;
+        piecetype_t captured = piece_type(piece_on(mp->board, to));
 
-        if (move_type(begin->move) == PROMOTION)
-        {
-            captured = PAWN;
-            begin->score = promotion_type(begin->move) == QUEEN ? 8192 : 0;
-        }
-        else if (move_type(begin->move) == EN_PASSANT)
-        {
-            captured = PAWN;
-            begin->score = 0;
-        }
-        else
-        {
-            captured = piece_type(piece_on(mp->board, to));
-            begin->score = VictimBonus[captured];
-        }
-
+        // Small trick using the fact that a move from pseudo-legal movegen with
+        // a queen promotion tag is implicitly a promotion.
+        begin->score = promotion_type(begin->move) == QUEEN ? 8192 : 0;
+        begin->score += VictimBonus[captured];
         begin->score += get_cp_history_score(mp->worker->cpHistory, piece, to, captured);
 
         ++begin;
