@@ -24,6 +24,17 @@ transposition_t TT = {
     0, NULL, 0
 };
 
+void tt_bzero(void)
+{
+    const tt_entry_t emptyEntry = {
+        0, NO_SCORE, NO_SCORE, 0, NO_BOUND, NO_MOVE
+    };
+
+    for (size_t cluster = 0; cluster < TT.clusterCount; ++cluster)
+        for (size_t i = 0; i < ClusterSize; ++i)
+            TT.table[cluster][i] = emptyEntry;
+}
+
 int tt_hashfull(void)
 {
     int count = 0;

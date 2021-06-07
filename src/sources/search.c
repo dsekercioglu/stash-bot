@@ -90,13 +90,18 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         ttBound = entry->genbound & 3;
         ttDepth = entry->depth;
 
-        if (ttDepth >= depth && !pvNode)
-            if (((ttBound & LOWER_BOUND) && ttScore >= beta) || ((ttBound & UPPER_BOUND) && ttScore <= alpha))
-                return (ttScore);
+        if (!pvNode && ttDepth >= depth && ttScore != NO_SCORE
+            && (ttBound & (ttScore >= beta ? LOWER_BOUND : UPPER_BOUND)))
+            return (ttScore);
 
         ttMove = entry->bestmove;
         eval = ss->staticEval = entry->eval;
-        if (ttBound & (ttScore > eval ? LOWER_BOUND : UPPER_BOUND))
+
+        if (eval == NO_SCORE)
+            eval = ss->staticEval = evaluate(board);
+
+        if (ttScore != NO_SCORE
+            && (ttBound & (ttScore > eval ? LOWER_BOUND : UPPER_BOUND)))
             eval = ttScore;
     }
     else
@@ -250,6 +255,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         if (!rootNode)
         {
             if (depth >= 9 && currmove == ttMove && !ss->excludedMove
+                && ttScore != NO_SCORE
                 && (ttBound & LOWER_BOUND) && ttDepth >= depth - 2)
             {
                 score_t singularBeta = ttScore - depth;
@@ -400,6 +406,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     // Check for interesting tt values
 
+    score_t eval = NO_SCORE;
     score_t ttScore = NO_SCORE;
     int ttBound = NO_BOUND;
     bool found;
@@ -410,12 +417,15 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
         ttBound = entry->genbound & 3;
         ttScore = score_from_tt(entry->score, ss->plies);
 
-        if (!pvNode && (((ttBound & LOWER_BOUND) && ttScore >= beta)
-            || ((ttBound & UPPER_BOUND) && ttScore <= alpha)))
+        if (!pvNode && ttScore != NO_SCORE && (ttBound & (ttScore >= beta ? LOWER_BOUND : UPPER_BOUND)))
             return (ttScore);
+
+        eval = entry->eval;
     }
 
-    score_t eval = found ? entry->eval : evaluate(board);
+    if (eval == NO_SCORE)
+        eval = evaluate(board);
+
     score_t bestScore = -INF_SCORE;
 
     // If not playing a capture is better because of better quiet moves,
@@ -424,7 +434,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     if (!board->stack->checkers)
     {
         bestScore = eval;
-        if (ttBound & (ttScore > eval ? LOWER_BOUND : UPPER_BOUND))
+        if (ttScore != NO_SCORE && (ttBound & (ttScore > eval ? LOWER_BOUND : UPPER_BOUND)))
             bestScore = ttScore;
 
         alpha = max(alpha, bestScore);
