@@ -80,10 +80,8 @@ void tt_save(tt_entry_t *entry, hashkey_t k, score_t s, score_t e, int d, int b,
     if (m || k != entry->key)
         entry->bestmove = (uint16_t)m;
 
-    // Do not erase entries with higher depth for same position.
-
     if (b == EXACT_BOUND || k != entry->key
-        || d * (3 + ((entry->genbound & 3) == EXACT_BOUND)) / 2 >= entry->depth)
+        || d * (3 - ((entry->genbound & 3) == EXACT_BOUND)) / 2 >= entry->depth)
     {
         entry->key = k;
         entry->score = s;
