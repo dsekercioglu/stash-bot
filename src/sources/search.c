@@ -186,6 +186,8 @@ __main_loop:
     int moveCount = 0;
     move_t quiets[64];
     int qcount = 0;
+    move_t captures[32];
+    int ccount = 0;
     bool skipQuiets = false;
 
     while ((currmove = movepick_next_move(&mp, skipQuiets)) != NO_MOVE)
@@ -241,8 +243,16 @@ __main_loop:
         int extension = 0;
         int newDepth = depth - 1;
         bool givesCheck = move_gives_check(board, currmove);
+        piece_t piece = piece_on(board, from_sq(currmove));
+        square_t to = to_sq(currmove);
+
+        piecetype_t captured = move_type(currmove) != NORMAL_MOVE
+            ? PAWN
+            : piece_type(piece_on(board, to));
+
         int histScore = isQuiet
-            ? get_bf_history_score(worker->bfHistory, piece_on(board, from_sq(currmove)), currmove) : 0;
+            ? get_bf_history_score(worker->bfHistory, piece, currmove)
+            : get_cp_history_score(worker->cpHistory, piece, to, captured);
 
         if (!rootNode)
         {
@@ -287,7 +297,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+                R = clamp((2000 - histScore) / 2000, 0, 3);
         }
         else
             R = 0;
@@ -344,6 +354,7 @@ __main_loop:
                 {
                     if (isQuiet)
                         update_quiet_history(board, depth, bestmove, quiets, qcount, ss);
+                    update_capture_history(board, depth, bestmove, captures, ccount);
                     break ;
                 }
             }
@@ -351,6 +362,8 @@ __main_loop:
 
         if (qcount < 64 && isQuiet)
             quiets[qcount++] = currmove;
+        else if (ccount < 32 && !isQuiet)
+            captures[ccount++] = currmove;
     }
 
     // Checkmate/Stalemate ?
