@@ -54,9 +54,6 @@ typedef enum
 }
 bestmove_type_t;
 
-extern const double BestmoveTypeScale[BM_TYPE_NB];
-extern const double BestmoveStabilityScale[5];
-
 typedef enum tm_mode_e
 {
     Tournament,
@@ -78,7 +75,6 @@ typedef struct timeman_s
     score_t prevScore;
     move_t prevBestmove;
     int stability;
-    bestmove_type_t type;
 }
 timeman_t;
 
