@@ -177,6 +177,11 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         }
     }
 
+    // If the current position isn't in TT and the search depth is high, decrease it by one ply.
+
+    if (!rootNode && !found && depth >= 7)
+        --depth;
+
 __main_loop:
 
     movepick_init(&mp, false, board, worker, ttMove, ss);
