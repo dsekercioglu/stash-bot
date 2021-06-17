@@ -56,7 +56,7 @@ static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
     while (begin < end)
     {
         if (move_type(begin->move) == PROMOTION)
-            begin->score = promotion_type(begin->move) == QUEEN ? 4096 : -1;
+            begin->score = promotion_type(begin->move) * 8 - PAWN;
 
         else if (move_type(begin->move) == EN_PASSANT)
             begin->score = PAWN * 8 - PAWN;
@@ -142,7 +142,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && mp->cur->score >= 0 && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, 0))
                     return ((mp->cur++)->move);
 
                 *(mp->badCaptures++) = *(mp->cur++);

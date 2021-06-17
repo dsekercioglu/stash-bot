@@ -749,7 +749,7 @@ bool move_is_pseudo_legal(const board_t *board, move_t move)
 
 bool see_greater_than(const board_t *board, move_t m, score_t threshold)
 {
-    if (move_type(m) != NORMAL_MOVE)
+    if (move_type(m) == CASTLING || move_type(m) == EN_PASSANT)
         return (threshold <= 0);
 
     square_t from = from_sq(m), to = to_sq(m);
