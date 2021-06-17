@@ -26,10 +26,12 @@
 
 # define THREADS 3
 # define ITERS 10000
-# define LEARNING_RATE 0.1
+# define LEARNING_RATE 0.001
 # define LR_DROP_ITERS 2500
-# define LR_DROP_VALUE 2.0
+# define LR_DROP_VALUE 1.0
 # define BATCH_SIZE 32768
+# define MOMENTUM_COEFF 0.9
+# define VELOCITY_COEFF 0.999
 
 typedef struct tune_tuple_s
 {
