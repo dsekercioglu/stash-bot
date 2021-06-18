@@ -445,7 +445,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if delta pruning is possible.
 
     const bool deltaPruning = (!board->stack->checkers && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t deltaBase = bestScore + PAWN_EG_SCORE * 2;
+    const score_t deltaBase = bestScore + 300;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
