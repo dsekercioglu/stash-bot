@@ -26,7 +26,7 @@
 void start_tuning_session(const char *filename)
 {
 #ifdef TUNE
-    tp_vector_t delta = {}, base = {}, adagrad = {};
+    tp_vector_t delta = {}, base = {}, momentum = {}, velocity = {};
     double K, lr = LEARNING_RATE;
     tune_data_t data = {};
 
@@ -44,15 +44,19 @@ void start_tuning_session(const char *filename)
             tp_vector_t gradient = {};
             compute_gradient(&data, gradient, delta, K, batchIdx);
 
-            const double scale = (K * 2.0 / BATCH_SIZE) * lr;
-
             for (int i = 0; i < IDX_COUNT; ++i)
             {
-                adagrad[i][MIDGAME] += pow(2.0 * gradient[i][MIDGAME] / BATCH_SIZE, 2.0);
-                adagrad[i][ENDGAME] += pow(2.0 * gradient[i][ENDGAME] / BATCH_SIZE, 2.0);
+                double mgGrad = (-K * 200.0) * gradient[i][MIDGAME] / BATCH_SIZE;
+                double egGrad = (-K * 200.0) * gradient[i][ENDGAME] / BATCH_SIZE;
 
-                delta[i][MIDGAME] += gradient[i][MIDGAME] * scale / sqrt(1e-8 + adagrad[i][MIDGAME]);
-                delta[i][ENDGAME] += gradient[i][ENDGAME] * scale / sqrt(1e-8 + adagrad[i][ENDGAME]);
+                momentum[i][MIDGAME] = (MOMENTUM_COEFF * momentum[i][MIDGAME]) + (1.0 - MOMENTUM_COEFF) * mgGrad;
+                momentum[i][ENDGAME] = (MOMENTUM_COEFF * momentum[i][ENDGAME]) + (1.0 - MOMENTUM_COEFF) * egGrad;
+
+                velocity[i][MIDGAME] = (VELOCITY_COEFF * velocity[i][MIDGAME]) + (1.0 - VELOCITY_COEFF) * pow(mgGrad, 2.0);
+                velocity[i][ENDGAME] = (VELOCITY_COEFF * velocity[i][ENDGAME]) + (1.0 - VELOCITY_COEFF) * pow(egGrad, 2.0);
+
+                delta[i][MIDGAME] -= lr * momentum[i][MIDGAME] * (1.0 / sqrt(1e-8 + velocity[i][MIDGAME]));
+                delta[i][ENDGAME] -= lr * momentum[i][ENDGAME] * (1.0 / sqrt(1e-8 + velocity[i][ENDGAME]));
             }
         }
 
