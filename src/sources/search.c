@@ -187,6 +187,7 @@ __main_loop:
     move_t quiets[64];
     int qcount = 0;
     bool skipQuiets = false;
+    bool singularNode = false;
 
     while ((currmove = movepick_next_move(&mp, skipQuiets)) != NO_MOVE)
     {
@@ -257,7 +258,10 @@ __main_loop:
                 ss->excludedMove = NO_MOVE;
 
                 if (singularScore < singularBeta)
+                {
                     extension = 1;
+                    singularNode = true;
+                }
             }
             else if (givesCheck)
                 extension = 1;
@@ -279,6 +283,10 @@ __main_loop:
                 // Increase for non-PV nodes
 
                 R += !pvNode;
+
+                // Decrease if the TT move has been singularly extended
+
+                R -= singularNode;
 
                 // Increase/decrease based on history
 
