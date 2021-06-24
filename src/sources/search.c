@@ -127,7 +127,15 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
-    improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
+    if (ss->plies >= 2)
+    {
+        // If we were in check two plies ago, use the score from 4 plies ago.
+
+        if ((ss - 2)->staticEval == NO_SCORE && ss->plies >= 4)
+            improving = ss->staticEval > (ss - 4)->staticEval;
+        else
+            improving = ss->staticEval > (ss - 2)->staticEval;
+    }
 
     // Futility Pruning.
 
