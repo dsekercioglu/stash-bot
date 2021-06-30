@@ -105,7 +105,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     if (inCheck)
     {
-        eval = ss->staticEval = NO_SCORE;
+        eval = ss->staticEval = -NO_SCORE;
         improving = false;
         goto __main_loop;
     }
@@ -427,7 +427,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     if (inCheck)
     {
-        eval = NO_SCORE;
+        eval = -NO_SCORE;
         bestScore = -INF_SCORE;
     }
     else
