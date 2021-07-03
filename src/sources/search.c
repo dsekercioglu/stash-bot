@@ -285,9 +285,9 @@ __main_loop:
             {
                 R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
-                // Increase for non-PV nodes
+                // Increase for non-PV and non-improving nodes
 
-                R += !pvNode;
+                R += !pvNode + !improving;
 
                 // Increase/decrease based on history
 
