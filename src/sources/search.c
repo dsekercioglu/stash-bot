@@ -39,6 +39,47 @@ void update_pv(move_t *pv, move_t bestmove, move_t *subPv)
     pv[i + 1] = NO_MOVE;
 }
 
+score_t RazorMargin = 150;
+
+long FutilityDepth = 8;
+score_t FutilityMargin = 80;
+
+long NmpBase = 96;
+long NmpDepthScale = 8;
+score_t NmpEvalScale = 128;
+long NmpEvalMaxDepth = 3;
+long NmpVerifDepth = 10;
+long NmpVerifScale = 24;
+
+long LmpMaxDepth = 5;
+long LmpImproving = 32;
+long LmpNotImproving = 20;
+
+long FtpMaxDepth = 4;
+score_t FtpMarginBase = 240;
+score_t FtpMarginDepth = 80;
+
+long SeeMaxDepth = 5;
+score_t SeeQuietScale = -80;
+score_t SeeCaptureScale = -25;
+
+long SingularMinDepth = 9;
+long SingularDepthDiff = 2;
+
+long LmrHistoryScale = 4000;
+long LmrHistoryLower = -2;
+long LmrHistoryUpper = 2;
+
+score_t DeltaMargin = PAWN_EG_SCORE * 2;
+
+double LmrB = -1.34;
+double LmrK = 1.26;
+
+score_t AspiWindowSize = 15;
+score_t AspiWindowEval = 0;
+score_t AspiEnlargeBase = 0;
+long AspiEnlargeScale = 32;
+
 score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchstack_t *ss, bool pvNode)
 {
     if (depth <= 0)
@@ -133,14 +174,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
+    if (!pvNode && depth == 1 && ss->staticEval + RazorMargin <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 80 * depth >= beta && eval < VICTORY)
+    if (!pvNode && depth <= FutilityDepth && eval - FutilityMargin * depth >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -152,7 +193,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = 3 + min((eval - beta) / 128, 3) + (depth / 4);
+        int R = (NmpBase + depth * NmpDepthScale) / 32
+            + min((eval - beta) / NmpEvalScale, NmpEvalMaxDepth);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -170,12 +212,12 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
             // Do not trust win claims.
 
-            if (worker->verifPlies || (depth <= 10 && abs(beta) < VICTORY))
+            if (worker->verifPlies || (depth <= NmpVerifDepth && abs(beta) < VICTORY))
                 return (score);
 
             // Zugzwang checking.
 
-            worker->verifPlies = ss->plies + (depth - R) * 3 / 4;
+            worker->verifPlies = ss->plies + (depth - R) * NmpVerifScale / 32;
 
             score_t zzscore = search(board, depth - R, beta - 1, beta, ss, false);
 
@@ -221,17 +263,17 @@ __main_loop:
         {
             // Late Move Pruning.
 
-            if (depth <= 5 && moveCount > depth * (improving ? 8 : 5))
+            if (depth <= LmpMaxDepth && moveCount > depth * (improving ? LmpImproving : LmpNotImproving) / 4)
                 skipQuiets = true;
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= FtpMaxDepth && !inCheck && isQuiet && eval + FtpMarginBase + FtpMarginDepth * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -80 * depth : -25 * depth * depth)))
+            if (depth <= SeeMaxDepth && !see_greater_than(board, currmove, (isQuiet ? SeeQuietScale * depth : SeeCaptureScale * depth * depth)))
                 continue ;
         }
 
@@ -255,8 +297,8 @@ __main_loop:
 
         if (!rootNode)
         {
-            if (depth >= 9 && currmove == ttMove && !ss->excludedMove
-                && (ttBound & LOWER_BOUND) && ttDepth >= depth - 2)
+            if (depth >= SingularMinDepth && currmove == ttMove && !ss->excludedMove
+                && (ttBound & LOWER_BOUND) && ttDepth >= depth - SingularDepthDiff)
             {
                 score_t singularBeta = ttScore - depth;
                 int singularDepth = depth / 2;
@@ -291,7 +333,7 @@ __main_loop:
 
                 // Increase/decrease based on history
 
-                R -= histScore / 4000;
+                R -= clamp(histScore / LmrHistoryScale, LmrHistoryLower, LmrHistoryUpper);
 
                 R = clamp(R, 0, newDepth - 1);
             }
@@ -466,7 +508,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if delta pruning is possible.
 
     const bool deltaPruning = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t deltaBase = bestScore + PAWN_EG_SCORE * 2;
+    const score_t deltaBase = bestScore + DeltaMargin;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {

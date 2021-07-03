@@ -33,9 +33,11 @@ int Reductions[64][64];
 
 void init_reduction_table(void)
 {
+    extern double LmrB, LmrK;
+
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+            Reductions[d][m] = LmrB + log(d) * log(m) / LmrK;
 }
 
 uint64_t perft(board_t *board, unsigned int depth)
@@ -225,7 +227,9 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = 15;
+                extern score_t AspiWindowSize, AspiWindowEval;
+
+                delta = AspiWindowSize + abs(pvScore) * AspiWindowEval / 128;
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
@@ -276,17 +280,20 @@ __retry:
 
             // Update aspiration window bounds in case of fail low/high
 
+            extern score_t AspiEnlargeBase;
+            extern long AspiEnlargeScale;
+
             if (bound == UPPER_BOUND)
             {
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
-                delta += delta / 4;
+                delta += AspiEnlargeBase + (long)delta * AspiEnlargeScale / 128;
                 goto __retry;
             }
             else if (bound == LOWER_BOUND)
             {
                 beta = min(INF_SCORE, (int)pvScore + delta);
-                delta += delta / 4;
+                delta += AspiEnlargeBase + (long)delta * AspiEnlargeScale / 128;
                 goto __retry;
             }
         }

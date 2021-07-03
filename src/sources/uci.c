@@ -520,6 +520,53 @@ void uci_loop(int argc, char **argv)
     add_option_check(&OptionList, "Ponder", &Options.ponder, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
 
+    TUNE_SCORE(RazorMargin, 75, 300);
+
+    TUNE_LONG(FutilityDepth, 4, 12);
+    TUNE_SCORE(FutilityMargin, 40, 160);
+    
+    TUNE_LONG(NmpBase, 48, 144);
+    TUNE_LONG(NmpDepthScale, 4, 16);
+    TUNE_SCORE(NmpEvalScale, 64, 256);
+    TUNE_LONG(NmpEvalMaxDepth, 1, 5);
+    TUNE_LONG(NmpVerifDepth, 7, 14);
+    TUNE_LONG(NmpVerifScale, 16, 32);
+
+    TUNE_LONG(LmpMaxDepth, 3, 7);
+    TUNE_LONG(LmpImproving, 16, 48);
+    TUNE_LONG(LmpNotImproving, 12, 32);
+
+    TUNE_LONG(FtpMaxDepth, 2, 6);
+    TUNE_SCORE(FtpMarginBase, 120, 360);
+    TUNE_SCORE(FtpMarginDepth, 40, 120);
+
+    TUNE_LONG(SeeMaxDepth, 3, 7);
+    TUNE_SCORE(SeeQuietScale, -120, -40);
+    TUNE_SCORE(SeeCaptureScale, -35, -15);
+
+    TUNE_LONG(SingularMinDepth, 6, 12);
+    TUNE_LONG(SingularDepthDiff, 1, 3);
+
+    TUNE_LONG(LmrHistoryScale, 2000, 6000);
+    TUNE_LONG(LmrHistoryLower, -4, 0);
+    TUNE_LONG(LmrHistoryUpper, 0, 4);
+
+    TUNE_SCORE(DeltaMargin, PAWN_EG_SCORE, PAWN_EG_SCORE * 3);
+
+    TUNE_DOUBLE(LmrB, -2, 2);
+    TUNE_DOUBLE(LmrK, 0.5, 5);
+
+    TUNE_SCORE(AspiWindowSize, 10, 25);
+    TUNE_SCORE(AspiWindowEval, 0, 16);
+    TUNE_SCORE(AspiEnlargeBase, 0, 10);
+    TUNE_LONG(AspiEnlargeScale, 16, 128);
+
+    TUNE_LONG(HistMaxDepth, 8, 16);
+    TUNE_LONG(HistScaleQ, 16, 48);
+    TUNE_LONG(HistScaleL, -50, 50);
+    TUNE_LONG(HistScaleC, -50, 50);
+    TUNE_LONG(HistConst, 0, 160);
+
     uci_position("startpos");
 
     if (argc > 1)

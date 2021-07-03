@@ -19,6 +19,12 @@
 #include "engine.h"
 #include "lazy_smp.h"
 
+long HistMaxDepth = 12;
+long HistScaleQ = 32;
+long HistScaleL = 0;
+long HistScaleC = 0;
+long HistConst = 40;
+
 void    update_quiet_history(const board_t *board, int depth,
         move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss)
 {
@@ -27,7 +33,7 @@ void    update_quiet_history(const board_t *board, int depth,
     piece_t lastPiece = NO_PIECE;
     square_t to;
     piece_t piece;
-    int bonus = (depth <= 12) ? 32 * depth * depth : 40;
+    int bonus = (depth <= HistMaxDepth) ? HistScaleQ * depth * depth + HistScaleL * depth + HistScaleC : HistConst;
     move_t previousMove = (ss - 1)->currentMove;
 
     piece = piece_on(board, from_sq(bestmove));
