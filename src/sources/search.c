@@ -258,7 +258,7 @@ __main_loop:
             if (depth >= 9 && currmove == ttMove && !ss->excludedMove
                 && (ttBound & LOWER_BOUND) && ttDepth >= depth - 2)
             {
-                score_t singularBeta = ttScore - depth;
+                score_t singularBeta = ttScore - depth * 2;
                 int singularDepth = depth / 2;
 
                 ss->excludedMove = ttMove;
