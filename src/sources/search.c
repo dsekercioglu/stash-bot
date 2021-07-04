@@ -291,7 +291,7 @@ __main_loop:
 
                 // Increase/decrease based on history
 
-                R -= histScore / 4000;
+                R -= histScore / 4500;
 
                 R = clamp(R, 0, newDepth - 1);
             }
