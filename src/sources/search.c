@@ -270,6 +270,9 @@ __main_loop:
             }
             else if (givesCheck)
                 extension = 1;
+
+            if (depth >= 9 && currmove == ttMove && isQuiet && histScore >= 6144)
+                extension = 1;
         }
 
         ss->currentMove = currmove;
