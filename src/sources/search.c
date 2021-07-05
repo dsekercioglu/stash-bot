@@ -350,15 +350,11 @@ __main_loop:
                     update_pv(ss->pv, currmove, (ss + 1)->pv);
 
                 if (alpha >= beta)
-                {
-                    if (isQuiet)
-                        update_quiet_history(board, depth, bestmove, quiets, qcount, ss);
                     break ;
-                }
             }
         }
 
-        if (qcount < 64 && isQuiet)
+        if (currmove != bestmove && qcount < 64 && isQuiet)
             quiets[qcount++] = currmove;
     }
 
@@ -366,6 +362,11 @@ __main_loop:
 
     if (moveCount == 0)
         bestScore = (ss->excludedMove) ? alpha : (board->stack->checkers) ? mated_in(ss->plies) : 0;
+
+    // If we got a quiet bestmove, update quiet histories.
+
+    else if (bestmove && !is_capture_or_promotion(board, bestmove))
+        update_quiet_history(board, depth, bestmove, quiets, qcount, ss);
     
     if (!rootNode || worker->pvLine == 0)
     {
