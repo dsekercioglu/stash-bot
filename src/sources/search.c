@@ -221,7 +221,7 @@ __main_loop:
         {
             // Late Move Pruning.
 
-            if (depth <= 5 && moveCount > depth * (improving ? 8 : 5))
+            if (depth <= 5 && moveCount > depth * (improving ? 9 : 5))
                 skipQuiets = true;
 
             // Futility Pruning.
