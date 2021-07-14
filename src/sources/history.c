@@ -19,15 +19,26 @@
 #include "engine.h"
 #include "lazy_smp.h"
 
-void    update_quiet_history(const board_t *board, int depth,
-        move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss)
+int bonus_score(int depth)
+{
+    if (depth >= 24)
+        return 32;
+
+    if (depth >= 12)
+        depth = 24 - depth;
+
+    return (32 * depth * depth);
+}
+
+void update_quiet_history(const board_t *board, int depth,
+    move_t bestmove, const move_t quiets[64], int qcount, searchstack_t *ss)
 {
     butterfly_history_t *bfHist = &get_worker(board)->bfHistory;
     square_t lastTo = SQ_A1;
     piece_t lastPiece = NO_PIECE;
     square_t to;
     piece_t piece;
-    int bonus = (depth <= 12) ? 32 * depth * depth : 40;
+    int bonus = bonus_score(depth);
     move_t previousMove = (ss - 1)->currentMove;
 
     piece = piece_on(board, from_sq(bestmove));
