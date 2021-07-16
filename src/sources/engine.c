@@ -38,6 +38,27 @@ void init_reduction_table(void)
             Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
 }
 
+void backup_tt(board_t *board, move_t *pv, int depth, score_t score)
+{
+    if (*(pv + 1) != NO_MOVE)
+    {
+        boardstack_t stack;
+        tt_entry_t *entry;
+        hashkey_t key;
+        bool found;
+
+        do_move(board, *pv, &stack);
+
+        depth -= !!depth;
+        key = board->stack->boardKey;
+        entry = tt_probe(board->stack->boardKey, &found);
+
+        tt_save(entry, key, score, entry->eval, depth, EXACT_BOUND, *(pv + 1));
+        backup_tt(board, pv + 1, depth, score);
+        undo_move(board, *pv);
+    }
+}
+
 uint64_t perft(board_t *board, unsigned int depth)
 {
     if (depth == 0)
@@ -289,6 +310,8 @@ __retry:
                 delta += delta / 4;
                 goto __retry;
             }
+            else
+                backup_tt(board, worker->rootMoves[worker->pvLine].pv, iterDepth, pvScore);
         }
 
         // Reset root moves' score for the next search
