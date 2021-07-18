@@ -237,7 +237,18 @@ __retry:
 
             hasSearchAborted = search_should_abort();
 
-            sort_root_moves(worker->rootMoves + worker->pvLine, worker->rootMoves + worker->rootCount);
+            // Sometimes upperbounds make root moves get weird values in
+            // intermediate searches, so we should ensure at least one move got
+            // a score above alpha when sorting. Otherwise we keep our previous
+            // bestmove.
+
+            bool safeSorting = false;
+
+            for (size_t i = worker->pvLine; i < worker->rootCount; ++i)
+                safeSorting |= worker->rootMoves[i].score > alpha;
+
+            if (safeSorting)
+                sort_root_moves(worker->rootMoves + worker->pvLine, worker->rootMoves + worker->rootCount);
             pvScore = worker->rootMoves[worker->pvLine].score;
 
             // Note: we set the bound to be EXACT_BOUND when the search aborts, even if the last
