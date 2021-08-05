@@ -249,6 +249,7 @@ __main_loop:
         int R;
         int extension = 0;
         int newDepth = depth - 1;
+        uint64_t curNodes = (rootNode) ? worker->nodes : 0;
         bool givesCheck = move_gives_check(board, currmove);
         int histScore = isQuiet
             ? get_bf_history_score(worker->bfHistory, piece_on(board, from_sq(currmove)), currmove) : 0;
@@ -325,6 +326,8 @@ __main_loop:
         {
             root_move_t *cur = find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove);
+
+            cur->nodes += worker->nodes - curNodes;
 
             // Update PV for root
 

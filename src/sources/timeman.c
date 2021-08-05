@@ -22,29 +22,6 @@
 #include "lazy_smp.h"
 #include "timeman.h"
 
-// Scaling table based on the move type
-
-const double BestmoveTypeScale[BM_TYPE_NB] = {
-    0.20, // One legal move
-    0.45, // Promoting a piece
-    0.50, // Capture with a very high SEE
-    0.85, // Check not throwing away material
-    0.95, // Capture
-    1.00, // Quiet move not throwing away material
-    1.20, // Check losing material
-    1.40, // Quiet losing material
-};
-
-// Scaling table based on the number of consecutive iterations the bestmove held
-
-const double BestmoveStabilityScale[5] = {
-    2.50,
-    1.20,
-    0.90,
-    0.80,
-    0.75
-};
-
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start)
 {
     clock_t overhead = Options.moveOverhead;
@@ -63,7 +40,7 @@ void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock
         time = max(0, time - overhead);
 
         tm->averageTime = time / mtg + inc;
-        tm->maximalTime = time / sqrt(mtg) + inc;
+        tm->maximalTime = time / pow(mtg, 0.4) + inc;
 
         // Allow for more time usage when we're pondering, since we're not using
         // our clock as long as the opponent thinks
@@ -84,88 +61,25 @@ void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock
     }
     else
         tm->mode = NoTimeman;
-
-    tm->prevScore = NO_SCORE;
-    tm->prevBestmove = NO_MOVE;
-    tm->stability = 0;
-    tm->type = NO_BM_TYPE;
 }
 
-double score_difference_scale(score_t s)
-{
-    const score_t X = 100;
-    const double T = 2.0;
-
-    // Clamp score to the range [-100, 100], and convert it to a time scale [0.5, 2.0]
-    // Examples:
-    // -100 -> 2.000x time
-    //  -50 -> 1.414x time
-    //    0 -> 1.000x time
-    //  +50 -> 0.707x time
-    // +100 -> 0.500x time
-
-    return (pow(T, clamp(s, -X, X) / (double)X));
-}
-
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score)
+void timeman_update(timeman_t *tm, const root_move_t *rootMoves, size_t rootCount)
 {
     // Only update timeman when we need one
     if (tm->mode != Tournament)
         return ;
 
-    // Update bestmove + stability statistics
-    if (tm->prevBestmove != bestmove)
-    {
-        movelist_t list;
-        bool isQuiet = !is_capture_or_promotion(board, bestmove);
-        bool givesCheck = move_gives_check(board, bestmove);
+    uint64_t bestNodes = rootMoves[0].nodes;
+    uint64_t otherNodes = 0;
 
-        tm->prevBestmove = bestmove;
-        tm->stability = 0;
+    for (size_t i = 1; i < rootCount; ++i)
+        otherNodes += rootMoves[i].nodes;
 
-        // Do we only have one legal move ? Don't burn much time on these
-        list_all(&list, board);
-        if (movelist_size(&list) == 1)
-            tm->type = OneLegalMove;
+    double scale = pow((double)otherNodes / (double)bestNodes, 0.4);
 
-        else if (move_type(bestmove) == PROMOTION)
-            tm->type = Promotion;
+    scale = fmax(0.2, fmin(scale, 5.0));
 
-        else if (!isQuiet && see_greater_than(board, bestmove, KNIGHT_MG_SCORE))
-            tm->type = SoundCapture;
-
-        else if (givesCheck && see_greater_than(board, bestmove, 0))
-            tm->type = SoundCheck;
-
-        else if (!isQuiet)
-            tm->type = Capture;
-
-        else if (see_greater_than(board, bestmove, 0))
-            tm->type = Quiet;
-
-        else if (givesCheck)
-            tm->type = WeirdCheck;
-
-        else
-            tm->type = WeirdQuiet;
-    }
-    else
-        tm->stability = min(tm->stability + 1, 4);
-
-    // Scale the time usage based on the type of bestmove we have
-    double scale = BestmoveTypeScale[tm->type];
-
-    // Scale the time usage based on how long this bestmove has held
-    // through search iterations
-    scale *= BestmoveStabilityScale[tm->stability];
-
-    // Scale the time usage based on how the score changed from the
-    // previous iteration (the higher it goes, the quicker we stop searching)
-    if (tm->prevScore != NO_SCORE)
-        scale *= score_difference_scale(tm->prevScore - score);
-
-    // Update score + optimal time usage
-    tm->prevScore = score;
+    // Update optimal time usage
     tm->optimalTime = min(tm->maximalTime, tm->averageTime * scale);
 }
 

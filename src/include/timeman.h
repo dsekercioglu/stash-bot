@@ -22,6 +22,7 @@
 # include <time.h>
 # include <sys/timeb.h>
 # include "board.h"
+# include "lazy_smp.h"
 # include "uci.h"
 
 INLINED clock_t chess_clock(void)
@@ -54,9 +55,6 @@ typedef enum
 }
 bestmove_type_t;
 
-extern const double BestmoveTypeScale[BM_TYPE_NB];
-extern const double BestmoveStabilityScale[5];
-
 typedef enum tm_mode_e
 {
     Tournament,
@@ -74,18 +72,13 @@ typedef struct timeman_s
     clock_t averageTime;
     clock_t maximalTime;
     clock_t optimalTime;
-
-    score_t prevScore;
-    move_t prevBestmove;
-    int stability;
-    bestmove_type_t type;
 }
 timeman_t;
 
 extern timeman_t Timeman;
 
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start);
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score);
+void timeman_update(timeman_t *tm, const root_move_t *rootMoves, size_t rootCount);
 void check_time(void);
 
 INLINED bool timeman_can_stop_search(timeman_t *tm, clock_t cur)
