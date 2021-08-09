@@ -40,7 +40,7 @@ void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock
         time = max(0, time - overhead);
 
         tm->averageTime = time / mtg + inc;
-        tm->maximalTime = time / pow(mtg, 0.4) + inc;
+        tm->maximalTime = time / pow(mtg, 0.37) + inc;
 
         // Allow for more time usage when we're pondering, since we're not using
         // our clock as long as the opponent thinks
@@ -75,9 +75,9 @@ void timeman_update(timeman_t *tm, const root_move_t *rootMoves, size_t rootCoun
     for (size_t i = 1; i < rootCount; ++i)
         otherNodes += rootMoves[i].nodes;
 
-    double scale = pow((double)otherNodes / (double)bestNodes, 0.4);
+    double scale = 3.85 * pow((double)otherNodes / (double)bestNodes, 1.12);
 
-    scale = fmax(0.2, fmin(scale, 5.0));
+    scale = fmax(0.1, fmin(scale, 2.3));
 
     // Update optimal time usage
     tm->optimalTime = min(tm->maximalTime, tm->averageTime * scale);
