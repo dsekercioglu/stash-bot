@@ -37,6 +37,9 @@ typedef struct rootMove_s
 }
 root_move_t;
 
+void sort_root_moves(root_move_t *begin, root_move_t *end);
+root_move_t *find_root_move(root_move_t *begin, root_move_t *end, move_t move);
+
 // Struct for worker thread data.
 
 typedef struct worker_s
