@@ -233,6 +233,13 @@ __main_loop:
 
             if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -80 * depth : -25 * depth * depth)))
                 continue ;
+
+            // Shuffle Pruning. if bestScore is above 0 and the same piece is being moved
+            // back and forth, prune the move.
+
+            if (bestScore > 0 && board->stack->rule50 >= 2 && ss->plies >= 2
+                && (ss - 1)->currentMove != NULL_MOVE && (ss - 2)->currentMove == reverse_move(currmove))
+                continue ;
         }
 
         // Report currmove info if enough time has passed
