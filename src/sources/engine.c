@@ -36,8 +36,8 @@ void init_reduction_table(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] = +0.67 + log(d) * log(m) / 4.15;
-            Reductions[1][d][m] = -0.81 + log(d) * log(m) / 1.35;
+            Reductions[0][d][m] = 1.17 + log(d) * log(m) / 3.44;
+            Reductions[1][d][m] = 0.08 + log(d) * log(m) / 1.69;
         }
 }
 
