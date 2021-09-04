@@ -142,7 +142,8 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && mp->cur->score >= 0 && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->ttMove && mp->cur->score >= 0
+                    && see_greater_than(mp->board, mp->cur->move, KNIGHT_MG_SCORE - BISHOP_MG_SCORE))
                     return ((mp->cur++)->move);
 
                 *(mp->badCaptures++) = *(mp->cur++);
