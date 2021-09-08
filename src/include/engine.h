@@ -98,7 +98,7 @@ extern evaltrace_t Trace;
 
 enum { MAX_PLIES = 240 };
 
-extern int Reductions[64][64];
+extern int Reductions[2][64][64];
 
 void sort_root_moves(root_move_t *begin, root_move_t *end);
 root_move_t *find_root_move(root_move_t *begin, root_move_t *end, move_t move);

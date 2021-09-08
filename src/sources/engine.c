@@ -29,13 +29,16 @@
 #include "tt.h"
 #include "uci.h"
 
-int Reductions[64][64];
+int Reductions[2][64][64];
 
 void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        {
+            Reductions[0][d][m] = -1.58 + log(d) * log(m) / 2.09;
+            Reductions[1][d][m] = -0.27 + log(d) * log(m) / 1.74;
+        }
 }
 
 uint64_t perft(board_t *board, unsigned int depth)
