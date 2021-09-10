@@ -75,6 +75,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     bool inCheck = !!board->stack->checkers;
     bool improving;
+    bool canPrune = !!board->stack->material[board->sideToMove] && !!piece_bb(board, board->sideToMove, PAWN);
 
     // Check for interesting tt values
 
@@ -128,27 +129,23 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     if (rootNode && worker->pvLine)
         ttMove = worker->rootMoves[worker->pvLine].move;
 
-    if (inCheck)
-        goto __main_loop;
-
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
+    if (!pvNode && canPrune && depth == 1 && ss->staticEval + 150 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
+    if (!pvNode && canPrune && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
 
-    if (!pvNode && depth >= 3
+    if (!pvNode && canPrune && depth >= 3
         && ss->plies >= worker->verifPlies && !ss->excludedMove
-        && eval >= beta && eval >= ss->staticEval
-        && board->stack->material[board->sideToMove])
+        && eval >= beta && eval >= ss->staticEval)
     {
         boardstack_t stack;
 
@@ -217,7 +214,7 @@ __main_loop:
 
         bool isQuiet = !is_capture_or_promotion(board, currmove);
 
-        if (!rootNode && bestScore > -MATE_FOUND)
+        if (!rootNode && canPrune && bestScore > -MATE_FOUND)
         {
             // Late Move Pruning.
 
