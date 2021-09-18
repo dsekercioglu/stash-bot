@@ -21,12 +21,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "book.h"
 #include "engine.h"
 #include "imath.h"
 #include "lazy_smp.h"
 #include "option.h"
 #include "tt.h"
 #include "uci.h"
+
+void uci_tree(const char *args)
+{
+    (void)args;
+    book_tree(&Book, Board.stack->boardKey, 0);
+}
 
 const cmdlink_t commands[] =
 {
@@ -39,6 +46,7 @@ const cmdlink_t commands[] =
     {"quit", &uci_quit},
     {"setoption", &uci_setoption},
     {"stop", &uci_stop},
+    {"tree", &uci_tree},
     {"uci", &uci_uci},
     {"ucinewgame", &uci_ucinewgame},
     {NULL, NULL}
@@ -509,16 +517,36 @@ void on_thread_set(void *data)
     fflush(stdout);
 }
 
+void on_book_set(void *data)
+{
+    char *path = *(char **)data;
+    if (strcmp(path, "<empty>"))
+        book_load(&Book, path);
+}
+
+void on_temp_set(void *data)
+{
+    Options.bookR = 2.0 - *(long *)data / 50.0;
+}
+
 void uci_loop(int argc, char **argv)
 {
+    Options.bookActions = strdup("none");
+    Options.bookPath = strdup("<empty>");
+    const char *actions[] = {"none", "read", "write", "both", NULL};
+
     init_option_list(&OptionList);
     add_option_spin_int(&OptionList, "Threads", &Options.threads, 1, 256, &on_thread_set);
     add_option_spin_int(&OptionList, "Hash", &Options.hash, 1, MAX_HASH, &on_hash_set);
     add_option_spin_int(&OptionList, "Move Overhead", &Options.moveOverhead, 0, 30000, NULL);
     add_option_spin_int(&OptionList, "MultiPV", &Options.multiPv, 1, 500, NULL);
+    add_option_spin_int(&OptionList, "BookThreshold", &Options.bookMinNodes, 0, 1000000000, NULL);
+    add_option_spin_int(&OptionList, "BookTemperature", &Options.bookTemp, 0, 100, &on_temp_set);
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_check(&OptionList, "Ponder", &Options.ponder, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
+    add_option_string(&OptionList, "BookFile", &Options.bookPath, &on_book_set);
+    add_option_combo(&OptionList, "BookAction", &Options.bookActions, actions, NULL);
 
     uci_position("startpos");
 
@@ -538,5 +566,7 @@ void uci_loop(int argc, char **argv)
 
     wait_search_end();
     uci_quit(NULL);
+    if (strcmp(Options.bookPath, "<empty>"))
+        book_save(&Book, Options.bookPath);
     quit_option_list(&OptionList);
 }

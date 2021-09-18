@@ -24,6 +24,8 @@
 # include <stdbool.h>
 # include <stddef.h>
 # include <time.h>
+# include "board.h"
+# include "lazy_smp.h"
 # include "inlining.h"
 
 # define UCI_VERSION "v31.8"
@@ -77,6 +79,11 @@ typedef struct ucioptions_s
     long hash;
     long moveOverhead;
     long multiPv;
+    long bookMinNodes;
+    long bookTemp;
+    double bookR;
+    char *bookPath;
+    char *bookActions;
     bool chess960;
     bool ponder;
 }

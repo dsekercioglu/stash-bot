@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "book.h"
 #include "engine.h"
 #include "history.h"
 #include "imath.h"
@@ -143,6 +144,7 @@ void *engine_go(void *ptr)
         worker->rootMoves[i].seldepth = 0;
         worker->rootMoves[i].prevScore = -INF_SCORE;
         worker->rootMoves[i].score = -INF_SCORE;
+        worker->rootMoves[i].nodes = 0;
         worker->rootMoves[i].pv[0] = NO_MOVE;
         worker->rootMoves[i].pv[1] = NO_MOVE;
     }
@@ -159,6 +161,24 @@ void *engine_go(void *ptr)
 
     if (!worker->idx)
     {
+        if (Options.bookActions[0] == 'b' || Options.bookActions[0] == 'r')
+        {
+            score_t score;
+            move_t move;
+            uint32_t kNodes;
+
+            book_probe(&Book, board->stack->boardKey, &score, &move, &kNodes, Options.bookR);
+
+            if (move != NO_MOVE && (uint64_t)kNodes * 1000 >= (uint64_t)Options.bookMinNodes)
+            {
+                const char *moveStr = move_to_str(move, board->chess960);
+                printf("info depth 1 score %s nodes %" FMT_INFO " pv %s\nbestmove %s\n",
+                    score_to_str(score), (info_t)kNodes * 1000, moveStr, moveStr);
+                fflush(stdout);
+                return (NULL);
+            }
+        }
+
         tt_clear();
         timeman_init(board, &Timeman, &SearchParams, chess_clock());
 
@@ -291,6 +311,9 @@ __retry:
             }
         }
 
+        if (hasSearchAborted)
+            break ;
+
         // Reset root moves' score for the next search
 
         for (root_move_t *i = worker->rootMoves; i < worker->rootMoves + worker->rootCount; ++i)
@@ -298,9 +321,6 @@ __retry:
             i->prevScore = i->score;
             i->score = -INF_SCORE;
         }
-
-        if (hasSearchAborted)
-            break ;
 
         // If we went over optimal time usage, we just finished our iteration,
         // so we can safely return our bestmove.
@@ -366,6 +386,26 @@ __retry:
             printf(" ponder %s", move_to_str(ponderMove, board->chess960));
         putchar('\n');
         fflush(stdout);
+
+        if (Options.bookActions[0] == 'b' || Options.bookActions[0] == 'w')
+            for (int i = 0; i < multiPv; ++i)
+            {
+                root_move_t *cur = worker->rootMoves + i;
+
+                if (cur->nodes >= (uint64_t)Options.bookMinNodes)
+                {
+                    boardstack_t stack;
+                    hashkey_t key = board->stack->boardKey;
+                    move_t move = cur->move;
+                    score_t score = (cur->prevScore == -INF_SCORE) ? cur->score : cur->prevScore;
+
+                    do_move(board, move, &stack);
+                    hashkey_t nextKey = board->stack->boardKey;
+                    undo_move(board, move);
+
+                    book_update_entry(&Book, key, nextKey, worker->nodes / 1000, cur->nodes / 1000, move, score);
+                }
+            }
 
         if (EngineSend != DO_ABORT)
         {

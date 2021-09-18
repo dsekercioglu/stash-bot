@@ -16,27 +16,29 @@
 **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef IMATH_H
-# define IMATH_H
+#include "bitboard.h"
+#include "imath.h"
 
-# include <stdint.h>
-# include "inlining.h"
-
-INLINED int max(int a, int b)
+uint64_t isqrt(uint64_t value)
 {
-    return (a > b ? a : b);
+    // Early handling of the zero case to avoid issues with bb_last_sq()
+    // returning -1 (due to the operation '63 - lzcnt(0)').
+    if (!value)
+        return (0);
+
+    uintmax_t root = 0;
+    uintmax_t bit = 1 << (bb_last_sq(value) / 2);
+
+    while (bit)
+    {
+        root >>= 1;
+        if (value >= root + bit)
+        {
+            value -= root + bit;
+            root += bit;
+        }
+        bit >>= 2;
+    }
+
+    return (root);
 }
-
-INLINED int min(int a, int b)
-{
-    return (a < b ? a : b);
-}
-
-INLINED int clamp(int value, int lower, int upper)
-{
-    return (value < lower ? lower : value > upper ? upper : value);
-}
-
-uint64_t isqrt(uint64_t value);
-
-#endif

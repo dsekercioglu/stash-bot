@@ -195,12 +195,14 @@ __main_loop:
     int moveCount = 0;
     move_t quiets[64];
     int qcount = 0;
+    uint64_t nodeCount = 0;
     bool skipQuiets = false;
 
     while ((currmove = movepick_next_move(&mp, skipQuiets)) != NO_MOVE)
     {
         if (rootNode)
         {
+            nodeCount = worker->nodes;
             // Exclude already searched PV lines for root nodes
 
             if (find_root_move(worker->rootMoves + worker->pvLine,
@@ -325,6 +327,10 @@ __main_loop:
         {
             root_move_t *cur = find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove);
+
+            nodeCount = worker->nodes - nodeCount;
+
+            cur->nodes += nodeCount;
 
             // Update PV for root
 
