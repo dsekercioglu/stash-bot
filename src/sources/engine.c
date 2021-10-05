@@ -212,6 +212,7 @@ void *engine_go(void *ptr)
             worker->seldepth = 0;
 
             score_t alpha, beta, delta;
+            int depth = iterDepth;
             score_t pvScore = worker->rootMoves[worker->pvLine].prevScore;
 
             // Don't set aspiration window bounds for low depths, as the scores are
@@ -231,7 +232,7 @@ void *engine_go(void *ptr)
             }
 
 __retry:
-            search(board, iterDepth + 1, alpha, beta, &sstack[2], true);
+            search(board, depth + 1, alpha, beta, &sstack[2], true);
 
             // Catch search aborting
 
@@ -278,6 +279,7 @@ __retry:
 
             if (bound == UPPER_BOUND)
             {
+                depth = iterDepth;
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
                 delta += delta / 4;
@@ -285,6 +287,7 @@ __retry:
             }
             else if (bound == LOWER_BOUND)
             {
+                depth -= !!depth;
                 beta = min(INF_SCORE, (int)pvScore + delta);
                 delta += delta / 4;
                 goto __retry;
