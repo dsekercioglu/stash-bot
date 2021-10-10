@@ -293,6 +293,10 @@ __main_loop:
             if (isQuiet)
                 R -= histScore / 4000;
 
+            // Decrease for moves that give check
+
+            R -= givesCheck;
+
             R = clamp(R, 0, newDepth - 1);
         }
         else
