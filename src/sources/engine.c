@@ -35,7 +35,7 @@ void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+            Reductions[d][m] = 0.6 + log(d) * log(m) / 2.4;
 }
 
 uint64_t perft(board_t *board, unsigned int depth)
@@ -211,6 +211,7 @@ void *engine_go(void *ptr)
 
             worker->seldepth = 0;
 
+            int depth = iterDepth;
             score_t alpha, beta, delta;
             score_t pvScore = worker->rootMoves[worker->pvLine].prevScore;
 
@@ -231,7 +232,7 @@ void *engine_go(void *ptr)
             }
 
 __retry:
-            search(board, iterDepth + 1, alpha, beta, &sstack[2], true);
+            search(board, depth + 1, alpha, beta, &sstack[2], true);
 
             // Catch search aborting
 
@@ -278,6 +279,7 @@ __retry:
 
             if (bound == UPPER_BOUND)
             {
+                depth = iterDepth;
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
                 delta += delta / 4;
@@ -285,6 +287,7 @@ __retry:
             }
             else if (bound == LOWER_BOUND)
             {
+                depth -= !!depth;
                 beta = min(INF_SCORE, (int)pvScore + delta);
                 delta += delta / 4;
                 goto __retry;

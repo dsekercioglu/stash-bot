@@ -140,7 +140,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 8 && eval - 80 * depth + 40 * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -280,24 +280,20 @@ __main_loop:
 
         // Can we apply LMR ?
 
-        if (depth >= 3 && moveCount > 2 + 2 * rootNode)
+        if (depth >= 3 && moveCount > 2 + 2 * rootNode && (isQuiet || !pvNode))
         {
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
+
+            // Increase for non-PV quiet nodes
+
+            R += !pvNode && isQuiet;
+
+            // Increase/decrease based on history
+
             if (isQuiet)
-            {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
-
-                // Increase for non-PV nodes
-
-                R += !pvNode;
-
-                // Increase/decrease based on history
-
                 R -= histScore / 4000;
 
-                R = clamp(R, 0, newDepth - 1);
-            }
-            else
-                R = 1;
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
