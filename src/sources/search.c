@@ -57,10 +57,10 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         worker->seldepth = ss->plies + 1;
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
-        return (!board->stack->checkers ? evaluate(board) : 0);
+        return (!board->stack->checkers ? evaluate(board) : draw_score(worker));
 
     if (!rootNode)
     {
@@ -82,6 +82,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     int ttBound = NO_BOUND;
     score_t ttScore = NO_SCORE;
     move_t ttMove = NO_MOVE;
+    bool ttCapture = false;
     bool found;
     hashkey_t key = board->stack->boardKey ^ ((hashkey_t)ss->excludedMove << 16);
     tt_entry_t *entry = tt_probe(key, &found);
@@ -98,6 +99,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
                 return (ttScore);
 
         ttMove = entry->bestmove;
+        ttCapture = is_capture_or_promotion(board, ttMove);
     }
 
     (ss + 1)->plies = ss->plies + 1;
@@ -280,24 +282,30 @@ __main_loop:
 
         // Can we apply LMR ?
 
-        if (depth >= 3 && moveCount > 2 + 2 * rootNode)
+        if (depth >= 3 && moveCount > 2 + 2 * rootNode && (isQuiet || !pvNode))
         {
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
+
+            // Increase for non-PV nodes
+
+            R += !pvNode;
+
             if (isQuiet)
             {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
-
-                // Increase for non-PV nodes
-
-                R += !pvNode;
+                // Increase if TT move is a capture
+                R += found && ttCapture;
 
                 // Increase/decrease based on history
-
                 R -= histScore / 4000;
-
-                R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+            {
+                // Increase for bad SEE captures that do not give check
+
+                R += !givesCheck && !see_greater_than(board, currmove, -100 * depth);
+            }
+
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
@@ -392,10 +400,10 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
         worker->seldepth = ss->plies + 1;
 
     if (search_should_abort() || game_is_drawn(board, ss->plies))
-        return (0);
+        return (draw_score(worker));
 
     if (ss->plies >= MAX_PLIES)
-        return (!board->stack->checkers ? evaluate(board) : 0);
+        return (!board->stack->checkers ? evaluate(board) : draw_score(worker));
 
     // Mate pruning.
 
