@@ -304,7 +304,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = clamp((2000 - histScore / 4000), 0, newDepth - 1);
+                R = clamp((3000 - histScore) / 3000, 0, newDepth - 1);
         }
         else
             R = 0;
