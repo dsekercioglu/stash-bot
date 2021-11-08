@@ -252,8 +252,13 @@ __main_loop:
         int extension = 0;
         int newDepth = depth - 1;
         bool givesCheck = move_gives_check(board, currmove);
+        piece_t movedPiece = piece_on(board, from_sq(currmove));
+        square_t to = to_sq(currmove);
         int histScore = isQuiet
-            ? get_bf_history_score(worker->bfHistory, piece_on(board, from_sq(currmove)), currmove) : 0;
+            ? get_bf_history_score(worker->bfHistory, movedPiece, currmove)
+            : get_cap_history_score(worker->capHistory, movedPiece, to,
+                move_type(currmove) == PROMOTION ? promotion_type(currmove)
+                : move_type(currmove) == EN_PASSANT ? PAWN : piece_type(piece_on(board, to)));
 
         if (!rootNode)
         {
@@ -276,7 +281,7 @@ __main_loop:
         }
 
         ss->currentMove = currmove;
-        ss->pieceHistory = &worker->ctHistory[piece_on(board, from_sq(currmove))][to_sq(currmove)];
+        ss->pieceHistory = &worker->ctHistory[movedPiece][to];
 
         do_move_gc(board, currmove, &stack, givesCheck);
 
@@ -299,7 +304,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+                R = clamp((2000 - histScore / 4000), 0, newDepth - 1);
         }
         else
             R = 0;

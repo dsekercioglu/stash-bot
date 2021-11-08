@@ -66,16 +66,16 @@ INLINED score_t get_pc_history_score(const piece_history_t hist, piece_t pc, squ
     return (hist[pc][to] / HistoryScale);
 }
 
-INLINED void add_cap_history(capture_history_t hist, piece_t pc, square_t to, piece_t captured, int32_t bonus)
+INLINED void add_cap_history(capture_history_t hist, piece_t pc, square_t to, piecetype_t captured, int32_t bonus)
 {
-    int16_t *entry = &hist[pc][to][piece_type(captured)];
+    int16_t *entry = &hist[pc][to][captured];
 
     *entry += bonus - (int32_t)*entry * abs(bonus) / HistoryResolution;
 }
 
-INLINED score_t get_cap_history_score(const capture_history_t hist, piece_t pc, square_t to, piece_t captured)
+INLINED score_t get_cap_history_score(const capture_history_t hist, piece_t pc, square_t to, piecetype_t captured)
 {
-    return (hist[pc][to][piece_type(captured)] / HistoryScale);
+    return (hist[pc][to][captured] / HistoryScale);
 }
 
 #endif
