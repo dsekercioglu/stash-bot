@@ -288,9 +288,6 @@ __main_loop:
 
             if (isQuiet)
             {
-                // Increase for non-PV nodes
-                R += !pvNode;
-
                 // Increase/decrease based on history
                 R -= histScore / 4000;
             }
