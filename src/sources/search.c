@@ -286,8 +286,14 @@ __main_loop:
         {
             R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
+            // Increase reduction for non-improving nodes
+            R += !improving;
+
             if (isQuiet)
             {
+                // Increase reduction for non-pv nodes
+                R += !pvNode;
+
                 // Increase/decrease based on history
                 R -= histScore / 4000;
             }
