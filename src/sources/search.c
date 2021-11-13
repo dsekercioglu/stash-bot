@@ -284,22 +284,17 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
-            if (isQuiet)
-            {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
-                // Increase for non-PV nodes
+            // Increase for non-PV nodes
 
-                R += !pvNode;
+            R += !pvNode;
 
-                // Increase/decrease based on history
+            // Increase/decrease based on history
 
-                R -= histScore / 4000;
+            R -= histScore / 4000;
 
-                R = clamp(R, 0, newDepth - 1);
-            }
-            else
-                R = 1;
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
