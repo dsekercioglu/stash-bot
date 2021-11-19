@@ -26,9 +26,7 @@
 
 enum
 {
-    HistoryMaxScore = 8192,
-    HistoryScale = 2,
-    HistoryResolution = HistoryMaxScore * HistoryScale
+    HistoryResolution = 16384,
 };
 
 typedef int16_t butterfly_history_t[COLOR_NB][SQUARE_NB * SQUARE_NB];
@@ -51,7 +49,7 @@ INLINED void add_bf_history(butterfly_history_t hist, piece_t piece, move_t move
 
 INLINED score_t get_bf_history_score(const butterfly_history_t hist, piece_t piece, move_t move)
 {
-    return (hist[piece_color(piece)][square_mask(move)] / HistoryScale);
+    return (hist[piece_color(piece)][square_mask(move)] / 2);
 }
 
 INLINED void add_pc_history(piece_history_t hist, piece_t pc, square_t to, int32_t bonus)
@@ -63,7 +61,7 @@ INLINED void add_pc_history(piece_history_t hist, piece_t pc, square_t to, int32
 
 INLINED score_t get_pc_history_score(const piece_history_t hist, piece_t pc, square_t to)
 {
-    return (hist[pc][to] / HistoryScale);
+    return (hist[pc][to]);
 }
 
 INLINED void add_cap_history(capture_history_t hist, piece_t pc, square_t to, piece_t captured, int32_t bonus)
@@ -75,7 +73,7 @@ INLINED void add_cap_history(capture_history_t hist, piece_t pc, square_t to, pi
 
 INLINED score_t get_cap_history_score(const capture_history_t hist, piece_t pc, square_t to, piece_t captured)
 {
-    return (hist[pc][to][piece_type(captured)] / HistoryScale);
+    return (hist[pc][to][piece_type(captured)] / 2);
 }
 
 #endif

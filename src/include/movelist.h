@@ -29,7 +29,7 @@
 typedef struct extmove_s
 {
     move_t move;
-    score_t score;
+    int32_t score;
 }
 extmove_t;
 
