@@ -186,6 +186,9 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         }
     }
 
+    if (!rootNode && depth >= 8 && !ttMove)
+        --depth;
+
 __main_loop:
 
     movepick_init(&mp, false, board, worker, ttMove, ss);
