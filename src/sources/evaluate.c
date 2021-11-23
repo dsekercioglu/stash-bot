@@ -56,6 +56,13 @@ const scorepair_t PP_TheirKingProximity[8] = {
     SPAIR( -3, 24)
 };
 
+const scorepair_t PP_StopControl[24] = {};
+
+const scorepair_t PP_Connected[6] = {};
+
+const scorepair_t PP_TarraschRuleUs[6] = {};
+const scorepair_t PP_TarraschRuleThem[6] = {};
+
 // King Safety eval terms
 
 const scorepair_t KnightWeight    = SPAIR(  44,  74);
@@ -579,16 +586,18 @@ scorepair_t evaluate_queens(const board_t *board, evaluation_t *eval, color_t us
     return (ret);
 }
 
-scorepair_t evaluate_passed_pos(const board_t *board, const pawn_entry_t *entry, color_t us)
+scorepair_t evaluate_passed_pos(const board_t *board, const pawn_entry_t *entry, const evaluation_t *eval, color_t us)
 {
     scorepair_t ret = 0;
+    color_t them = not_color(us);
     square_t ourKing = get_king_square(board, us);
-    square_t theirKing = get_king_square(board, not_color(us));
+    square_t theirKing = get_king_square(board, them);
     bitboard_t bb = entry->passed[us];
 
     while (bb)
     {
         square_t sq = bb_pop_first_sq(&bb);
+        rank_t rank = relative_sq_rank(sq, us);
 
         // Give a bonus/penalty based on how close is our King and their King
         // from the Pawn.
@@ -601,6 +610,77 @@ scorepair_t evaluate_passed_pos(const board_t *board, const pawn_entry_t *entry,
 
         TRACE_ADD(IDX_PP_OUR_KING_PROX + ourDistance - 1, us, 1);
         TRACE_ADD(IDX_PP_THEIR_KING_PROX + theirDistance - 1, us, 1);
+
+        // Give a bonus/penalty based on how the enemy controls the queening path.
+
+        bitboard_t queening = forward_file_bb(us, sq);
+        bitboard_t stop = square_bb(sq + pawn_direction(us));
+
+        int control = 3;
+
+        // Blockade of stop
+        if (stop & color_bb(board, them))
+            control = 0;
+
+        // Control of stop
+        else if (stop & eval->attackedTwice[them] & ~eval->attackedTwice[us])
+            control = 1;
+        else if (stop & eval->attacked[them] & ~eval->attacked[us])
+            control = 1;
+
+        // Blockade/Control of telestop
+        else if (queening & color_bb(board, them))
+            control = 2;
+        else if (queening & eval->attackedTwice[them] & ~eval->attackedTwice[us])
+            control = 2;
+        else if (queening & eval->attacked[them] & ~eval->attacked[us])
+            control = 2;
+
+        int stopControlIdx = control * 6 + rank - RANK_2;
+
+        ret += PP_StopControl[stopControlIdx];
+
+        TRACE_ADD(IDX_PP_STOP_CONTROL + stopControlIdx, us, 1);
+
+        // Give a bonus for connected passers
+        // Note: we give two bonuses for two connected passers,
+        // one per pawn.
+
+        if (entry->passed[us] & king_moves(sq))
+        {
+            ret += PP_Connected[rank - RANK_2];
+            TRACE_ADD(IDX_PP_CONNECTED + rank - RANK_2, us, 1);
+        }
+
+        // Give a bonus/penalty for a side with a Rook behind the pawn
+        bitboard_t rooksBehind = forward_file_bb(them, sq) & piecetype_bb(board, ROOK);
+
+        if (rooksBehind)
+        {
+            bitboard_t ourRook = rooksBehind & color_bb(board, us);
+            bitboard_t theirRook = rooksBehind & ~ourRook;
+
+            if (ourRook)
+            {
+                square_t rsq = bb_relative_last_sq(us, ourRook);
+
+                if (rook_moves(board, rsq) & square_bb(sq))
+                {
+                    ret += PP_TarraschRuleUs[rank - RANK_2];
+                    TRACE_ADD(IDX_PP_TARRASCH_US + rank - RANK_2, us, 1);
+                }
+            }
+            if (theirRook)
+            {
+                square_t rsq = bb_relative_last_sq(us, theirRook);
+
+                if (rook_moves(board, rsq) & square_bb(sq))
+                {
+                    ret += PP_TarraschRuleThem[rank - RANK_2];
+                    TRACE_ADD(IDX_PP_TARRASCH_THEM + rank - RANK_2, us, 1);
+                }
+            }
+        }
     }
 
     return (ret);
@@ -718,8 +798,8 @@ score_t evaluate(const board_t *board)
 
     // Add the Passed Pawn evaluation
 
-    tapered += evaluate_passed_pos(board, pe, WHITE);
-    tapered -= evaluate_passed_pos(board, pe, BLACK);
+    tapered += evaluate_passed_pos(board, pe, &eval, WHITE);
+    tapered -= evaluate_passed_pos(board, pe, &eval, BLACK);
 
     // Add the King Safety evaluation
 

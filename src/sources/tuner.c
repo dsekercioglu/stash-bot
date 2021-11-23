@@ -168,12 +168,15 @@ void init_base_values(tp_vector_t base)
     INIT_BASE_SP(IDX_DOUBLED, DoubledPenalty);
     INIT_BASE_SP(IDX_ISOLATED, IsolatedPenalty);
 
-    extern const scorepair_t PassedBonus[RANK_NB], PhalanxBonus[RANK_NB], DefenderBonus[RANK_NB];
+    extern const scorepair_t PassedBonus[RANK_NB * 4], PhalanxBonus[RANK_NB], DefenderBonus[RANK_NB];
 
     for (rank_t r = RANK_2; r <= RANK_7; ++r)
     {
-        base[IDX_PASSER + r - RANK_2][MIDGAME] = midgame_score(PassedBonus[r]);
-        base[IDX_PASSER + r - RANK_2][ENDGAME] = endgame_score(PassedBonus[r]);
+        for (file_t f = FILE_A; f <= FILE_D; ++f)
+        {
+            base[IDX_PASSER + (r - RANK_2) * 4 + f][MIDGAME] = midgame_score(PassedBonus[r * 4 + f]);
+            base[IDX_PASSER + (r - RANK_2) * 4 + f][ENDGAME] = endgame_score(PassedBonus[r * 4 + f]);
+        }
 
         base[IDX_PHALANX + r - RANK_2][MIDGAME] = midgame_score(PhalanxBonus[r]);
         base[IDX_PHALANX + r - RANK_2][ENDGAME] = endgame_score(PhalanxBonus[r]);
@@ -197,6 +200,11 @@ void init_base_values(tp_vector_t base)
         base[IDX_PP_THEIR_KING_PROX + distance - 1][MIDGAME] = midgame_score(PP_TheirKingProximity[distance]);
         base[IDX_PP_THEIR_KING_PROX + distance - 1][ENDGAME] = endgame_score(PP_TheirKingProximity[distance]);
     }
+
+    INIT_BASE_SPA(IDX_PP_STOP_CONTROL, PP_StopControl, 24);
+    INIT_BASE_SPA(IDX_PP_CONNECTED, PP_Connected, 6);
+    INIT_BASE_SPA(IDX_PP_TARRASCH_US, PP_TarraschRuleUs, 6);
+    INIT_BASE_SPA(IDX_PP_TARRASCH_THEM, PP_TarraschRuleThem, 6);
 }
 
 void init_tuner_entries(tune_data_t *data, const char *filename)
@@ -586,7 +594,7 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_ISOLATED, IsolatedPenalty);
     putchar('\n');
 
-    PRINT_SPA(IDX_PASSER, PassedBonus, 6, 3, 1, "SPAIR");
+    PRINT_SPA(IDX_PASSER, PassedBonus, 24, 3, 4, "SPAIR");
     putchar('\n');
     PRINT_SPA(IDX_PHALANX, PhalanxBonus, 6, 3, 1, "SPAIR");
     putchar('\n');

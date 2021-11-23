@@ -25,15 +25,15 @@ const scorepair_t StragglerPenalty = SPAIR(-15, -22);
 const scorepair_t DoubledPenalty = SPAIR(-18, -38);
 const scorepair_t IsolatedPenalty = SPAIR(-9, -8);
 
-const scorepair_t PassedBonus[RANK_NB] = {
-    0,
-    SPAIR(-14,-31),
-    SPAIR(-10,-17),
-    SPAIR( -7, 45),
-    SPAIR( 18, 97),
-    SPAIR( 46,175),
-    SPAIR( 78,313),
-    0
+const scorepair_t PassedBonus[RANK_NB * 4] = {
+    0, 0, 0, 0,
+    SPAIR(-14,-31), SPAIR(-14,-31), SPAIR(-14,-31), SPAIR(-14,-31),
+    SPAIR(-10,-17), SPAIR(-10,-17), SPAIR(-10,-17), SPAIR(-10,-17),
+    SPAIR( -7, 45), SPAIR( -7, 45), SPAIR( -7, 45), SPAIR( -7, 45),
+    SPAIR( 18, 97), SPAIR( 18, 97), SPAIR( 18, 97), SPAIR( 18, 97),
+    SPAIR( 46,175), SPAIR( 46,175), SPAIR( 46,175), SPAIR( 46,175),
+    SPAIR( 78,313), SPAIR( 78,313), SPAIR( 78,313), SPAIR( 78,313),
+    0, 0, 0, 0
 };
 
 const scorepair_t PhalanxBonus[RANK_NB] = {
@@ -74,9 +74,9 @@ scorepair_t evaluate_passed(pawn_entry_t *entry, color_t us, bitboard_t ourPawns
             && (queening & entry->attacks[not_color(us)] & ~entry->attacks[us]) == 0
             && (queening & entry->attacks2[not_color(us)] & ~entry->attacks2[us]) == 0)
         {
-            ret += PassedBonus[relative_sq_rank(sq, us)];
+            ret += PassedBonus[to_sq32(relative_sq(sq, us))];
             entry->passed[us] |= square_bb(sq);
-            TRACE_ADD(IDX_PASSER + relative_sq_rank(sq, us) - RANK_2, us, 1);
+            TRACE_ADD(IDX_PASSER + to_sq32(relative_sq(sq, us)) - RANK_2 * 4, us, 1);
         }
     }
 
