@@ -143,6 +143,7 @@ void *engine_go(void *ptr)
         worker->rootMoves[i].seldepth = 0;
         worker->rootMoves[i].prevScore = -INF_SCORE;
         worker->rootMoves[i].score = -INF_SCORE;
+        worker->rootMoves[i].nodes = 0;
         worker->rootMoves[i].pv[0] = NO_MOVE;
         worker->rootMoves[i].pv[1] = NO_MOVE;
     }
