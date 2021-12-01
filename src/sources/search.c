@@ -141,7 +141,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     else if (ss->plies >= 4 && (ss - 4)->staticEval != NO_SCORE)
         improving = ss->staticEval > (ss - 4)->staticEval;
     else
-        improving = false;
+        improving = true;
 
     // Futility Pruning.
 
