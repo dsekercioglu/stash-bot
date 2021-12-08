@@ -330,7 +330,7 @@ __retry:
     // or "ponderhit" in ponder mode.
 
     if (SearchParams.infinite || SearchParams.ponder)
-        while (!search_should_abort() && !(SearchParams.ponder && EnginePonderhit))
+        while (!search_should_abort() && !(SearchParams.ponder && Sync.ponderhit))
             if (!worker->idx)
                 check_time();
 
@@ -368,11 +368,11 @@ __retry:
         putchar('\n');
         fflush(stdout);
 
-        if (EngineSend != DO_ABORT)
+        if (Sync.send != DO_ABORT)
         {
-            pthread_mutex_lock(&EngineMutex);
-            EngineSend = DO_EXIT;
-            pthread_mutex_unlock(&EngineMutex);
+            pthread_mutex_lock(&Sync.mutex);
+            Sync.send = DO_EXIT;
+            pthread_mutex_unlock(&Sync.mutex);
 
             for (int i = 1; i < WPool.size; ++i)
                 pthread_join(WPool.list[i].thread, NULL);
@@ -388,19 +388,19 @@ void *engine_thread(void *nothing __attribute__((unused)))
 {
     // Inform the UCI thread that we're ready to run
 
-    pthread_mutex_lock(&EngineMutex);
-    EngineMode = WAITING;
-    pthread_cond_broadcast(&EngineCond);
+    pthread_mutex_lock(&Sync.mutex);
+    Sync.mode = WAITING;
+    pthread_cond_broadcast(&Sync.cond);
 
     // Loop while we're not notified that a "quit" command has been issued
 
-    while (EngineSend != DO_ABORT)
+    while (Sync.send != DO_ABORT)
     {
-        pthread_cond_wait(&EngineCond, &EngineMutex);
+        pthread_cond_wait(&Sync.cond, &Sync.mutex);
 
-        if (EngineSend == DO_THINK)
+        if (Sync.send == DO_THINK)
         {
-            EngineSend = DO_NOTHING;
+            Sync.send = DO_NOTHING;
 
             // Start by copying the board received from the "position" command
 
@@ -412,15 +412,15 @@ void *engine_thread(void *nothing __attribute__((unused)))
 
             // Only unlock the mutex once we're not using the global board
 
-            pthread_mutex_unlock(&EngineMutex);
+            pthread_mutex_unlock(&Sync.mutex);
             engine_go(board);
-            pthread_mutex_lock(&EngineMutex);
-            EngineMode = WAITING;
-            pthread_cond_broadcast(&EngineCond);
+            pthread_mutex_lock(&Sync.mutex);
+            Sync.mode = WAITING;
+            pthread_cond_broadcast(&Sync.cond);
         }
     }
 
-    pthread_mutex_unlock(&EngineMutex);
+    pthread_mutex_unlock(&Sync.mutex);
 
     return (NULL);
 }

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "board.h"
 #include "engine.h"
+#include "evaluate.h"
 #include "imath.h"
 #include "lazy_smp.h"
 #include "movepick.h"

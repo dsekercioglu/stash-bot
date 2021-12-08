@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "engine.h"
+#include "evaluate.h"
 #include "imath.h"
 #include "lazy_smp.h"
 #include "option.h"
@@ -81,10 +82,10 @@ char *get_next_token(char **str)
 
 void wait_search_end(void)
 {
-    pthread_mutex_lock(&EngineMutex);
-    while (EngineMode != WAITING)
-        pthread_cond_wait(&EngineCond, &EngineMutex);
-    pthread_mutex_unlock(&EngineMutex);
+    pthread_mutex_lock(&Sync.mutex);
+    while (Sync.mode != WAITING)
+        pthread_cond_wait(&Sync.cond, &Sync.mutex);
+    pthread_mutex_unlock(&Sync.mutex);
 }
 
 const char *move_to_str(move_t move, bool isChess960)
@@ -180,23 +181,23 @@ void uci_isready(const char *args __attribute__((unused)))
 
 void uci_quit(const char *args __attribute__((unused)))
 {
-    pthread_mutex_lock(&EngineMutex);
-    EngineSend = DO_ABORT;
-    pthread_mutex_unlock(&EngineMutex);
-    pthread_cond_signal(&EngineCond);
+    pthread_mutex_lock(&Sync.mutex);
+    Sync.send = DO_ABORT;
+    pthread_mutex_unlock(&Sync.mutex);
+    pthread_cond_signal(&Sync.cond);
 }
 
 void uci_stop(const char *args __attribute__((unused)))
 {
-    pthread_mutex_lock(&EngineMutex);
-    EngineSend = DO_EXIT;
-    pthread_mutex_unlock(&EngineMutex);
-    pthread_cond_signal(&EngineCond);
+    pthread_mutex_lock(&Sync.mutex);
+    Sync.send = DO_EXIT;
+    pthread_mutex_unlock(&Sync.mutex);
+    pthread_cond_signal(&Sync.cond);
 }
 
 void uci_ponderhit(const char *args __attribute__((unused)))
 {
-    EnginePonderhit = 1;
+    Sync.ponderhit = 1;
 }
 
 void uci_uci(const char *args __attribute__((unused)))
@@ -312,10 +313,10 @@ void uci_position(const char *args)
 void uci_go(const char *args)
 {
     wait_search_end();
-    pthread_mutex_lock(&EngineMutex);
+    pthread_mutex_lock(&Sync.mutex);
 
-    EngineSend = DO_THINK;
-    EnginePonderhit = 0;
+    Sync.send = DO_THINK;
+    Sync.ponderhit = 0;
     memset(&SearchParams, 0, sizeof(goparams_t));
     list_all(&SearchMoves, &Board);
 
@@ -407,10 +408,10 @@ void uci_go(const char *args)
         token = strtok(NULL, Delimiters);
     }
 
-    EngineMode = THINKING;
+    Sync.mode = THINKING;
 
-    pthread_cond_broadcast(&EngineCond);
-    pthread_mutex_unlock(&EngineMutex);
+    pthread_cond_broadcast(&Sync.cond);
+    pthread_mutex_unlock(&Sync.mutex);
     free(copy);
 }
 

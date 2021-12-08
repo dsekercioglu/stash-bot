@@ -80,13 +80,19 @@ typedef struct ucioptions_s
 }
 ucioptions_t;
 
+typedef struct uci_sync_s
+{
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    enum e_egn_mode mode;
+    enum e_egn_send send;
+    int ponderhit;
+}
+uci_sync_t;
+
 extern pthread_attr_t WorkerSettings;
 extern ucioptions_t Options;
-extern pthread_mutex_t EngineMutex;
-extern pthread_cond_t EngineCond;
-extern enum e_egn_mode EngineMode;
-extern enum e_egn_send EngineSend;
-extern int EnginePonderhit;
+extern uci_sync_t Sync;
 extern const char *Delimiters;
 extern goparams_t SearchParams;
 
@@ -99,7 +105,7 @@ cmdlink_t;
 
 INLINED bool search_should_abort(void)
 {
-    return (EngineSend == DO_EXIT || EngineSend == DO_ABORT);
+    return (Sync.send == DO_EXIT || Sync.send == DO_ABORT);
 }
 
 void wait_search_end(void);

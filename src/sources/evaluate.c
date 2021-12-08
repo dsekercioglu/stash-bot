@@ -19,8 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "endgame.h"
-#include "engine.h"
+#include "evaluate.h"
 #include "imath.h"
+#include "movelist.h"
 #include "pawns.h"
 
 #ifdef TUNE
@@ -117,20 +118,6 @@ const scorepair_t MobilityQ[28] = {
     SPAIR(  26, 189), SPAIR(  28, 187), SPAIR(  21, 195), SPAIR(  22, 179),
     SPAIR(  45, 159), SPAIR(  -3, 178), SPAIR(  16, 183), SPAIR(  48, 159)
 };
-
-typedef struct evaluation_s
-{
-    bitboard_t kingZone[COLOR_NB];
-    bitboard_t mobilityZone[COLOR_NB];
-    bitboard_t attacked[COLOR_NB];
-    bitboard_t attackedTwice[COLOR_NB];
-    bitboard_t attackedBy[COLOR_NB][PIECETYPE_NB];
-    int safetyAttackers[COLOR_NB];
-    int safetyAttacks[COLOR_NB];
-    scorepair_t safetyScore[COLOR_NB];
-    int tempos[COLOR_NB];
-}
-evaluation_t;
 
 bool is_kxk_endgame(const board_t *board, color_t us)
 {

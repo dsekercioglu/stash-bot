@@ -90,14 +90,14 @@ void check_time(void);
 
 INLINED bool timeman_can_stop_search(timeman_t *tm, clock_t cur)
 {
-    if (tm->pondering && EnginePonderhit == 0)
+    if (tm->pondering && Sync.ponderhit == 0)
         return (false);
     return (tm->mode != NoTimeman && cur >= tm->start + tm->optimalTime);
 }
 
 INLINED bool timeman_must_stop_search(timeman_t *tm, clock_t cur)
 {
-    if (tm->pondering && EnginePonderhit == 0)
+    if (tm->pondering && Sync.ponderhit == 0)
         return (false);
     return (tm->mode != NoTimeman && cur >= tm->start + tm->maximalTime);
 }

@@ -33,11 +33,13 @@ goparams_t SearchParams;
 option_list_t OptionList;
 movelist_t SearchMoves;
 
-pthread_cond_t EngineCond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t EngineMutex = PTHREAD_MUTEX_INITIALIZER;
-enum e_egn_mode EngineMode = THINKING;
-enum e_egn_send EngineSend = DO_NOTHING;
-int EnginePonderhit = 0;
+uci_sync_t Sync = {
+    PTHREAD_MUTEX_INITIALIZER,
+    PTHREAD_COND_INITIALIZER,
+    THINKING,
+    DO_NOTHING,
+    0
+};
 
 uint64_t Seed = 1048592ul;
 

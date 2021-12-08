@@ -193,7 +193,7 @@ void check_time(void)
     return ;
 
 __set_stop:
-    pthread_mutex_lock(&EngineMutex);
-    EngineSend = DO_EXIT;
-    pthread_mutex_unlock(&EngineMutex);
+    pthread_mutex_lock(&Sync.mutex);
+    Sync.send = DO_EXIT;
+    pthread_mutex_unlock(&Sync.mutex);
 }
