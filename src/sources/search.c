@@ -151,6 +151,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
         return (eval);
 
+    bool nmpFail = false;
+
     // Null move pruning.
 
     if (!pvNode && depth >= 3
@@ -192,6 +194,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
             if (zzscore >= beta)
                 return (score);
         }
+        else
+            nmpFail = true;
     }
 
 __main_loop:
@@ -299,6 +303,10 @@ __main_loop:
                 // Increase for non-PV nodes
 
                 R += !pvNode;
+
+                // Decrease when NMP fails
+
+                R -= nmpFail;
 
                 // Decrease if the move is a killer or countermove
                 R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
