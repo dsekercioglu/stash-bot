@@ -83,6 +83,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     bool inCheck = !!board->stack->checkers;
     bool improving;
+    bool nmpFail = false;
 
     // Check for interesting tt values
 
@@ -150,8 +151,6 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
         return (eval);
-
-    bool nmpFail = false;
 
     // Null move pruning.
 
