@@ -75,6 +75,9 @@ typedef struct ucioptions_s
     long hash;
     long moveOverhead;
     long multiPv;
+    long bookVariance;
+    char *bookFile;
+    char *bookMode;
     bool chess960;
     bool ponder;
 }
@@ -112,6 +115,7 @@ void print_pv(const board_t *board, root_move_t *rootMove, int multiPv,
     int depth, clock_t time, int bound);
 
 void uci_bench(const char *args);
+void uci_book_info(const char *args);
 void uci_d(const char *args);
 void uci_debug(const char *args);
 void uci_go(const char *args);

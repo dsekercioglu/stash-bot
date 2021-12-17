@@ -19,6 +19,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "book.h"
 #include "engine.h"
 #include "history.h"
 #include "imath.h"
@@ -149,6 +150,7 @@ void *engine_go(void *ptr)
         worker->rootMoves[i].seldepth = 0;
         worker->rootMoves[i].prevScore = -INF_SCORE;
         worker->rootMoves[i].score = -INF_SCORE;
+        worker->rootMoves[i].nodes = 0;
         worker->rootMoves[i].pv[0] = NO_MOVE;
         worker->rootMoves[i].pv[1] = NO_MOVE;
     }
@@ -166,6 +168,27 @@ void *engine_go(void *ptr)
 
     if (!worker->idx)
     {
+        if ((*Options.bookMode == 'r' || *Options.bookMode == 'b') && Options.multiPv == 1)
+        {
+            book_entry_t *entry = book_probe(&Book, board);
+
+            if (entry != NULL)
+            {
+                move_t move;
+                score_t score;
+
+                if (book_entry_select(&Book, entry, Options.bookVariance, &move, &score))
+                {
+                    printf("info depth 1 seldepth 1 multipv 1 score %s nodes 0 nps 0 hashfull 0 time 1 pv %s\n",
+                        score_to_str(score), move_to_str(move, board->chess960));
+                    printf("bestmove %s\n", move_to_str(move, board->chess960));
+                    fflush(stdout);
+                    free(worker->rootMoves);
+                    return (NULL);
+                }
+            }
+        }
+
         tt_clear();
         timeman_init(board, &Timeman, &SearchParams, chess_clock());
 
@@ -382,6 +405,32 @@ __retry:
 
             for (int i = 1; i < WPool.size; ++i)
                 pthread_join(WPool.list[i].thread, NULL);
+        }
+
+        if (*Options.bookMode == 'w' || *Options.bookMode == 'b')
+        {
+            boardstack_t stack;
+            book_movedata_t data[256];
+            size_t k = 0;
+
+            for (int i = 0; i < multiPv; ++i)
+            {
+                root_move_t *cur = worker->rootMoves + i;
+
+                data[k].move = cur->move;
+                data[k].nodes = cur->nodes;
+                data[k].score = cur->score != -INF_SCORE ? cur->score : cur->prevScore;
+
+                if (data[k].score == -INF_SCORE)
+                    continue ;
+
+                do_move(board, cur->move, &stack);
+                data[k].keyAfterMove = board->stack->boardKey;
+                undo_move(board, cur->move);
+                ++k;
+            }
+
+            book_update(&Book, board, k, data);
         }
     }
 

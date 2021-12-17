@@ -42,7 +42,7 @@ int EnginePonderhit = 0;
 uint64_t Seed = 1048592ul;
 
 ucioptions_t Options = {
-    1, 16, 100, 1, false, false
+    1, 16, 100, 1, 0, NULL, NULL, false, false
 };
 
 timeman_t Timeman;
@@ -57,6 +57,9 @@ int main(int argc, char **argv)
     cyclic_init();
     init_kpk_bitbase();
     init_endgame_table();
+
+    Options.bookFile = strdup("<empty>");
+    Options.bookMode = strdup("off");
 
 #ifdef TUNE
 

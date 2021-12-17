@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "book.h"
 #include "engine.h"
 #include "imath.h"
 #include "lazy_smp.h"
@@ -33,6 +34,7 @@
 const cmdlink_t commands[] =
 {
     {"bench", &uci_bench},
+    {"book_info", &uci_book_info},
     {"d", &uci_d},
     {"go", &uci_go},
     {"isready", &uci_isready},
@@ -170,6 +172,11 @@ void print_pv(const board_t *board, root_move_t *rootMove, int multiPv, int dept
     for (size_t k = 0; rootMove->pv[k]; ++k)
         printf(" %s", move_to_str(rootMove->pv[k], board->chess960));
     putchar('\n');
+}
+
+void uci_book_info(const char *args __attribute__((unused)))
+{
+    book_info(&Book, &Board);
 }
 
 void uci_isready(const char *args __attribute__((unused)))
@@ -511,8 +518,17 @@ void on_thread_set(void *data)
     fflush(stdout);
 }
 
+void on_book_set(void *data)
+{
+    book_load(&Book, *(char **)data);
+}
+
 void uci_loop(int argc, char **argv)
 {
+    const char *bookModes[5] = {
+        "off", "read", "write", "both", NULL
+    };
+
     init_option_list(&OptionList);
     add_option_spin_int(&OptionList, "Threads", &Options.threads, 1, 256, &on_thread_set);
     add_option_spin_int(&OptionList, "Hash", &Options.hash, 1, MAX_HASH, &on_hash_set);
@@ -521,6 +537,9 @@ void uci_loop(int argc, char **argv)
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_check(&OptionList, "Ponder", &Options.ponder, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
+    add_option_combo(&OptionList, "BookMode", &Options.bookMode, bookModes, NULL);
+    add_option_spin_int(&OptionList, "BookVariance", &Options.bookVariance, 0, 100, NULL);
+    add_option_string(&OptionList, "BookFile", &Options.bookFile, &on_book_set);
 
     uci_position("startpos");
 

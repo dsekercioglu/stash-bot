@@ -209,6 +209,8 @@ __main_loop:
 
     while ((currmove = movepick_next_move(&mp, skipQuiets)) != NO_MOVE)
     {
+        uint64_t nodes = 0;
+
         if (rootNode)
         {
             // Exclude already searched PV lines for root nodes
@@ -216,6 +218,8 @@ __main_loop:
             if (find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove) == NULL)
                 continue ;
+
+            nodes = worker->nodes;
         }
         else
         {
@@ -339,6 +343,7 @@ __main_loop:
             root_move_t *cur = find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove);
 
+            cur->nodes += worker->nodes - nodes;
             // Update PV for root
 
             if (moveCount == 1 || alpha < score)

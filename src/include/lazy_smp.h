@@ -26,12 +26,13 @@
 
 // Struct for root moves.
 
-typedef struct rootMove_s
+typedef struct root_move_s
 {
     move_t  move;
     int seldepth;
     score_t prevScore;
     score_t score;
+    uint64_t nodes;
     move_t  pv[512];
 }
 root_move_t;
