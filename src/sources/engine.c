@@ -177,7 +177,7 @@ void *engine_go(void *ptr)
                 move_t move;
                 score_t score;
 
-                if (book_entry_select(&Book, entry, Options.bookVariance, &move, &score))
+                if (book_entry_select(&Book, entry, Options.bookVariance, &move, &score) == 0)
                 {
                     printf("info depth 1 seldepth 1 multipv 1 score %s nodes 0 nps 0 hashfull 0 time 1 pv %s\n",
                         score_to_str(score), move_to_str(move, board->chess960));
@@ -321,6 +321,9 @@ __retry:
             }
         }
 
+        if (hasSearchAborted)
+            break ;
+
         // Reset root moves' score for the next search
 
         for (root_move_t *i = worker->rootMoves; i < worker->rootMoves + worker->rootCount; ++i)
@@ -328,9 +331,6 @@ __retry:
             i->prevScore = i->score;
             i->score = -INF_SCORE;
         }
-
-        if (hasSearchAborted)
-            break ;
 
         // If we went over optimal time usage, we just finished our iteration,
         // so we can safely return our bestmove.

@@ -197,7 +197,7 @@ book_entry_t *book_add_entry(book_t *book, const board_t *board, uint64_t nodes,
     memmove(book->list + left + 1, book->list + left, (book->size - left) * sizeof(book_entry_t));
 
     // Then write the entry data in the list.
-    book->list[left] = (book_entry_t){board->stack->boardKey, nodes, score, count, 0, 0, NULL, NULL};
+    book->list[left] = (book_entry_t){board->stack->boardKey, nodes, -score, count, 0, 0, NULL, NULL};
     ++book->size;
 
     return (book->list + left);
@@ -227,7 +227,7 @@ int book_entry_add_move(book_entry_t *entry, book_entry_t *nextEntry, move_t mov
     nextEntry->prevList = ptr;
 
     entry->list[entry->inBook++] = (book_next_t){move, nextEntry->key};
-    nextEntry->prevList[entry->prevCount++] = entry->key;
+    nextEntry->prevList[nextEntry->prevCount++] = entry->key;
     return (0);
 }
 
@@ -235,7 +235,6 @@ int book_update_entry(book_t *book, hashkey_t nextKey, const board_t *board, mov
 {
     hashkey_t key = board->stack->boardKey;
 
-    book_entry_t *rootEntry = book_probe_key(book, key);
     book_entry_t *nextEntry = book_probe_key(book, nextKey);
 
     // If the entry specific to the move doesn't exist, add it.
@@ -260,6 +259,8 @@ int book_update_entry(book_t *book, hashkey_t nextKey, const board_t *board, mov
         nextEntry->score = -score;
     }
 
+    book_entry_t *rootEntry = book_probe_key(book, key);
+
     // If the root entry doesn't exist, add it.
     // Either case make sure that the root entry is correctly linked to the
     // current move in both directions.
@@ -273,6 +274,7 @@ int book_update_entry(book_t *book, hashkey_t nextKey, const board_t *board, mov
     else
     {
         rootEntry = book_add_entry(book, board, 0, NO_SCORE);
+        nextEntry = book_probe_key(book, nextKey);
 
         if (rootEntry == NULL || book_entry_add_move(rootEntry, nextEntry, move))
             return (-1);

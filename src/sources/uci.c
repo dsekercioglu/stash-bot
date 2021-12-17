@@ -520,7 +520,8 @@ void on_thread_set(void *data)
 
 void on_book_set(void *data)
 {
-    book_load(&Book, *(char **)data);
+    if (strcmp(*(char **)data, "<empty>"))
+        book_load(&Book, *(char **)data);
 }
 
 void uci_loop(int argc, char **argv)
@@ -559,5 +560,9 @@ void uci_loop(int argc, char **argv)
 
     wait_search_end();
     uci_quit(NULL);
+
+    if ((*Options.bookMode == 'w' || *Options.bookMode == 'b') && strcmp(Options.bookFile, "<empty>"))
+        book_save(&Book, Options.bookFile);
+
     quit_option_list(&OptionList);
 }
