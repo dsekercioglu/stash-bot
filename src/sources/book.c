@@ -287,26 +287,32 @@ void book_backpropagate(book_t *book, hashkey_t key)
 {
     book_entry_t *entry = book_probe_key(book, key);
 
-    uint64_t sum = 0;
+    if (entry->nodes == UINT64_MAX)
+        return ;
+
+    uint64_t maxNodes = 0;
     score_t maxScore = -INF_SCORE;
 
     for (uint16_t i = 0; i < entry->inBook; ++i)
     {
         book_entry_t *nextEntry = book_probe_key(book, entry->list[i].key);
 
-        sum += nextEntry->nodes;
+        maxNodes = nextEntry->nodes == UINT64_MAX || maxNodes < nextEntry->nodes ? maxNodes : nextEntry->nodes;
         maxScore = max(maxScore, -nextEntry->score);
     }
 
     // Only backpropagate the score if we have enough total nodes and we're not
     // reporting a fake mate.
-    if (sum > entry->nodes && (maxScore > -MATE_FOUND || entry->inBook == entry->count))
+    if (maxNodes >= entry->nodes && (maxScore > -MATE_FOUND || entry->inBook == entry->count))
     {
-        entry->nodes = sum;
+        // To avoid infinite recursion
+        entry->nodes = UINT64_MAX;
         entry->score = maxScore;
 
         for (uint16_t i = 0; i < entry->prevCount; ++i)
             book_backpropagate(book, entry->prevList[i]);
+
+        entry->nodes = maxNodes;
     }
 }
 
