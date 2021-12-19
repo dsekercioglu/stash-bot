@@ -139,7 +139,9 @@ void init_base_values(tp_vector_t base)
     INIT_BASE_SP(IDX_KS_ROOK, RookWeight);
     INIT_BASE_SP(IDX_KS_QUEEN, QueenWeight);
     INIT_BASE_SP(IDX_KS_ATTACK, AttackWeight);
+    INIT_BASE_SP(IDX_KS_QUEENLESS, QueenlessAttack);
     INIT_BASE_SP(IDX_KS_WEAK_Z, WeakKingZone);
+    INIT_BASE_SP(IDX_KS_BRK_SHELTER, BrokenShelter);
     INIT_BASE_SP(IDX_KS_CHECK_N, SafeKnightCheck);
     INIT_BASE_SP(IDX_KS_CHECK_B, SafeBishopCheck);
     INIT_BASE_SP(IDX_KS_CHECK_R, SafeRookCheck);
@@ -404,14 +406,14 @@ double adjusted_eval(const tune_entry_t *entry, const tp_vector_t delta, double 
 
     normal[MIDGAME] -= max(0, midgame_score(entry->safety[WHITE])) * midgame_score(entry->safety[WHITE]) / 256
                      - max(0, midgame_score(entry->safety[BLACK])) * midgame_score(entry->safety[BLACK]) / 256;
-    normal[ENDGAME] -= max(0, endgame_score(entry->safety[WHITE])) / 16
-                     - max(0, endgame_score(entry->safety[BLACK])) / 16;
+    normal[ENDGAME] -= max(0, endgame_score(entry->safety[WHITE]))
+                     - max(0, endgame_score(entry->safety[BLACK]));
 
     // Compute the new safety evaluations for each side
 
     safety[MIDGAME] = fmax(0, wsafety[MIDGAME]) * wsafety[MIDGAME] / 256.0
                     - fmax(0, bsafety[MIDGAME]) * bsafety[MIDGAME] / 256.0;
-    safety[ENDGAME] = fmax(0, wsafety[ENDGAME]) / 16.0 - fmax(0, bsafety[ENDGAME]) / 16.0;
+    safety[ENDGAME] = fmax(0, wsafety[ENDGAME]) - fmax(0, bsafety[ENDGAME]);
 
     // Save the safety scores for computing gradients later
 
@@ -492,7 +494,7 @@ void update_gradient(const tune_entry_t *entry, tp_vector_t gradient, const tp_v
 
         gradient[index][MIDGAME] += mgBase / 128.0
             * (fmax(safetyValues[WHITE][MIDGAME], 0) * wcoeff - fmax(safetyValues[BLACK][MIDGAME], 0) * bcoeff);
-        gradient[index][ENDGAME] += egBase / 16.0 * entry->scaleFactor
+        gradient[index][ENDGAME] += egBase * entry->scaleFactor
             * ((safetyValues[WHITE][MIDGAME] > 0.0) * wcoeff - (safetyValues[BLACK][ENDGAME] > 0.0) * bcoeff);
     }
 }
@@ -548,7 +550,9 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KS_ROOK, RookWeight);
     PRINT_SP(IDX_KS_QUEEN, QueenWeight);
     PRINT_SP(IDX_KS_ATTACK, AttackWeight);
+    PRINT_SP(IDX_KS_QUEENLESS, QueenlessAttack);
     PRINT_SP(IDX_KS_WEAK_Z, WeakKingZone);
+    PRINT_SP(IDX_KS_BRK_SHELTER, BrokenShelter);
     PRINT_SP(IDX_KS_CHECK_N, SafeKnightCheck);
     PRINT_SP(IDX_KS_CHECK_B, SafeBishopCheck);
     PRINT_SP(IDX_KS_CHECK_R, SafeRookCheck);
