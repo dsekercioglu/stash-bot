@@ -196,7 +196,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
 __main_loop:
 
-    movepick_init(&mp, false, board, worker, ttMove, ss);
+    movepick_init(&mp, false, board, worker, ttMove, ss, eval);
 
     move_t currmove;
     move_t bestmove = NO_MOVE;
@@ -472,7 +472,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     (ss + 1)->plies = ss->plies + 1;
 
-    movepick_init(&mp, true, board, worker, ttMove, ss);
+    movepick_init(&mp, true, board, worker, ttMove, ss, eval);
 
     move_t currmove;
     move_t bestmove = NO_MOVE;

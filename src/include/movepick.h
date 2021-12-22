@@ -57,6 +57,7 @@ typedef struct movepick_s
     extmove_t *cur, *badCaptures;
     bool inQsearch;
     int stage;
+    score_t eval;
     move_t ttMove;
     move_t killer1;
     move_t killer2;
@@ -68,7 +69,7 @@ typedef struct movepick_s
 movepick_t;
 
 void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
-    const worker_t *worker, move_t ttMove, searchstack_t *ss);
+    const worker_t *worker, move_t ttMove, searchstack_t *ss, score_t eval);
 
 move_t  movepick_next_move(movepick_t *mp, bool skipQuiets);
 

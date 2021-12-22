@@ -19,9 +19,10 @@
 #include "movepick.h"
 
 void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
-    const worker_t *worker, move_t ttMove, searchstack_t *ss)
+    const worker_t *worker, move_t ttMove, searchstack_t *ss, score_t eval)
 {
     mp->inQsearch = inQsearch;
+    mp->eval = eval;
 
     if (board->stack->checkers)
         mp->stage = CHECK_PICK_TT + !(ttMove && move_is_pseudo_legal(board, ttMove));
@@ -152,7 +153,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, 0))
+                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, -mp->eval / 3))
                     return ((mp->cur++)->move);
 
                 *(mp->badCaptures++) = *(mp->cur++);
