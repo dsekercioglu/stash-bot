@@ -153,7 +153,7 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, -mp->eval / 3))
+                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, (-mp->eval / KNIGHT_MG_SCORE) * PAWN_MG_SCORE))
                     return ((mp->cur++)->move);
 
                 *(mp->badCaptures++) = *(mp->cur++);
