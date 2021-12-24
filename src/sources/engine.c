@@ -28,14 +28,17 @@
 #include "tt.h"
 #include "uci.h"
 
-int Reductions[64][64];
+int Reductions[2][64][64];
 int Pruning[2][7];
 
 void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        {
+            Reductions[0][d][m] = +0.60 + log(d) * log(m) / 5.40;
+            Reductions[1][d][m] = -0.50 + log(d) * log(m) / 1.65;
+        }
 
     for (int d = 1; d < 7; ++d)
     {

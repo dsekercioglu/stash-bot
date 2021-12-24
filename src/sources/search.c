@@ -292,7 +292,7 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode && (isQuiet || !pvNode))
         {
-            R = Reductions[min(depth, 63)][min(moveCount, 63)];
+            R = Reductions[isQuiet][min(depth, 63)][min(moveCount, 63)];
 
             // Increase for quiet non-PV nodes
 
