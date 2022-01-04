@@ -24,7 +24,7 @@
 
 # ifdef TUNE
 
-# define THREADS 3
+# define THREADS 1
 # define ITERS 10000
 # define LEARNING_RATE 0.001
 # define LR_DROP_ITERS 10000

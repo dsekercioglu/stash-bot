@@ -34,26 +34,20 @@ const scorepair_t Initiative = SPAIR(15, 15);
 
 // Passed Pawn eval terms
 
-const scorepair_t PP_OurKingProximity[8] = {
+const scorepair_t PP_OurKingProximity[5] = {
     0,
     SPAIR( -6, 37),
     SPAIR(-20, 29),
     SPAIR(-10,  2),
     SPAIR( -5,-13),
-    SPAIR(  1,-17),
-    SPAIR( 18,-21),
-    SPAIR(  4,-20)
 };
 
-const scorepair_t PP_TheirKingProximity[8] = {
+const scorepair_t PP_TheirKingProximity[5] = {
     0,
     SPAIR(-31,-99),
     SPAIR( 11,-21),
     SPAIR( -2,  4),
     SPAIR(  0, 20),
-    SPAIR(  0, 32),
-    SPAIR(  5, 36),
-    SPAIR( -3, 24)
 };
 
 // King Safety eval terms
@@ -64,6 +58,7 @@ const scorepair_t RookWeight      = SPAIR(  29,-744);
 const scorepair_t QueenWeight     = SPAIR(  68, 656);
 const scorepair_t AttackWeight    = SPAIR(  19, 202);
 const scorepair_t WeakKingZone    = SPAIR(  12,-421);
+const scorepair_t BrokenShelter   = SPAIR(   0,   0);
 const scorepair_t SafeKnightCheck = SPAIR(  35,-125);
 const scorepair_t SafeBishopCheck = SPAIR(  47,   2);
 const scorepair_t SafeRookCheck   = SPAIR(  43,  86);
@@ -72,23 +67,36 @@ const scorepair_t SafetyOffset    = SPAIR( -60,-619);
 
 // Knight eval terms
 
-const scorepair_t KnightShielded      = SPAIR(  5, 21);
-const scorepair_t KnightOutpost       = SPAIR(  6,-23);
-const scorepair_t KnightCenterOutpost = SPAIR( 21,  1);
-const scorepair_t KnightSolidOutpost  = SPAIR(  8, 33);
+const scorepair_t ClosedPosKnight[5] = {
+    SPAIR(0, 0), SPAIR(0, 0), SPAIR(0, 0), SPAIR(0, 0),
+    SPAIR(0, 0)
+};
+
+const scorepair_t KnightShielded = SPAIR(5, 21);
+const scorepair_t KnightOutpost = SPAIR(6, -23);
+const scorepair_t KnightCenterOutpost = SPAIR(21, 1);
+const scorepair_t KnightSolidOutpost = SPAIR(8, 33);
 
 // Bishop eval terms
 
-const scorepair_t BishopPairBonus = SPAIR( 25, 98);
-const scorepair_t BishopShielded  = SPAIR(  7, 18);
+const scorepair_t ClosedPosBishop[5] = {
+    SPAIR(0, 0), SPAIR(0, 0), SPAIR(0, 0), SPAIR(0, 0),
+    SPAIR(0, 0)
+};
+
+const scorepair_t BishopPairBonus = SPAIR(25, 98);
+const scorepair_t BishopShielded = SPAIR(7, 18);
+const scorepair_t BishopBuried = SPAIR(0, 0);
 
 // Rook eval terms
 
-const scorepair_t RookOnSemiOpenFile = SPAIR( 14, 32);
-const scorepair_t RookOnOpenFile     = SPAIR( 37,  7);
-const scorepair_t RookXrayQueen      = SPAIR( 10, 13);
+const scorepair_t RookOnSemiOpenFile = SPAIR(14, 32);
+const scorepair_t RookOnOpenFile = SPAIR(37, 7);
+const scorepair_t RookXrayQueen = SPAIR(10, 13);
+const scorepair_t RookTrapped = SPAIR(0, 0);
+const scorepair_t RookBuried = SPAIR(0, 0);
 
-// Mobility eval terms
+// Mobility terms
 
 const scorepair_t MobilityN[9] = {
     SPAIR( -64,  16), SPAIR( -41, -36), SPAIR( -37,  35), SPAIR( -30,  64),
@@ -131,6 +139,7 @@ typedef struct evaluation_s
     int safetyAttacks[COLOR_NB];
     scorepair_t safetyScore[COLOR_NB];
     int tempos[COLOR_NB];
+    int positionClosed;
 }
 evaluation_t;
 
@@ -317,6 +326,13 @@ void eval_init(const board_t *board, evaluation_t *eval)
     // If not in check, add one tempo to the side to move.
 
     eval->tempos[board->sideToMove] += !board->stack->checkers;
+
+    // Compute position closedness based on the count of pawns who cannot advance
+    // (including pawns with their stop squares controlled)
+    bitboard_t fixedPawns = wpawns & shift_down(occupied | battacks);
+    fixedPawns |= bpawns & shift_up(occupied | wattacks);
+
+    eval->positionClosed = min(4, popcount(fixedPawns) / 2);
 }
 
 scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const pawn_entry_t *pe, color_t us)
@@ -336,7 +352,16 @@ scorepair_t evaluate_knights(const board_t *board, evaluation_t *eval, const paw
         TRACE_ADD(IDX_PIECE + KNIGHT - PAWN, us, 1);
         TRACE_ADD(IDX_PSQT + 48 + (KNIGHT - KNIGHT) * 32 + to_sq32(relative_sq(sq, us)), us, 1);
 
+<<<<<<< HEAD
         // If the Knight is pinned, it has no Mobility squares.
+=======
+        // Give a bonus/penalty based on how closed the position is
+
+        ret += ClosedPosKnight[eval->positionClosed];
+        TRACE_ADD(IDX_KNIGHT_CLOSED_POS + eval->positionClosed, us, 1);
+
+        // If the Knight is pinned, it has no Mobility squares
+>>>>>>> ee1aaa6... Prepared code for FRC tuning
 
         if (board->stack->kingBlockers[us] & sqbb)
             b = 0;
@@ -424,6 +449,33 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
 
         TRACE_ADD(IDX_PIECE + BISHOP - PAWN, us, 1);
         TRACE_ADD(IDX_PSQT + 48 + (BISHOP - KNIGHT) * 32 + to_sq32(relative_sq(sq, us)), us, 1);
+
+        // Give a bonus/penalty based on how closed the position is
+
+        ret += ClosedPosBishop[eval->positionClosed];
+        TRACE_ADD(IDX_BISHOP_CLOSED_POS + eval->positionClosed, us, 1);
+
+        // Chess960 pattern. If the Bishop is in the corner with a friendly
+        // Pawn blocking its diagonal, give a penalty (higher if the Pawn
+        // itself is blocked by another piece).
+        if (board->chess960)
+        {
+            square_t relSq = relative_sq(sq, us);
+
+            if (relSq == SQ_A1 && (ourPawns & square_bb(relative_sq(SQ_B2, us))))
+            {
+                int scale = empty_square(board, relative_sq(SQ_B3, us)) ? 3 : 4;
+                ret += BishopBuried * scale;
+                TRACE_ADD(IDX_BISHOP_BURIED, us, scale);
+            }
+
+            if (relSq == SQ_H1 && (ourPawns & square_bb(relative_sq(SQ_G2, us))))
+            {
+                int scale = empty_square(board, relative_sq(SQ_G3, us)) ? 3 : 4;
+                ret += BishopBuried * scale;
+                TRACE_ADD(IDX_BISHOP_BURIED, us, scale);
+            }
+        }
 
         // If the Bishop is pinned, reduce its mobility to all the squares
         // between the King and the pinner.
@@ -518,8 +570,31 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
 
         // Bonus for Rook mobility
 
-        ret += MobilityR[popcount(b & eval->mobilityZone[us])];
+        int mobility = popcount(b & eval->mobilityZone[us]);
+
+        ret += MobilityR[mobility];
         TRACE_ADD(IDX_MOBILITY_ROOK + popcount(b & eval->mobilityZone[us]), us, 1);
+
+        // Check for trapped Rooks in the opening
+
+        if (mobility <= 3 && relative_sq_rank(sq, us) <= RANK_3)
+        {
+            file_t kingFile = sq_file(get_king_square(board, us));
+
+            if ((kingFile <= FILE_D) == (sq_file(sq) < kingFile))
+            {
+                if (has_castling(us, board->stack->castlings))
+                {
+                    ret += RookTrapped;
+                    TRACE_ADD(IDX_ROOK_TRAPPED, us, 1);
+                }
+                else
+                {
+                    ret += RookBuried;
+                    TRACE_ADD(IDX_ROOK_BURIED, us, 1);
+                }
+            }
+        }
 
         // Bonus for a Rook on King Attack zone
 
@@ -600,8 +675,8 @@ scorepair_t evaluate_passed_pos(const board_t *board, const pawn_entry_t *entry,
         // Give a bonus/penalty based on how close is our King and their King
         // from the Pawn.
 
-        int ourDistance = SquareDistance[ourKing][sq];
-        int theirDistance = SquareDistance[theirKing][sq];
+        int ourDistance = min(SquareDistance[ourKing][sq], 4);
+        int theirDistance = min(SquareDistance[theirKing][sq], 4);
 
         ret += PP_OurKingProximity[ourDistance];
         ret += PP_TheirKingProximity[theirDistance];
@@ -647,6 +722,15 @@ scorepair_t evaluate_safety(const board_t *board, evaluation_t *eval, color_t us
 
         bonus += AttackWeight * eval->safetyAttacks[us];
         bonus += WeakKingZone * popcount(weak & eval->kingZone[us]);
+
+        // Check if the Pawn shelter of the King is partially missing.
+
+        for (file_t f = max(FILE_A, sq_file(theirKing) - 1); f <= min(FILE_H, sq_file(theirKing) + 1); ++f)
+            if (!(piece_bb(board, them, PAWN) & file_bb(f) & eval->kingZone[us]))
+            {
+                bonus += BrokenShelter;
+                TRACE_ADD(IDX_KS_BRK_SHELTER, us, 1);
+            }
 
         bonus += SafeKnightCheck * popcount(knightChecks);
         bonus += SafeBishopCheck * popcount(bishopChecks);
