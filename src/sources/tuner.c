@@ -245,7 +245,7 @@ void init_tuner_entries(tune_data_t *data, const char *filename)
         }
 
 
-        set_board(&board, linebuf, false, &stack);
+        set_board(&board, linebuf, true, &stack);
         if (init_tuner_entry(cur, &board))
             data->size++;
 
@@ -608,9 +608,9 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SPA(IDX_DEFENDER, DefenderBonus, 5, 3, 1, "SPAIR");
     putchar('\n');
 
-    PRINT_SPA(IDX_PP_OUR_KING_PROX, PP_OurKingProximity, 7, 3, 1, "SPAIR");
+    PRINT_SPA(IDX_PP_OUR_KING_PROX, PP_OurKingProximity, 4, 3, 1, "SPAIR");
     putchar('\n');
-    PRINT_SPA(IDX_PP_THEIR_KING_PROX, PP_TheirKingProximity, 7, 3, 1, "SPAIR");
+    PRINT_SPA(IDX_PP_THEIR_KING_PROX, PP_TheirKingProximity, 4, 3, 1, "SPAIR");
     putchar('\n');
 }
 
