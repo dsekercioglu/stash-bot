@@ -1,6 +1,6 @@
 /*
 **    Stash, a UCI chess playing engine developed from scratch
-**    Copyright (C) 2019-2021 Morgan Houppin
+**    Copyright (C) 2019-2022 Morgan Houppin
 **
 **    Stash is free software: you can redistribute it and/or modify
 **    it under the terms of the GNU General Public License as published by
@@ -140,23 +140,29 @@ void init_base_values(tp_vector_t base)
     INIT_BASE_SP(IDX_KS_QUEEN, QueenWeight);
     INIT_BASE_SP(IDX_KS_ATTACK, AttackWeight);
     INIT_BASE_SP(IDX_KS_WEAK_Z, WeakKingZone);
+    INIT_BASE_SP(IDX_KS_BRK_SHELTER, BrokenShelter);
     INIT_BASE_SP(IDX_KS_CHECK_N, SafeKnightCheck);
     INIT_BASE_SP(IDX_KS_CHECK_B, SafeBishopCheck);
     INIT_BASE_SP(IDX_KS_CHECK_R, SafeRookCheck);
     INIT_BASE_SP(IDX_KS_CHECK_Q, SafeQueenCheck);
     INIT_BASE_SP(IDX_KS_OFFSET, SafetyOffset);
 
+    INIT_BASE_SPA(IDX_KNIGHT_CLOSED_POS, ClosedPosKnight, 5);
     INIT_BASE_SP(IDX_KNIGHT_SHIELDED, KnightShielded);
     INIT_BASE_SP(IDX_KNIGHT_OUTPOST, KnightOutpost);
     INIT_BASE_SP(IDX_KNIGHT_CENTER_OUTPOST, KnightCenterOutpost);
     INIT_BASE_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
 
+    INIT_BASE_SPA(IDX_BISHOP_CLOSED_POS, ClosedPosBishop, 5);
     INIT_BASE_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     INIT_BASE_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    INIT_BASE_SP(IDX_BISHOP_BURIED, BishopBuried);
 
     INIT_BASE_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);
     INIT_BASE_SP(IDX_ROOK_OPEN, RookOnOpenFile);
     INIT_BASE_SP(IDX_ROOK_XRAY_QUEEN, RookXrayQueen);
+    INIT_BASE_SP(IDX_ROOK_TRAPPED, RookTrapped);
+    INIT_BASE_SP(IDX_ROOK_BURIED, RookBuried);
 
     INIT_BASE_SPA(IDX_MOBILITY_KNIGHT, MobilityN, 9);
     INIT_BASE_SPA(IDX_MOBILITY_BISHOP, MobilityB, 14);
@@ -187,9 +193,9 @@ void init_base_values(tp_vector_t base)
         }
     }
 
-    extern const scorepair_t PP_OurKingProximity[8], PP_TheirKingProximity[8];
+    extern const scorepair_t PP_OurKingProximity[5], PP_TheirKingProximity[5];
 
-    for (int distance = 1; distance <= 7; ++distance)
+    for (int distance = 1; distance <= 4; ++distance)
     {
         base[IDX_PP_OUR_KING_PROX + distance - 1][MIDGAME] = midgame_score(PP_OurKingProximity[distance]);
         base[IDX_PP_OUR_KING_PROX + distance - 1][ENDGAME] = endgame_score(PP_OurKingProximity[distance]);
@@ -549,6 +555,7 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KS_QUEEN, QueenWeight);
     PRINT_SP(IDX_KS_ATTACK, AttackWeight);
     PRINT_SP(IDX_KS_WEAK_Z, WeakKingZone);
+    PRINT_SP(IDX_KS_BRK_SHELTER, BrokenShelter);
     PRINT_SP(IDX_KS_CHECK_N, SafeKnightCheck);
     PRINT_SP(IDX_KS_CHECK_B, SafeBishopCheck);
     PRINT_SP(IDX_KS_CHECK_R, SafeRookCheck);
@@ -556,19 +563,26 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KS_OFFSET, SafetyOffset);
     putchar('\n');
 
+    PRINT_SPA(IDX_KNIGHT_CLOSED_POS, ClosedPosKnight, 5, 4, 4, "SPAIR");
+    putchar('\n');
     PRINT_SP(IDX_KNIGHT_SHIELDED, KnightShielded);
     PRINT_SP(IDX_KNIGHT_OUTPOST, KnightOutpost);
     PRINT_SP(IDX_KNIGHT_CENTER_OUTPOST, KnightCenterOutpost);
     PRINT_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
     putchar('\n');
 
+    PRINT_SPA(IDX_BISHOP_CLOSED_POS, ClosedPosKnight, 5, 4, 4, "SPAIR");
+    putchar('\n');
     PRINT_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     PRINT_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    PRINT_SP(IDX_BISHOP_BURIED, BishopBuried);
     putchar('\n');
 
     PRINT_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);
     PRINT_SP(IDX_ROOK_OPEN, RookOnOpenFile);
     PRINT_SP(IDX_ROOK_XRAY_QUEEN, RookXrayQueen);
+    PRINT_SP(IDX_ROOK_TRAPPED, RookTrapped);
+    PRINT_SP(IDX_ROOK_BURIED, RookBuried);
     putchar('\n');
 
     PRINT_SPA(IDX_MOBILITY_KNIGHT, MobilityN, 9, 4, 4, "SPAIR");

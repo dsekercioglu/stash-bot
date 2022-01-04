@@ -1,6 +1,6 @@
 /*
 **    Stash, a UCI chess playing engine developed from scratch
-**    Copyright (C) 2019-2021 Morgan Houppin
+**    Copyright (C) 2019-2022 Morgan Houppin
 **
 **    Stash is free software: you can redistribute it and/or modify
 **    it under the terms of the GNU General Public License as published by
@@ -32,15 +32,20 @@ typedef enum tune_idx_e
     IDX_PSQT = IDX_PIECE + 5,
     IDX_CASTLING = IDX_PSQT + 48 + 32 * 5,
     IDX_INITIATIVE,
-    IDX_KNIGHT_SHIELDED,
+    IDX_KNIGHT_CLOSED_POS,
+    IDX_KNIGHT_SHIELDED = IDX_KNIGHT_CLOSED_POS + 5,
     IDX_KNIGHT_OUTPOST,
     IDX_KNIGHT_CENTER_OUTPOST,
     IDX_KNIGHT_SOLID_OUTPOST,
-    IDX_BISHOP_PAIR,
+    IDX_BISHOP_CLOSED_POS,
+    IDX_BISHOP_PAIR = IDX_BISHOP_CLOSED_POS + 5,
     IDX_BISHOP_SHIELDED,
+    IDX_BISHOP_BURIED,
     IDX_ROOK_SEMIOPEN,
     IDX_ROOK_OPEN,
     IDX_ROOK_XRAY_QUEEN,
+    IDX_ROOK_TRAPPED,
+    IDX_ROOK_BURIED,
     IDX_MOBILITY_KNIGHT,
     IDX_MOBILITY_BISHOP = IDX_MOBILITY_KNIGHT + 9,
     IDX_MOBILITY_ROOK = IDX_MOBILITY_BISHOP + 14,
@@ -53,13 +58,14 @@ typedef enum tune_idx_e
     IDX_PHALANX = IDX_PASSER + 6,
     IDX_DEFENDER = IDX_PHALANX + 6,
     IDX_PP_OUR_KING_PROX = IDX_DEFENDER + 5,
-    IDX_PP_THEIR_KING_PROX = IDX_PP_OUR_KING_PROX + 7,
-    IDX_KS_KNIGHT = IDX_PP_THEIR_KING_PROX + 7,
+    IDX_PP_THEIR_KING_PROX = IDX_PP_OUR_KING_PROX + 4,
+    IDX_KS_KNIGHT = IDX_PP_THEIR_KING_PROX + 4,
     IDX_KS_BISHOP,
     IDX_KS_ROOK,
     IDX_KS_QUEEN,
     IDX_KS_ATTACK,
     IDX_KS_WEAK_Z,
+    IDX_KS_BRK_SHELTER,
     IDX_KS_CHECK_N,
     IDX_KS_CHECK_B,
     IDX_KS_CHECK_R,

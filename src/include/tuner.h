@@ -1,6 +1,6 @@
 /*
 **    Stash, a UCI chess playing engine developed from scratch
-**    Copyright (C) 2019-2021 Morgan Houppin
+**    Copyright (C) 2019-2022 Morgan Houppin
 **
 **    Stash is free software: you can redistribute it and/or modify
 **    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 # ifdef TUNE
 
-# define THREADS 3
+# define THREADS 1
 # define ITERS 10000
 # define LEARNING_RATE 0.001
 # define LR_DROP_ITERS 10000
