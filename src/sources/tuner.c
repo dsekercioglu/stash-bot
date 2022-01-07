@@ -571,7 +571,7 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
     putchar('\n');
 
-    PRINT_SPA(IDX_BISHOP_CLOSED_POS, ClosedPosKnight, 5, 4, 4, "SPAIR");
+    PRINT_SPA(IDX_BISHOP_CLOSED_POS, ClosedPosBishop, 5, 4, 4, "SPAIR");
     putchar('\n');
     PRINT_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     PRINT_SP(IDX_BISHOP_SHIELDED, BishopShielded);
