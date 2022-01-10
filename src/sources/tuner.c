@@ -28,6 +28,7 @@ void start_tuning_session(const char *filename)
 #ifdef TUNE
     tp_vector_t delta = {}, base = {}, momentumGrad = {}, velocityGrad = {};
     double K, lr = LEARNING_RATE;
+    double lastLoss = 0.0;
     tune_data_t data = {};
 
     init_base_values(base);
@@ -62,7 +63,8 @@ void start_tuning_session(const char *filename)
         }
 
         double loss = adjusted_eval_mse(&data, delta, K);
-        printf("Iteration [%d], Loss [%.7f]\n", iter, loss);
+        printf("Iteration [%d], Loss [%.7f], Diff [%lg]\n", iter, loss, iter == 0 ? 0.0 : lastLoss - loss);
+        lastLoss = loss;
 
         if (iter % LR_DROP_ITERS == LR_DROP_ITERS - 1)
             lr /= LR_DROP_VALUE;

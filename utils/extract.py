@@ -5,7 +5,7 @@ import os, time, random, multiprocessing, queue
 THREADS                 = 3
 INPUT_NAME              = "Stash.pgn"
 OUTPUT_NAME             = "Stash.book"
-FENS_PER_GAME           = 10
+FENS_PER_GAME           = 8
 
 VALUE = {
     "1-0": "1.0",
@@ -23,7 +23,7 @@ class Visitor(chess.pgn.BaseVisitor):
             self.fens.append(board.fen())
 
     def result(self):
-        return self.fens
+        return [] if len(self.fens) <= 8 else self.fens[8:]
 
 def splitPGN():
 
@@ -107,7 +107,7 @@ def parseFENSFromPGNS(id, q):
                 rejected += 1; continue
 
             # Sample FENS_PER_GAME times and save the positions
-            for fen in random.sample(fens, FENS_PER_GAME):
+            for fen in random.sample(fens, len(fens) // FENS_PER_GAME):
                 outputs.append("{0} {1}\n".format(fen, VALUE[game.headers["Result"]]))
 
             # No criteria met to skip this game
