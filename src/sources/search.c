@@ -227,7 +227,7 @@ __main_loop:
 
         bool isQuiet = !is_capture_or_promotion(board, currmove);
 
-        if (!rootNode && bestScore > -MATE_FOUND)
+        if (!rootNode && bestScore > -MATE_FOUND && board->stack->material[board->sideToMove])
         {
             // Late Move Pruning.
 
@@ -266,7 +266,7 @@ __main_loop:
         if (!rootNode)
         {
             if (depth >= 9 && currmove == ttMove && !ss->excludedMove
-                && (ttBound & LOWER_BOUND) && abs(ttScore) < VICTORY
+                && (ttBound & LOWER_BOUND) && abs(ttScore) < INF_SCORE
                 && ttDepth >= depth - 2)
             {
                 score_t singularBeta = ttScore - depth;
