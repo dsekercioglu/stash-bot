@@ -154,6 +154,7 @@ void *engine_go(void *ptr)
         worker->rootMoves[i].seldepth = 0;
         worker->rootMoves[i].prevScore = -INF_SCORE;
         worker->rootMoves[i].score = -INF_SCORE;
+        worker->rootMoves[i].nodes = 0;
         worker->rootMoves[i].pv[0] = NO_MOVE;
         worker->rootMoves[i].pv[1] = NO_MOVE;
     }
@@ -319,7 +320,7 @@ __retry:
 
         if (!worker->idx)
         {
-            timeman_update(&Timeman, board, worker->rootMoves->move, worker->rootMoves->prevScore);
+            timeman_update(&Timeman, worker->rootMoves, worker->rootMoves + worker->rootCount);
             if (timeman_can_stop_search(&Timeman, chess_clock()))
                 break ;
         }

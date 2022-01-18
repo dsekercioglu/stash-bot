@@ -22,29 +22,6 @@
 #include "lazy_smp.h"
 #include "timeman.h"
 
-// Scaling table based on the move type
-
-const double BestmoveTypeScale[BM_TYPE_NB] = {
-    0.20, // One legal move
-    0.45, // Promoting a piece
-    0.50, // Capture with a very high SEE
-    0.85, // Check not throwing away material
-    0.95, // Capture
-    1.00, // Quiet move not throwing away material
-    1.20, // Check losing material
-    1.40, // Quiet losing material
-};
-
-// Scaling table based on the number of consecutive iterations the bestmove held
-
-const double BestmoveStabilityScale[5] = {
-    2.50,
-    1.20,
-    0.90,
-    0.80,
-    0.75
-};
-
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start)
 {
     clock_t overhead = Options.moveOverhead;
@@ -87,9 +64,6 @@ void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock
         tm->mode = NoTimeman;
 
     tm->prevScore = NO_SCORE;
-    tm->prevBestmove = NO_MOVE;
-    tm->stability = 0;
-    tm->type = NO_BM_TYPE;
 }
 
 double score_difference_scale(score_t s)
@@ -107,69 +81,31 @@ double score_difference_scale(score_t s)
 
     return (pow(T, clamp(s, -X, X) / (double)X));
 }
-
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score)
+void timeman_update(timeman_t *tm, root_move_t *begin, root_move_t *end)
 {
     // Only update timeman when we need one.
 
     if (tm->mode != Tournament)
         return ;
 
-    // Update bestmove + stability statistics.
-
-    if (tm->prevBestmove != bestmove)
-    {
-        movelist_t list;
-        bool isQuiet = !is_capture_or_promotion(board, bestmove);
-        bool givesCheck = move_gives_check(board, bestmove);
-
-        tm->prevBestmove = bestmove;
-        tm->stability = 0;
-
-        // Do we only have one legal move ? Don't burn much time on these.
-
-        list_all(&list, board);
-        if (movelist_size(&list) == 1)
-            tm->type = OneLegalMove;
-
-        else if (move_type(bestmove) == PROMOTION)
-            tm->type = Promotion;
-
-        else if (!isQuiet && see_greater_than(board, bestmove, KNIGHT_MG_SCORE))
-            tm->type = SoundCapture;
-
-        else if (givesCheck && see_greater_than(board, bestmove, 0))
-            tm->type = SoundCheck;
-
-        else if (!isQuiet)
-            tm->type = Capture;
-
-        else if (see_greater_than(board, bestmove, 0))
-            tm->type = Quiet;
-
-        else if (givesCheck)
-            tm->type = WeirdCheck;
-
-        else
-            tm->type = WeirdQuiet;
-    }
-    else
-        tm->stability = min(tm->stability + 1, 4);
-
-    // Scale the time usage based on the type of bestmove we have.
-
-    double scale = BestmoveTypeScale[tm->type];
-
-    // Scale the time usage based on how long this bestmove has held
-    // through search iterations.
-
-    scale *= BestmoveStabilityScale[tm->stability];
+    double scale = 1.0;
+    score_t score = begin->score;
 
     // Scale the time usage based on how the score changed from the
     // previous iteration (the higher it goes, the quicker we stop searching).
 
     if (tm->prevScore != NO_SCORE)
         scale *= score_difference_scale(tm->prevScore - score);
+
+    // Scale the time usage based on the node repartition between the best move
+    // and the rest of the moves.
+    uint64_t bestNodes = begin->nodes;
+    uint64_t totalNodes = 0;
+
+    for (root_move_t *it = begin; it != end; it++)
+        totalNodes += it->nodes;
+
+    scale *= (totalNodes - bestNodes) / (double)totalNodes;
 
     // Update score + optimal time usage.
 

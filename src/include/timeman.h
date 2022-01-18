@@ -39,24 +39,6 @@ INLINED clock_t chess_clock(void)
 #endif
 }
 
-typedef enum
-{
-    NO_BM_TYPE = -1,
-    OneLegalMove,
-    Promotion,
-    SoundCapture,
-    SoundCheck,
-    Capture,
-    Quiet,
-    WeirdCheck,
-    WeirdQuiet,
-    BM_TYPE_NB
-}
-bestmove_type_t;
-
-extern const double BestmoveTypeScale[BM_TYPE_NB];
-extern const double BestmoveStabilityScale[5];
-
 typedef enum tm_mode_e
 {
     Tournament,
@@ -76,16 +58,13 @@ typedef struct timeman_s
     clock_t optimalTime;
 
     score_t prevScore;
-    move_t prevBestmove;
-    int stability;
-    bestmove_type_t type;
 }
 timeman_t;
 
 extern timeman_t Timeman;
 
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start);
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score);
+void timeman_update(timeman_t *tm, root_move_t *begin, root_move_t *end);
 void check_time(void);
 
 INLINED bool timeman_can_stop_search(timeman_t *tm, clock_t cur)
