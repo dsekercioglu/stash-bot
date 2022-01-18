@@ -105,7 +105,11 @@ void timeman_update(timeman_t *tm, root_move_t *begin, root_move_t *end)
     for (root_move_t *it = begin; it != end; it++)
         totalNodes += it->nodes;
 
-    scale *= (totalNodes - bestNodes) / (double)totalNodes;
+    double nodeRate = (totalNodes - bestNodes) / (double)totalNodes;
+
+    nodeRate = fmin(fmax(nodeRate, 0.15), 0.85);
+
+    scale *= nodeRate * 2.0;
 
     // Update score + optimal time usage.
 
