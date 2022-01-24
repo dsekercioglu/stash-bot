@@ -235,13 +235,13 @@ score_t scale_endgame(const board_t *board, score_t eg, const pawn_entry_t *entr
         factor = (strongMat <= BISHOP_MG_SCORE) ? 0 : max((int32_t)(strongMat - weakMat) * 8 / BISHOP_MG_SCORE, 0);
 
     // OCB endgames: scale based on the number of remaining pieces of the strong side,
-	// or if there are only Bishops and Pawns remaining, based on the number of passed
-	// pawns of the strong side.
+    // or if there are only Bishops and Pawns remaining, based on the number of passed
+    // pawns of the strong side.
 
     else if (ocb_endgame(board))
         factor = (strongMat == BISHOP_MG_SCORE)
-			? 16 + popcount(entry->passed[strongSide]) * 4
-			: 36 + popcount(color_bb(board, strongSide)) * 6;
+            ? 16 + popcount(entry->passed[strongSide]) * 4
+            : 36 + popcount(color_bb(board, strongSide)) * 6;
 
     // Rook endgames: drawish if the Pawn advantage is small, and all strong side Pawns
     // are on the same side of the board. Don't scale if the defending King is far from
