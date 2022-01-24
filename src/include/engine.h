@@ -119,7 +119,6 @@ void update_capture_history(const board_t *board, int depth,
     move_t bestmove, const move_t captures[64], int ccount, searchstack_t *ss);
 
 score_t evaluate(const board_t *board);
-score_t scale_endgame(const board_t *board, score_t eg);
 
 void init_reduction_table(void);
 
