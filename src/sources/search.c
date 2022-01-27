@@ -38,6 +38,21 @@ void update_pv(move_t *pv, move_t bestmove, move_t *subPv)
     pv[i + 1] = NO_MOVE;
 }
 
+int get_currmove_histscore(const worker_t *worker, const board_t *board, move_t currmove, bool isQuiet)
+{
+    piece_t movedPiece = piece_on(board, from_sq(currmove));
+    square_t to = to_sq(currmove);
+
+    if (isQuiet)
+        return get_bf_history_score(worker->bfHistory, movedPiece, currmove);
+
+    else
+        return get_cap_history_score(worker->capHistory, movedPiece, to,
+              move_type(currmove) == PROMOTION  ? promotion_type(currmove)
+            : move_type(currmove) == EN_PASSANT ? PAWN
+                                                : piece_type(piece_on(board, to)));
+}
+
 score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchstack_t *ss, bool pvNode)
 {
     bool rootNode = (ss->plies == 0);
@@ -259,8 +274,7 @@ __main_loop:
         int extension = 0;
         int newDepth = depth - 1;
         bool givesCheck = move_gives_check(board, currmove);
-        int histScore = isQuiet
-            ? get_bf_history_score(worker->bfHistory, piece_on(board, from_sq(currmove)), currmove) : 0;
+        int histScore = get_currmove_histscore(worker, board, currmove, isQuiet);
 
         if (!rootNode)
         {
@@ -310,7 +324,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+                R = clamp(-(1000 + histScore) / 3000, 0, newDepth - 1);
         }
         else
             R = 0;
