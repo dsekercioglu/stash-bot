@@ -289,7 +289,7 @@ __main_loop:
 
         // Can we apply LMR ?
 
-        if (depth >= 3 && moveCount > 2 + 2 * rootNode)
+        if (depth >= 3 && moveCount > 1 + 2 * rootNode)
         {
             if (isQuiet)
             {
