@@ -484,7 +484,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if futility pruning is possible.
 
     const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t futilityBase = bestScore + 200;
+    const score_t futilityBase = bestScore + 160;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
@@ -507,7 +507,10 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
             // Check if the move is very unlikely to improve alpha.
 
             if (delta < alpha)
+            {
+                alpha = max(alpha, futilityBase);
                 continue ;
+            }
         }
 
         ss->currentMove = currmove;
