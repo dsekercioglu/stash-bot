@@ -97,33 +97,33 @@ const scorepair_t RookXrayQueen      = SPAIR( 10,  5);
 // Mobility eval terms
 
 const scorepair_t MobilityN[9] = {
-    SPAIR( -55,  11), SPAIR( -41, -25), SPAIR( -36,  34), SPAIR( -31,  58),
-    SPAIR( -26,  70), SPAIR( -21,  85), SPAIR( -16,  93), SPAIR( -10,  93),
-    SPAIR(  -8,  84)
+    SPAIR( -28, -44), SPAIR( -14, -80), SPAIR(  -9, -21), SPAIR(  -4,   3),
+    SPAIR(   1,  15), SPAIR(   6,  30), SPAIR(  11,  38), SPAIR(  17,  38),
+    SPAIR(  19,  29)
 };
 
 const scorepair_t MobilityB[14] = {
-    SPAIR( -48, -35), SPAIR( -44, -59), SPAIR( -31, -21), SPAIR( -28,  13),
-    SPAIR( -21,  33), SPAIR( -15,  44), SPAIR( -13,  56), SPAIR( -12,  60),
-    SPAIR( -13,  63), SPAIR(  -8,  61), SPAIR(  -9,  55), SPAIR(  -4,  53),
-    SPAIR(   3,  49), SPAIR(  22,  15)
+    SPAIR( -33, -62), SPAIR( -29, -86), SPAIR( -16, -48), SPAIR( -13, -14),
+    SPAIR(  -6,   6), SPAIR(   0,  17), SPAIR(   2,  29), SPAIR(   3,  33),
+    SPAIR(   2,  36), SPAIR(   7,  34), SPAIR(   6,  28), SPAIR(  11,  26),
+    SPAIR(  18,  22), SPAIR(  37, -12)
 };
 
 const scorepair_t MobilityR[15] = {
-    SPAIR(-109,  28), SPAIR( -41,  16), SPAIR( -36,  75), SPAIR( -39,  90),
-    SPAIR( -36, 102), SPAIR( -34, 113), SPAIR( -31, 123), SPAIR( -26, 127),
-    SPAIR( -21, 134), SPAIR( -14, 134), SPAIR( -12, 142), SPAIR( -14, 146),
-    SPAIR(   1, 136), SPAIR(   3, 133), SPAIR(  14, 116)
+    SPAIR( -83, -79), SPAIR( -15, -91), SPAIR( -10, -32), SPAIR( -13, -17),
+    SPAIR( -10,  -5), SPAIR(  -8,   6), SPAIR(  -5,  16), SPAIR(   0,  20),
+    SPAIR(   5,  27), SPAIR(  12,  27), SPAIR(  14,  35), SPAIR(  12,  39),
+    SPAIR(  27,  29), SPAIR(  29,  26), SPAIR(  40,   9)
 };
 
 const scorepair_t MobilityQ[28] = {
-    SPAIR( -96,-186), SPAIR(  22, 116), SPAIR(   3, 179), SPAIR(   0, 166),
-    SPAIR(   1, 109), SPAIR(  -1, 109), SPAIR(  -0, 136), SPAIR(   0, 165),
-    SPAIR(   3, 177), SPAIR(   5, 191), SPAIR(   8, 198), SPAIR(  12, 198),
-    SPAIR(  12, 207), SPAIR(  17, 203), SPAIR(  16, 214), SPAIR(  19, 210),
-    SPAIR(  16, 212), SPAIR(  16, 208), SPAIR(  21, 202), SPAIR(  23, 197),
-    SPAIR(  28, 187), SPAIR(  29, 187), SPAIR(  17, 190), SPAIR(  20, 175),
-    SPAIR(  43, 157), SPAIR(  -4, 176), SPAIR(  16, 183), SPAIR(  48, 159)
+    SPAIR(-106,-351), SPAIR(  12, -49), SPAIR(  -7,  14), SPAIR( -10,   1),
+    SPAIR(  -9, -56), SPAIR( -11, -56), SPAIR( -10, -29), SPAIR( -10,   0),
+    SPAIR(  -7,  12), SPAIR(  -5,  26), SPAIR(  -2,  33), SPAIR(   2,  33),
+    SPAIR(   2,  42), SPAIR(   7,  38), SPAIR(   6,  49), SPAIR(   9,  45),
+    SPAIR(   6,  47), SPAIR(   6,  43), SPAIR(  11,  37), SPAIR(  13,  32),
+    SPAIR(  18,  22), SPAIR(  19,  22), SPAIR(   7,  25), SPAIR(  10,  10),
+    SPAIR(  33,  -8), SPAIR( -14,  11), SPAIR(   6,  18), SPAIR(  38,  -6)
 };
 
 // Threat eval terms
