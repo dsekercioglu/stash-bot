@@ -128,13 +128,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
             eval = ttScore;
     }
     else
-    {
         eval = ss->staticEval = evaluate(board);
-
-        // Save the eval in TT so that other workers won't have to recompute it.
-
-        tt_save(entry, key, NO_SCORE, eval, 0, NO_BOUND, NO_MOVE);
-    }
 
     if (rootNode && worker->pvLine)
         ttMove = worker->rootMoves[worker->pvLine].move;
