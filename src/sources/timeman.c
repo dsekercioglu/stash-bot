@@ -35,16 +35,6 @@ const double BestmoveTypeScale[BM_TYPE_NB] = {
     1.40, // Quiet losing material
 };
 
-// Scaling table based on the number of consecutive iterations the bestmove held
-
-const double BestmoveStabilityScale[5] = {
-    2.50,
-    1.20,
-    0.90,
-    0.80,
-    0.75
-};
-
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start)
 {
     clock_t overhead = Options.moveOverhead;
@@ -154,7 +144,7 @@ void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_
             tm->type = WeirdQuiet;
     }
     else
-        tm->stability = min(tm->stability + 1, 4);
+        ++tm->stability;
 
     // Scale the time usage based on the type of bestmove we have.
 
@@ -163,7 +153,7 @@ void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_
     // Scale the time usage based on how long this bestmove has held
     // through search iterations.
 
-    scale *= BestmoveStabilityScale[tm->stability];
+    scale *= tm->stability >= 7 ? 0.8 : 2.0;
 
     // Scale the time usage based on how the score changed from the
     // previous iteration (the higher it goes, the quicker we stop searching).
