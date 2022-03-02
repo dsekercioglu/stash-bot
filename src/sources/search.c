@@ -239,17 +239,17 @@ __main_loop:
         {
             // Late Move Pruning.
 
-            if (depth <= 6 && moveCount > Pruning[improving][depth])
+            if (depth <= 5 && moveCount > Pruning[improving][depth])
                 skipQuiets = true;
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= 4 && !inCheck && isQuiet && eval + 237 + 79 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -80 * depth : -25 * depth * depth)))
+            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -83 * depth : -24 * depth * depth)))
                 continue ;
         }
 
