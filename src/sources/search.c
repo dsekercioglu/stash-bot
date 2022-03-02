@@ -316,7 +316,7 @@ __main_loop:
 
                 R -= histScore / 4000;
 
-                R = clamp(R, 0, newDepth - 1);
+                R = clamp(R, (depth >= 7 && moveCount <= 6) ? -1 : 0, newDepth - 1);
             }
             else
                 R = 1;
@@ -329,7 +329,7 @@ __main_loop:
 
         // If LMR is not possible, or our LMR failed, do a search with no reductions.
 
-        if ((R && score > alpha) || (!R && !(pvNode && moveCount == 1)))
+        if ((R > 0 && score > alpha) || (R <= 0 && !(pvNode && moveCount == 1)))
             score = -search(board, newDepth + extension, -alpha - 1, -alpha, ss + 1, false);
 
         if (pvNode && (moveCount == 1 || score > alpha))
