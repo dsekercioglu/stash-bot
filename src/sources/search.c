@@ -273,7 +273,7 @@ __main_loop:
 
         if (!rootNode)
         {
-            if (depth >= 9 && currmove == ttMove && !ss->excludedMove
+            if (depth >= 8 && currmove == ttMove && !ss->excludedMove
                 && (ttBound & LOWER_BOUND) && abs(ttScore) < VICTORY
                 && ttDepth >= depth - 2)
             {
