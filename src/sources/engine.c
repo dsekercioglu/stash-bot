@@ -35,12 +35,12 @@ void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+            Reductions[d][m] = -1.37 + log(d) * log(m) / 1.26;
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[1][d] = +3.17 + 3.66 * pow(d, 1.09);
-        Pruning[0][d] = -1.25 + 3.13 * pow(d, 0.65);
+        Pruning[1][d] = +3.20 + 3.63 * pow(d, 1.08);
+        Pruning[0][d] = -1.26 + 3.05 * pow(d, 0.65);
     }
 }
 

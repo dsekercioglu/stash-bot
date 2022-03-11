@@ -244,12 +244,12 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= 4 && !inCheck && isQuiet && eval + 242 + 81 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -80 * depth : -25 * depth * depth)))
+            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -78 * depth : -25 * depth * depth)))
                 continue ;
         }
 
