@@ -61,7 +61,7 @@ typedef struct board_s
     bitboard_t castlingPath[CASTLING_NB];
     int ply;
     color_t sideToMove;
-    scorepair_t psqScorePair;
+    score_t psqScore;
     boardstack_t *stack;
     void *worker;
     bool chess960;
@@ -220,7 +220,7 @@ INLINED void put_piece(board_t *board, piece_t piece, square_t square)
     board->colorBB[piece_color(piece)] |= sqbb;
     board->pieceCount[piece]++;
     board->pieceCount[create_piece(piece_color(piece), ALL_PIECES)]++;
-    board->psqScorePair += PsqScore[piece][square];
+    board->psqScore += PsqScore[piece][square];
 }
 
 INLINED void move_piece(board_t *board, square_t from, square_t to)
@@ -233,7 +233,7 @@ INLINED void move_piece(board_t *board, square_t from, square_t to)
     board->colorBB[piece_color(piece)] ^= moveBB;
     board->table[from] = NO_PIECE;
     board->table[to] = piece;
-    board->psqScorePair += PsqScore[piece][to] - PsqScore[piece][from];
+    board->psqScore += PsqScore[piece][to] - PsqScore[piece][from];
 }
 
 INLINED void remove_piece(board_t *board, square_t square)
@@ -246,7 +246,7 @@ INLINED void remove_piece(board_t *board, square_t square)
     board->colorBB[piece_color(piece)] ^= sqbb;
     board->pieceCount[piece]--;
     board->pieceCount[create_piece(piece_color(piece), ALL_PIECES)]--;
-    board->psqScorePair -= PsqScore[piece][square];
+    board->psqScore -= PsqScore[piece][square];
 }
 
 INLINED void do_move(board_t *board, move_t move, boardstack_t *stack)

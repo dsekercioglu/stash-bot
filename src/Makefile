@@ -38,9 +38,9 @@ endif
 # Add .exe to the executable name if we are on Windows
 
 ifeq ($(OS),Windows_NT)
-	EXE = stash-bot.exe
+	EXE = vault.exe
 else
-	EXE = stash-bot
+	EXE = vault
 endif
 
 # Enable use of PREFETCH instruction

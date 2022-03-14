@@ -67,16 +67,12 @@ scorepair_t evaluate_passed(pawn_entry_t *entry, color_t us, bitboard_t ourPawns
         square_t sq = bb_pop_first_sq(&ourPawns);
         bitboard_t queening = forward_file_bb(us, sq);
 
-        TRACE_ADD(IDX_PIECE + PAWN - PAWN, us, 1);
-        TRACE_ADD(IDX_PSQT + relative_sq(sq, us) - SQ_A2, us, 1);
-
         if ((queening & theirPawns) == 0
             && (queening & entry->attacks[not_color(us)] & ~entry->attacks[us]) == 0
             && (queening & entry->attacks2[not_color(us)] & ~entry->attacks2[us]) == 0)
         {
             ret += PassedBonus[relative_sq_rank(sq, us)];
             entry->passed[us] |= square_bb(sq);
-            TRACE_ADD(IDX_PASSER + relative_sq_rank(sq, us) - RANK_2, us, 1);
         }
     }
 
@@ -107,7 +103,6 @@ scorepair_t evaluate_backward(pawn_entry_t *entry, color_t us, bitboard_t ourPaw
         return (ret);
 
     ret += BackwardPenalty * popcount(backward);
-    TRACE_ADD(IDX_BACKWARD, us, popcount(backward));
 
     backward &= (us == WHITE) ? (RANK_2_BITS | RANK_3_BITS) : (RANK_6_BITS | RANK_7_BITS);
 
@@ -125,7 +120,6 @@ scorepair_t evaluate_backward(pawn_entry_t *entry, color_t us, bitboard_t ourPaw
         return (ret);
 
     ret += StragglerPenalty * popcount(backward);
-    TRACE_ADD(IDX_STRAGGLER, us, popcount(backward));
 
     return (ret);
 }
@@ -141,7 +135,6 @@ scorepair_t evaluate_connected(bitboard_t bb, color_t us)
         square_t sq = bb_pop_first_sq(&phalanx);
 
         ret += PhalanxBonus[relative_sq_rank(sq, us)];
-        TRACE_ADD(IDX_PHALANX + relative_sq_rank(sq, us) - RANK_2, us, 1);
     }
 
     bitboard_t defenders = bb & (us == WHITE ? bpawns_attacks_bb(bb) : wpawns_attacks_bb(bb));
@@ -151,7 +144,6 @@ scorepair_t evaluate_connected(bitboard_t bb, color_t us)
         square_t sq = bb_pop_first_sq(&defenders);
 
         ret += DefenderBonus[relative_sq_rank(sq, us)];
-        TRACE_ADD(IDX_DEFENDER + relative_sq_rank(sq, us) - RANK_2, us, 1);
     }
 
     return (ret);
@@ -168,15 +160,9 @@ scorepair_t evaluate_doubled_isolated(bitboard_t bb, color_t us __attribute__((u
         if (b)
         {
             if (more_than_one(b))
-            {
                 ret += DoubledPenalty;
-                TRACE_ADD(IDX_DOUBLED, us, 1);
-            }
             if (!(adjacent_files_bb(s) & bb))
-            {
                 ret += IsolatedPenalty;
-                TRACE_ADD(IDX_ISOLATED, us, 1);
-            }
         }
     }
 
@@ -185,16 +171,10 @@ scorepair_t evaluate_doubled_isolated(bitboard_t bb, color_t us __attribute__((u
 
 pawn_entry_t *pawn_probe(const board_t *board)
 {
-#ifndef TUNE
     pawn_entry_t *entry = get_worker(board)->pawnTable + (board->stack->pawnKey % PawnTableSize);
 
     if (entry->key == board->stack->pawnKey)
         return (entry);
-
-#else
-    static pawn_entry_t e;
-    pawn_entry_t *entry = &e;
-#endif
 
     entry->key = board->stack->pawnKey;
     entry->value = 0;

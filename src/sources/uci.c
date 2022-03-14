@@ -28,7 +28,7 @@
 #include "tt.h"
 #include "uci.h"
 
-#define UCI_VERSION "v32.14"
+#define UCI_VERSION "v0.1"
 
 const cmdlink_t commands[] =
 {
@@ -201,7 +201,7 @@ void uci_ponderhit(const char *args __attribute__((unused)))
 
 void uci_uci(const char *args __attribute__((unused)))
 {
-    puts("id name Stash " UCI_VERSION);
+    puts("id name Vault " UCI_VERSION);
     puts("id author Morgan Houppin");
     show_options(&OptionList);
     puts("uciok");

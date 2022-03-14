@@ -142,7 +142,7 @@ score_t eval_knnkp(const board_t *board, color_t winningSide)
 score_t eval_kmpkn(const board_t *board, color_t winningSide)
 {
     pawn_entry_t *pe = pawn_probe(board);
-    score_t score = endgame_score(pe->value + board->psqScorePair);
+    score_t score = endgame_score(pe->value) + board->psqScore;
     color_t losingSide = not_color(winningSide);
     bool tempo = (board->sideToMove == losingSide);
 
@@ -174,7 +174,7 @@ score_t eval_kmpkn(const board_t *board, color_t winningSide)
 score_t eval_kmpkb(const board_t *board, color_t winningSide)
 {
     pawn_entry_t *pe = pawn_probe(board);
-    score_t score = endgame_score(pe->value + board->psqScorePair);
+    score_t score = endgame_score(pe->value) + board->psqScore;
     color_t losingSide = not_color(winningSide);
     bool tempo = (board->sideToMove == losingSide);
 
@@ -206,7 +206,7 @@ score_t eval_kmpkb(const board_t *board, color_t winningSide)
 score_t eval_krpkr(const board_t *board, color_t winningSide)
 {
     pawn_entry_t *pe = pawn_probe(board);
-    score_t score = endgame_score(pe->value + board->psqScorePair);
+    score_t score = endgame_score(pe->value) + board->psqScore;
     color_t losingSide = not_color(winningSide);
     bool tempo = (board->sideToMove == losingSide);
 
@@ -260,7 +260,7 @@ score_t eval_krpkr(const board_t *board, color_t winningSide)
 score_t eval_kbpsk(const board_t *board, color_t winningSide)
 {
     pawn_entry_t *pe = pawn_probe(board);
-    score_t score = endgame_score(pe->value + board->psqScorePair);
+    score_t score = endgame_score(pe->value) + board->psqScore;
     color_t losingSide = not_color(winningSide);
 
     square_t winningKsq = relative_sq(get_king_square(board, winningSide), winningSide);
@@ -295,7 +295,7 @@ score_t eval_kbpsk(const board_t *board, color_t winningSide)
 score_t eval_kpsk(const board_t *board, color_t winningSide)
 {
     pawn_entry_t *pe = pawn_probe(board);
-    score_t score = endgame_score(pe->value + board->psqScorePair);
+    score_t score = endgame_score(pe->value) + board->psqScore;
     color_t losingSide = not_color(winningSide);
 
     square_t winningKsq = relative_sq(get_king_square(board, winningSide), winningSide);
