@@ -327,9 +327,9 @@ __main_loop:
             // Increase/decrease based on history.
 
             if (isQuiet)
-                R -= (histScore - 0) / 4000;
+                R -= (histScore - 23) / 3996;
             else
-                R -= (histScore - 0) / 4000;
+                R -= (histScore - 17) / 3993;
 
             R = clamp(R, 0, newDepth - 1);
         }
