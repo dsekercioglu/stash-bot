@@ -27,6 +27,21 @@
 #include "tt.h"
 #include "uci.h"
 
+int get_currmove_histscore(const worker_t *worker, const board_t *board, move_t currmove, bool isQuiet)
+{
+    piece_t movedPiece = piece_on(board, from_sq(currmove));
+    square_t to = to_sq(currmove);
+
+    if (isQuiet)
+        return get_bf_history_score(worker->bfHistory, movedPiece, currmove);
+
+    else
+        return get_cap_history_score(worker->capHistory, movedPiece, to,
+              move_type(currmove) == PROMOTION  ? promotion_type(currmove)
+            : move_type(currmove) == EN_PASSANT ? PAWN
+                                                : piece_type(piece_on(board, to)));
+}
+
 void update_pv(move_t *pv, move_t bestmove, move_t *subPv)
 {
     size_t i;
@@ -268,8 +283,7 @@ __main_loop:
         int extension = 0;
         int newDepth = depth - 1;
         bool givesCheck = move_gives_check(board, currmove);
-        int histScore = isQuiet
-            ? get_bf_history_score(worker->bfHistory, piece_on(board, from_sq(currmove)), currmove) : 0;
+        int histScore = get_currmove_histscore(worker, board, currmove, isQuiet);
 
         if (!rootNode)
         {
@@ -300,26 +314,24 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
+
+            // Increase for non-PV nodes.
+
+            R += !pvNode;
+
+            // Decrease if the move is a killer or countermove.
+
+            R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
+
+            // Increase/decrease based on history.
+
             if (isQuiet)
-            {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
-
-                // Increase for non-PV nodes.
-
-                R += !pvNode;
-
-                // Decrease if the move is a killer or countermove.
-
-                R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
-
-                // Increase/decrease based on history.
-
-                R -= histScore / 4000;
-
-                R = clamp(R, 0, newDepth - 1);
-            }
+                R -= (histScore - 0) / 4000;
             else
-                R = 1;
+                R -= (histScore - 0) / 4000;
+
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
