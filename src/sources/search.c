@@ -319,7 +319,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+                R = !givesCheck;
         }
         else
             R = 0;
