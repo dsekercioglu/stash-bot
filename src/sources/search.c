@@ -159,7 +159,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     if (!pvNode && depth >= 3
         && ss->plies >= worker->verifPlies && !ss->excludedMove
         && eval >= beta && eval >= ss->staticEval
-        && board->stack->material[board->sideToMove])
+        && board->stack->material[board->sideToMove] > BISHOP_MG_SCORE)
     {
         boardstack_t stack;
 
