@@ -277,7 +277,7 @@ __main_loop:
                 && (ttBound & LOWER_BOUND) && abs(ttScore) < VICTORY
                 && ttDepth >= depth - 2)
             {
-                score_t singularBeta = ttScore - depth;
+                score_t singularBeta = ttScore - depth * 2;
                 int singularDepth = depth / 2;
 
                 ss->excludedMove = ttMove;
