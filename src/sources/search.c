@@ -197,9 +197,9 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
         }
     }
 
-    // Reduce depth if the node is absent from TT.
+    // Reduce depth if the node's TT entry is absent or has no ttMove.
 
-    if (!rootNode && !found && depth >= 5)
+    if (!rootNode && !ttMove && depth >= 5)
         --depth;
 
 __main_loop:
