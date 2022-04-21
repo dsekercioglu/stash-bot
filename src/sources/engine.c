@@ -165,6 +165,7 @@ void *engine_go(void *ptr)
     memset(worker->cmHistory, 0, sizeof(countermove_history_t));
     memset(worker->capHistory, 0, sizeof(capture_history_t));
     worker->verifPlies = 0;
+    worker->verifColor = WHITE;
 
     // The main thread initializes all the shared things for search here:
     // node counter, time manager, workers' board and threads, and TT reset.

@@ -157,7 +157,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     // Null move pruning.
 
     if (!pvNode && depth >= 3
-        && ss->plies >= worker->verifPlies && !ss->excludedMove
+        && (ss->plies >= worker->verifPlies || board->sideToMove != worker->verifColor)
+        && !ss->excludedMove
         && eval >= beta && eval >= ss->staticEval
         && board->stack->material[board->sideToMove])
     {
@@ -187,6 +188,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
             // Zugzwang checking.
 
             worker->verifPlies = ss->plies + (depth - R) * 3 / 4;
+            worker->verifColor = board->sideToMove;
 
             score_t zzscore = search(board, depth - R, beta - 1, beta, ss, false);
 
