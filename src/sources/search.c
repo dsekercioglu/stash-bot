@@ -82,6 +82,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     bool inCheck = !!board->stack->checkers;
     bool improving;
+    bool nmpFailed = false;
 
     // Check for interesting TT values.
 
@@ -195,6 +196,8 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
             if (zzscore >= beta)
                 return (score);
         }
+
+        nmpFailed = true;
     }
 
     // Reduce depth if the node is absent from TT.
@@ -310,6 +313,10 @@ __main_loop:
                 // Increase for non-PV nodes.
 
                 R += !pvNode;
+
+                // Decrease if a null move search failed.
+
+                R -= nmpFailed;
 
                 // Decrease if the move is a killer or countermove.
 
