@@ -51,6 +51,7 @@ typedef struct worker_s
     pawn_entry_t *pawnTable;
 
     int seldepth;
+    color_t verifColor;
     int verifPlies;
     _Atomic uint64_t nodes;
 
