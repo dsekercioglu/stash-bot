@@ -289,6 +289,9 @@ __main_loop:
 
                 else if (singularBeta >= beta)
                     return (singularBeta);
+
+                else if (ttScore >= beta)
+                    extension = -1;
             }
             else if (givesCheck)
                 extension = 1;
