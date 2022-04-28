@@ -322,7 +322,7 @@ __main_loop:
                 R = clamp(R, 0, newDepth - 1);
             }
             else
-                R = 1;
+                R = !givesCheck && mp.stage == PICK_BAD_INSTABLE;
         }
         else
             R = 0;
