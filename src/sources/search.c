@@ -163,7 +163,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = 4 + min((eval - beta) / 140, 5) + (depth / 5);
+        int R = 3 + min((eval - beta) / 144, 3) + (depth / 4);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -181,7 +181,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
             // Do not trust win claims.
 
-            if (worker->verifPlies || (depth <= 14 && abs(beta) < VICTORY))
+            if (worker->verifPlies || (depth <= 15 && abs(beta) < VICTORY))
                 return (score);
 
             // Zugzwang checking.
