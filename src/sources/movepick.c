@@ -51,7 +51,7 @@ void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
 static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
     static const score_t MVV_LVA[PIECETYPE_NB] = {
-        0, 0, 640, 640, 1280, 2560, 0, 0
+        0, 0, 480, 480, 960, 1920, 0, 0
     };
 
     while (begin < end)
