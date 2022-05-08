@@ -50,8 +50,8 @@ void movepick_init(movepick_t *mp, bool inQsearch, const board_t *board,
 
 static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 {
-    static const score_t MVV_LVA[PIECETYPE_NB] = {
-        0, 0, 640, 640, 1280, 2560, 0, 0
+    static const score_t MVV[PIECETYPE_NB] = {
+        0, 0, 800, 800, 1600, 3200, 0, 0
     };
 
     while (begin < end)
@@ -63,16 +63,16 @@ static void score_captures(movepick_t *mp, extmove_t *begin, extmove_t *end)
 
         if (move_type(move) == PROMOTION)
         {
-            begin->score = MVV_LVA[promotion_type(move)];
+            begin->score = MVV[promotion_type(move)];
             captured = piece_type(promotion_type(move));
         }
         else if (move_type(move) == EN_PASSANT)
         {
-            begin->score = MVV_LVA[PAWN];
+            begin->score = MVV[PAWN];
             captured = PAWN;
         }
         else
-            begin->score = MVV_LVA[captured];
+            begin->score = MVV[captured];
 
         begin->score += get_cap_history_score(mp->worker->capHistory, movedPiece, to, captured);
 
