@@ -28,19 +28,22 @@
 #include "types.h"
 #include "uci.h"
 
-int Reductions[64][64];
+int Reductions[2][64][64];
 int Pruning[2][7];
 
 void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        {
+            Reductions[0][d][m] = +0.99 + log(d) * log(m) / 3.92;
+            Reductions[1][d][m] = -1.33 + log(d) * log(m) / 1.17;
+        }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[1][d] = +3.17 + 3.66 * pow(d, 1.09);
-        Pruning[0][d] = -1.25 + 3.13 * pow(d, 0.65);
+        Pruning[0][d] = -1.31 + 3.01 * pow(d, 0.61);
+        Pruning[1][d] = +3.28 + 3.60 * pow(d, 1.10);
     }
 }
 
@@ -237,7 +240,7 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = 15;
+                delta = 15 + min(85, abs(pvScore) / 224);
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
@@ -292,13 +295,13 @@ __retry:
             {
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
-                delta += delta / 4;
+                delta += (int32_t)delta * 66 / 256;
                 goto __retry;
             }
             else if (bound == LOWER_BOUND)
             {
                 beta = min(INF_SCORE, (int)pvScore + delta);
-                delta += delta / 4;
+                delta += (int32_t)delta * 66 / 256;
                 goto __retry;
             }
         }

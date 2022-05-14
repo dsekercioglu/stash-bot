@@ -144,14 +144,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
+    if (!pvNode && depth == 1 && ss->staticEval + 149 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 8 && eval - 83 * depth + 79 * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -163,7 +163,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = 3 + min((eval - beta) / 128, 3) + (depth / 4);
+        int R = (800 + depth * 69) / 256 + min((eval - beta) / 128, 3);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -244,7 +244,7 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= 4 && !inCheck && isQuiet && eval + 242 + 79 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
@@ -303,9 +303,11 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
+
+            R = Reductions[isQuiet][min(depth, 63)][min(moveCount, 63)];
+
             if (isQuiet)
             {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
                 // Increase for non-PV nodes.
 
@@ -317,12 +319,10 @@ __main_loop:
 
                 // Increase/decrease based on history.
 
-                R -= histScore / 4000;
-
-                R = clamp(R, 0, newDepth - 1);
+                R -= histScore / 3964;
             }
-            else
-                R = 1;
+
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
@@ -496,7 +496,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if futility pruning is possible.
 
     const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t futilityBase = bestScore + 120;
+    const score_t futilityBase = bestScore + 118;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
