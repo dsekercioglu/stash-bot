@@ -36,14 +36,14 @@ void init_reduction_table(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] = +0.99 + log(d) * log(m) / 3.92;
-            Reductions[1][d][m] = -1.33 + log(d) * log(m) / 1.17;
+            Reductions[0][d][m] = +0.97 + log(d) * log(m) / 3.88;
+            Reductions[1][d][m] = -1.36 + log(d) * log(m) / 1.15;
         }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[0][d] = -1.31 + 3.01 * pow(d, 0.61);
-        Pruning[1][d] = +3.28 + 3.60 * pow(d, 1.10);
+        Pruning[0][d] = -1.43 + 3.03 * pow(d, 0.60);
+        Pruning[1][d] = +3.24 + 3.56 * pow(d, 1.08);
     }
 }
 
@@ -240,7 +240,7 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = 15 + min(85, abs(pvScore) / 224);
+                delta = 15 + min(85, abs(pvScore) / 153);
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
@@ -295,13 +295,13 @@ __retry:
             {
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
-                delta += (int32_t)delta * 66 / 256;
+                delta += (int32_t)delta * 69 / 256;
                 goto __retry;
             }
             else if (bound == LOWER_BOUND)
             {
                 beta = min(INF_SCORE, (int)pvScore + delta);
-                delta += (int32_t)delta * 66 / 256;
+                delta += (int32_t)delta * 69 / 256;
                 goto __retry;
             }
         }
