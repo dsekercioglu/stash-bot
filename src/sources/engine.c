@@ -36,14 +36,14 @@ void init_reduction_table(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] = +0.97 + log(d) * log(m) / 3.88;
-            Reductions[1][d][m] = -1.36 + log(d) * log(m) / 1.15;
+            Reductions[0][d][m] = +0.98 + log(d) * log(m) / 3.95;
+            Reductions[1][d][m] = -1.38 + log(d) * log(m) / 1.15;
         }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[0][d] = -1.43 + 3.03 * pow(d, 0.60);
-        Pruning[1][d] = +3.24 + 3.56 * pow(d, 1.08);
+        Pruning[0][d] = -1.31 + 3.04 * pow(d, 0.61);
+        Pruning[1][d] = +3.23 + 3.48 * pow(d, 1.09);
     }
 }
 
@@ -240,7 +240,7 @@ void *engine_go(void *ptr)
             }
             else
             {
-                delta = 15 + min(85, abs(pvScore) / 153);
+                delta = 15 + min(85, abs(pvScore) / 213);
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
