@@ -141,10 +141,6 @@ void main_worker_search(worker_t *worker)
         return ;
     }
 
-    // Wait for all threads to stop searching.
-
-    wpool_wait_search_end(&WPool);
-
     printf("bestmove %s", move_to_str(worker->rootMoves->move, board->chess960));
 
     move_t ponderMove = worker->rootMoves->pv[1];
@@ -178,6 +174,10 @@ void main_worker_search(worker_t *worker)
 
     putchar('\n');
     fflush(stdout);
+
+    // Wait for all threads to stop searching.
+
+    wpool_wait_search_end(&WPool);
 
     free(worker->rootMoves);
     free_boardstack(worker->stack);
