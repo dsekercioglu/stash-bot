@@ -144,14 +144,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 151 <= alpha)
+    if (!pvNode && depth == 1 && ss->staticEval + 154 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 90 * depth + 77 * improving >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 8 && eval - 89 * depth + 79 * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -163,7 +163,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = (801 + depth * 71) / 256 + min((eval - beta) / 124, 4);
+        int R = (824 + depth * 74) / 256 + min((eval - beta) / 121, 4);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -244,12 +244,12 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 227 + 79 * depth <= alpha)
+            if (depth <= 4 && !inCheck && isQuiet && eval + 229 + 78 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 7 && !see_greater_than(board, currmove, (isQuiet ? -75 * depth : -25 * depth * depth)))
+            if (depth <= 7 && !see_greater_than(board, currmove, (isQuiet ? -72 * depth : -24 * depth * depth)))
                 continue ;
         }
 
@@ -319,7 +319,7 @@ __main_loop:
 
                 // Increase/decrease based on history.
 
-                R -= histScore / 3572;
+                R -= histScore / 3401;
             }
 
             R = clamp(R, 0, newDepth - 1);
@@ -496,7 +496,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if futility pruning is possible.
 
     const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t futilityBase = bestScore + 116;
+    const score_t futilityBase = bestScore + 120;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
