@@ -19,8 +19,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include "endgame.h"
-#include "engine.h"
 #include "option.h"
+#include "search.h"
 #include "timeman.h"
 #include "tt.h"
 #include "tuner.h"

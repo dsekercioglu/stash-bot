@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "endgame.h"
-#include "engine.h"
 #include "pawns.h"
+#include "search.h"
 #include "types.h"
 
 #ifdef TUNE

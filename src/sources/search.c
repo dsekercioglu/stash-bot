@@ -20,26 +20,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "board.h"
-#include "engine.h"
 #include "movepick.h"
+#include "search.h"
 #include "timeman.h"
 #include "tt.h"
 #include "types.h"
 #include "uci.h"
 
-int Reductions[64][64];
-int Pruning[2][7];
+int Reductions[2][64][64];
+int Pruning[2][MAX_PLIES + 1];
 
 void init_reduction_table(void)
 {
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
-            Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        {
+            Reductions[0][d][m] = +0.92 + log(d) * log(m) / 3.98;
+            Reductions[1][d][m] = -1.42 + log(d) * log(m) / 1.09;
+        }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[1][d] = +3.17 + 3.66 * pow(d, 1.09);
-        Pruning[0][d] = -1.25 + 3.13 * pow(d, 0.65);
+        Pruning[0][d] = -1.45 + 2.81 * pow(d, 0.64);
+        Pruning[1][d] = +3.32 + 3.67 * pow(d, 1.07);
     }
 }
 
@@ -229,7 +232,7 @@ void worker_search(worker_t *worker)
             }
             else
             {
-                delta = 15;
+                delta = 16;
                 alpha = max(-INF_SCORE, pvScore - delta);
                 beta = min(INF_SCORE, pvScore + delta);
             }
@@ -284,13 +287,13 @@ __retry:
             {
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
-                delta += delta / 4;
+                delta += (int32_t)delta * 75 / 256 + 1;
                 goto __retry;
             }
             else if (bound == LOWER_BOUND)
             {
                 beta = min(INF_SCORE, (int)pvScore + delta);
-                delta += delta / 4;
+                delta += (int32_t)delta * 75 / 256 + 1;
                 goto __retry;
             }
         }
@@ -442,14 +445,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
+    if (!pvNode && depth == 1 && ss->staticEval + 157 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 80 * (depth - improving) >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 8 && eval - 88 * depth + 79 * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -461,7 +464,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = 3 + min((eval - beta) / 128, 3) + (depth / 4);
+        int R = (846 + depth * 68) / 256 + min((eval - beta) / 119, 4);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -479,7 +482,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
             // Do not trust win claims.
 
-            if (worker->verifPlies || (depth <= 10 && abs(beta) < VICTORY))
+            if (worker->verifPlies || (depth <= 11 && abs(beta) < VICTORY))
                 return (score);
 
             // Zugzwang checking.
@@ -542,12 +545,12 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 240 + 80 * depth <= alpha)
+            if (depth <= 4 && !inCheck && isQuiet && eval + 227 + 77 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 5 && !see_greater_than(board, currmove, (isQuiet ? -80 * depth : -25 * depth * depth)))
+            if (depth <= 7 && !see_greater_than(board, currmove, (isQuiet ? -72 * depth : -24 * depth * depth)))
                 continue ;
         }
 
@@ -573,9 +576,9 @@ __main_loop:
         {
             if (depth >= 9 && currmove == ttMove && !ss->excludedMove
                 && (ttBound & LOWER_BOUND) && abs(ttScore) < VICTORY
-                && ttDepth >= depth - 2)
+                && ttDepth >= depth - 3)
             {
-                score_t singularBeta = ttScore - depth;
+                score_t singularBeta = ttScore - (depth * 3) / 2;
                 int singularDepth = depth / 2;
 
                 ss->excludedMove = ttMove;
@@ -601,10 +604,10 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
+            R = Reductions[isQuiet][min(depth, 63)][min(moveCount, 63)];
+
             if (isQuiet)
             {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
-
                 // Increase for non-PV nodes.
 
                 R += !pvNode;
@@ -615,12 +618,10 @@ __main_loop:
 
                 // Increase/decrease based on history.
 
-                R -= histScore / 4000;
-
-                R = clamp(R, 0, newDepth - 1);
+                R -= histScore / 3517;
             }
-            else
-                R = 1;
+
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
@@ -794,7 +795,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if futility pruning is possible.
 
     const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t futilityBase = bestScore + 120;
+    const score_t futilityBase = bestScore + 123;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {

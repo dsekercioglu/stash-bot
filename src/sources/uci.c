@@ -21,13 +21,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "engine.h"
 #include "option.h"
+#include "search.h"
 #include "tt.h"
 #include "types.h"
 #include "uci.h"
 
-#define UCI_VERSION "v33.1"
+#define UCI_VERSION "v33.2"
 
 const cmdlink_t commands[] =
 {
