@@ -35,14 +35,14 @@ void init_reduction_table(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] = +0.92 + log(d) * log(m) / 3.98;
-            Reductions[1][d][m] = -1.42 + log(d) * log(m) / 1.09;
+            Reductions[0][d][m] = +0.97 + log(d) * log(m) / 3.90;
+            Reductions[1][d][m] = -1.59 + log(d) * log(m) / 1.11;
         }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[0][d] = -1.45 + 2.81 * pow(d, 0.64);
-        Pruning[1][d] = +3.32 + 3.67 * pow(d, 1.07);
+        Pruning[0][d] = -1.60 + 2.37 * pow(d, 0.65);
+        Pruning[1][d] = +3.25 + 3.74 * pow(d, 1.12);
     }
 }
 
@@ -445,14 +445,14 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
 
     // Razoring.
 
-    if (!pvNode && depth == 1 && ss->staticEval + 157 <= alpha)
+    if (!pvNode && depth == 1 && ss->staticEval + 153 <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 && eval - 88 * depth + 79 * improving >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 8 && eval - 88 * depth + 80 * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -464,7 +464,7 @@ score_t search(board_t *board, int depth, score_t alpha, score_t beta, searchsta
     {
         boardstack_t stack;
 
-        int R = (846 + depth * 68) / 256 + min((eval - beta) / 119, 4);
+        int R = (858 + depth * 68) / 256 + min((eval - beta) / 122, 3);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -545,12 +545,12 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 4 && !inCheck && isQuiet && eval + 227 + 77 * depth <= alpha)
+            if (depth <= 5 && !inCheck && isQuiet && eval + 226 + 75 * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 7 && !see_greater_than(board, currmove, (isQuiet ? -72 * depth : -24 * depth * depth)))
+            if (depth <= 7 && !see_greater_than(board, currmove, (isQuiet ? -71 * depth : -23 * depth * depth)))
                 continue ;
         }
 
@@ -618,7 +618,7 @@ __main_loop:
 
                 // Increase/decrease based on history.
 
-                R -= histScore / 3517;
+                R -= histScore / 3465;
             }
 
             R = clamp(R, 0, newDepth - 1);
@@ -794,8 +794,8 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
     // Check if futility pruning is possible.
 
-    const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6);
-    const score_t futilityBase = bestScore + 123;
+    const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 7);
+    const score_t futilityBase = bestScore + 126;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
