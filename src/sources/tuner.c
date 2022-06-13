@@ -275,7 +275,7 @@ bool init_tuner_entry(tune_entry_t *entry, const board_t *board)
     if (board->sideToMove == BLACK) entry->staticEval = -entry->staticEval;
 
     entry->phase = Trace.phase;
-    entry->phaseFactors[MIDGAME] = entry->phase / 24.0;
+    entry->phaseFactors[MIDGAME] = (entry->phase - EG_LIMIT) / (double)(MG_LIMIT - EG_LIMIT);
     entry->phaseFactors[ENDGAME] = 1 - entry->phaseFactors[MIDGAME];
 
     init_tuner_tuples(entry);

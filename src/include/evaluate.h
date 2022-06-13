@@ -21,6 +21,12 @@
 
 #include "board.h"
 
+enum
+{
+    MG_LIMIT = 24,
+    EG_LIMIT = 6
+};
+
 #ifdef TUNE
 
 typedef enum tune_idx_e
