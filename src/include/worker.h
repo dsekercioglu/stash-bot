@@ -23,6 +23,7 @@
 #include "history.h"
 #include "pawns.h"
 #include "uci.h"
+#include <time.h>
 #include <pthread.h>
 
 // Struct for search params.
