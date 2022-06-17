@@ -23,6 +23,7 @@
 #include "history.h"
 #include "pawns.h"
 #include "uci.h"
+#include <time.h>
 #include <pthread.h>
 
 // Struct for search params.
@@ -53,6 +54,7 @@ typedef struct root_move_s
     int seldepth;
     score_t prevScore;
     score_t score;
+    uint64_t nodes;
     move_t pv[512];
 } root_move_t;
 
