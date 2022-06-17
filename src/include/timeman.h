@@ -40,27 +40,6 @@ INLINED clock_t chess_clock(void)
 #endif
 }
 
-// Enum for the type of bestmove
-typedef enum
-{
-    NO_BM_TYPE = -1,
-    OneLegalMove,
-    Promotion,
-    SoundCapture,
-    SoundCheck,
-    Capture,
-    Quiet,
-    WeirdCheck,
-    WeirdQuiet,
-    BM_TYPE_NB
-} bestmove_type_t;
-
-// Global for scaling time usage based on bestmove type
-extern const double BestmoveTypeScale[BM_TYPE_NB];
-
-// Global for scaling time usage based on stability
-extern const double BestmoveStabilityScale[5];
-
 // Enum for the type of time management to use
 typedef enum tm_mode_e
 {
@@ -81,9 +60,6 @@ typedef struct timeman_s
     clock_t optimalTime;
 
     score_t prevScore;
-    move_t prevBestmove;
-    int stability;
-    bestmove_type_t type;
 } timeman_t;
 
 // Global for time management
@@ -93,7 +69,7 @@ extern timeman_t Timeman;
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start);
 
 // Updates the time management based on the current bestmove and score.
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score);
+void timeman_update(timeman_t *tm, const board_t *board);
 
 // Checks time usage periodically.
 void check_time(void);

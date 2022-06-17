@@ -22,23 +22,6 @@
 #include "worker.h"
 #include <math.h>
 
-// Scaling table based on the move type
-
-const double BestmoveTypeScale[BM_TYPE_NB] = {
-    0.20, // One legal move
-    0.45, // Promoting a piece
-    0.50, // Capture with a very high SEE
-    0.85, // Check not throwing away material
-    0.95, // Capture
-    1.00, // Quiet move not throwing away material
-    1.20, // Check losing material
-    1.40, // Quiet losing material
-};
-
-// Scaling table based on the number of consecutive iterations the bestmove held
-
-const double BestmoveStabilityScale[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
-
 void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock_t start)
 {
     clock_t overhead = Options.moveOverhead;
@@ -81,15 +64,23 @@ void timeman_init(const board_t *board, timeman_t *tm, goparams_t *params, clock
         tm->mode = NoTimeman;
 
     tm->prevScore = NO_SCORE;
-    tm->prevBestmove = NO_MOVE;
-    tm->stability = 0;
-    tm->type = NO_BM_TYPE;
+}
+
+double node_repartition_scale(uint64_t topNodes, uint64_t totalNodes)
+{
+    const double T_MAX = 2.56;
+    const double T_MIN = 0.37;
+
+    double ratio = (double)topNodes / (double)totalNodes;
+    double scale = 4.05 - ratio * 4.00;
+
+    return fmax(T_MIN, fmin(T_MAX, scale));
 }
 
 double score_difference_scale(score_t s)
 {
-    const score_t X = 100;
-    const double T = 2.0;
+    const score_t X = 94;
+    const double T = 2.05;
 
     // Clamp score to the range [-100, 100], and convert it to a time scale [0.5, 2.0]
     // Examples:
@@ -102,61 +93,21 @@ double score_difference_scale(score_t s)
     return (pow(T, clamp(s, -X, X) / (double)X));
 }
 
-void timeman_update(timeman_t *tm, const board_t *board, move_t bestmove, score_t score)
+void timeman_update(timeman_t *tm, const board_t *board)
 {
     // Only update timeman when we need one.
 
     if (tm->mode != Tournament) return;
 
-    // Update bestmove + stability statistics.
+    worker_t *worker = get_worker(board);
+    uint64_t topNodes = worker->rootMoves->nodes;
+    uint64_t totalNodes = 0;
+    score_t score = worker->rootMoves->prevScore;
 
-    if (tm->prevBestmove != bestmove)
-    {
-        movelist_t list;
-        bool isQuiet = !is_capture_or_promotion(board, bestmove);
-        bool givesCheck = move_gives_check(board, bestmove);
+    for (size_t i = 0; i < worker->rootCount; ++i)
+        totalNodes += worker->rootMoves[i].nodes;
 
-        tm->prevBestmove = bestmove;
-        tm->stability = 0;
-
-        // Do we only have one legal move ? Don't burn much time on these.
-
-        list_all(&list, board);
-        if (movelist_size(&list) == 1)
-            tm->type = OneLegalMove;
-
-        else if (move_type(bestmove) == PROMOTION)
-            tm->type = Promotion;
-
-        else if (!isQuiet && see_greater_than(board, bestmove, KNIGHT_MG_SCORE))
-            tm->type = SoundCapture;
-
-        else if (givesCheck && see_greater_than(board, bestmove, 0))
-            tm->type = SoundCheck;
-
-        else if (!isQuiet)
-            tm->type = Capture;
-
-        else if (see_greater_than(board, bestmove, 0))
-            tm->type = Quiet;
-
-        else if (givesCheck)
-            tm->type = WeirdCheck;
-
-        else
-            tm->type = WeirdQuiet;
-    }
-    else
-        tm->stability = min(tm->stability + 1, 4);
-
-    // Scale the time usage based on the type of bestmove we have.
-
-    double scale = BestmoveTypeScale[tm->type];
-
-    // Scale the time usage based on how long this bestmove has held
-    // through search iterations.
-
-    scale *= BestmoveStabilityScale[tm->stability];
+    double scale = node_repartition_scale(topNodes, totalNodes);
 
     // Scale the time usage based on how the score changed from the
     // previous iteration (the higher it goes, the quicker we stop searching).

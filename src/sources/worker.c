@@ -222,6 +222,7 @@ void wpool_start_search(
             curRootMove->move = SearchMoves.moves[k].move;
             curRootMove->seldepth = 0;
             curRootMove->score = curRootMove->prevScore = -INF_SCORE;
+            curRootMove->nodes = 0;
             curRootMove->pv[0] = curRootMove->pv[1] = NO_MOVE;
         }
     }
