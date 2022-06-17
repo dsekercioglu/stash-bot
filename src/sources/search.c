@@ -309,7 +309,7 @@ __retry:
 
         if (!worker->idx)
         {
-            timeman_update(&Timeman, board, worker->rootMoves->move, worker->rootMoves->prevScore);
+            timeman_update(&Timeman, board);
             if (timeman_can_stop_search(&Timeman, chess_clock())) break;
         }
 
@@ -580,6 +580,8 @@ __main_loop:
         ss->currentMove = currmove;
         ss->pieceHistory = &worker->ctHistory[piece_on(board, from_sq(currmove))][to_sq(currmove)];
 
+        uint64_t curRootNodes = (rootNode) ? worker->nodes : 0;
+
         do_move_gc(board, currmove, &stack, givesCheck);
 
         // Can we apply LMR ?
@@ -631,6 +633,8 @@ __main_loop:
         {
             root_move_t *cur = find_root_move(worker->rootMoves + worker->pvLine,
                 worker->rootMoves + worker->rootCount, currmove);
+
+            cur->nodes += worker->nodes - curRootNodes;
 
             // Update PV for root.
 
