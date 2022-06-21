@@ -18,6 +18,7 @@
 
 #include "search.h"
 #include "board.h"
+#include "endgame.h"
 #include "evaluate.h"
 #include "movepick.h"
 #include "timeman.h"
@@ -428,6 +429,20 @@ score_t search(
     if (rootNode && worker->pvLine) ttMove = worker->rootMoves[worker->pvLine].move;
 
     if (inCheck) goto __main_loop;
+
+    // Endgame Pruning. If the static eval is zero, and the current position is
+    // a specialized endgame, abort the search.
+
+    if (!rootNode && ss->staticEval == 0 && endgame_probe(board) != NULL)
+    {
+        // Save the TT entry with a higher depth to allow for faster cutoffs later.
+        // We don't raise the depth too much to avoid cluttering the table on future
+        // searches with old unused entries that don't get erased because of their
+        // high "fake" depth.
+
+        tt_save(entry, key, 0, 0, min(depth + 6, MAX_PLIES - 1), EXACT_BOUND, NO_MOVE);
+        return (0);
+    }
 
     // Razoring.
 
