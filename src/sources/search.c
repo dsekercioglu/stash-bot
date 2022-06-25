@@ -18,6 +18,7 @@
 
 #include "search.h"
 #include "board.h"
+#include "endgame.h"
 #include "evaluate.h"
 #include "movepick.h"
 #include "timeman.h"
@@ -428,6 +429,17 @@ score_t search(
     if (rootNode && worker->pvLine) ttMove = worker->rootMoves[worker->pvLine].move;
 
     if (inCheck) goto __main_loop;
+
+    // Early Endgame draw. If we're in a specialized endgame, and the static eval is
+    // exactly zero, set bestScore to 0.
+
+    if (!rootNode && ss->staticEval == 0 && endgame_probe(board) != NULL)
+    {
+        bestScore = 0;
+
+        if (bestScore >= beta)
+            return bestScore;
+    }
 
     // Razoring.
 
