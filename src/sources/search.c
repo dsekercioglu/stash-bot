@@ -794,7 +794,11 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
 
             // Check if the move is very unlikely to improve alpha.
 
-            if (delta < alpha) continue;
+            if (delta < alpha)
+            {
+                bestScore = max(bestScore, delta);
+                continue ;
+            }
         }
 
         ss->currentMove = currmove;
