@@ -32,7 +32,7 @@ evaltrace_t Trace;
 
 // Special eval terms
 
-const scorepair_t CastlingBonus = SPAIR(92, -87);
+const scorepair_t CastlingBonus = SPAIR(32, -62);
 const scorepair_t Initiative = SPAIR(12, 5);
 
 // Passed Pawn eval terms
@@ -90,12 +90,16 @@ const scorepair_t ClosedPosKnight[5] = {
 
 const scorepair_t BishopPairBonus = SPAIR( 24, 97);
 const scorepair_t BishopShielded  = SPAIR(  7, 19);
+const scorepair_t BishopTrapped   = SPAIR(-27,-23);
+const scorepair_t BishopBuried    = SPAIR(-27,-23);
 
 // Rook eval terms
 
 const scorepair_t RookOnSemiOpenFile = SPAIR( 13, 26);
 const scorepair_t RookOnOpenFile     = SPAIR( 32, 11);
 const scorepair_t RookXrayQueen      = SPAIR( 10,  3);
+const scorepair_t RookTrapped        = SPAIR(  0, 10);
+const scorepair_t RookBuried         = SPAIR(-26,-14);
 
 // Mobility eval terms
 
@@ -467,6 +471,35 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
             TRACE_ADD(IDX_BISHOP_SHIELDED, us, 1);
         }
 
+        // FRC penalty for Bishop stuck in a corner
+
+        if (board->chess960)
+        {
+            square_t relSq = relative_sq(sq, us);
+            direction_t up = pawn_direction(us);
+            piece_t ourPawn = create_piece(us, PAWN);
+
+            if (relSq == SQ_A1 && piece_on(board, sq + up + EAST) == ourPawn)
+            {
+                // Bigger penalty if our Pawn is blocked by an enemy Pawn
+
+                bool buried = piece_on(board, sq + up * 2 + EAST) == create_piece(not_color(us), PAWN);
+
+                ret += buried ? BishopBuried : BishopTrapped;
+                TRACE_ADD(buried ? IDX_BISHOP_BURIED : IDX_BISHOP_TRAPPED, us, 1);
+            }
+
+            if (relSq == SQ_H1 && piece_on(board, sq + up + WEST) == ourPawn)
+            {
+                // Bigger penalty if our Pawn is blocked by an enemy Pawn
+
+                bool buried = piece_on(board, sq + up * 2 + WEST) == create_piece(not_color(us), PAWN);
+
+                ret += buried ? BishopBuried : BishopTrapped;
+                TRACE_ADD(buried ? IDX_BISHOP_BURIED : IDX_BISHOP_TRAPPED, us, 1);
+            }
+        }
+
         // Bonus for a Bishop on King Attack zone
 
         if (b & eval->kingZone[us])
@@ -529,8 +562,25 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
 
         // Bonus for Rook mobility
 
-        ret += MobilityR[popcount(b & eval->mobilityZone[us])];
+        int mobility = popcount(b & eval->mobilityZone[us]);
+        ret += MobilityR[mobility];
         TRACE_ADD(IDX_MOBILITY_ROOK + popcount(b & eval->mobilityZone[us]), us, 1);
+
+        // Penalty for a trapped Rook
+
+        if (mobility <= 3)
+        {
+            file_t kingf = sq_file(get_king_square(board, us));
+            file_t rookf = sq_file(sq);
+
+            if ((kingf >= FILE_E) == (kingf < rookf))
+            {
+                bool noCastling = !has_castling(us, board->stack->castlings);
+
+                ret += noCastling ? RookBuried : RookTrapped;
+                TRACE_ADD(noCastling ? IDX_ROOK_BURIED : IDX_ROOK_TRAPPED, us, 1);
+            }
+        }
 
         // Bonus for a Rook on King Attack zone
 

@@ -19,6 +19,7 @@
 #include "tuner.h"
 #include "types.h"
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,10 +161,14 @@ void init_base_values(tp_vector_t base)
 
     INIT_BASE_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     INIT_BASE_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    INIT_BASE_SP(IDX_BISHOP_TRAPPED, BishopTrapped);
+    INIT_BASE_SP(IDX_BISHOP_BURIED, BishopBuried);
 
     INIT_BASE_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);
     INIT_BASE_SP(IDX_ROOK_OPEN, RookOnOpenFile);
     INIT_BASE_SP(IDX_ROOK_XRAY_QUEEN, RookXrayQueen);
+    INIT_BASE_SP(IDX_ROOK_TRAPPED, RookTrapped);
+    INIT_BASE_SP(IDX_ROOK_BURIED, RookBuried);
 
     INIT_BASE_SPA(IDX_MOBILITY_KNIGHT, MobilityN, 9);
     INIT_BASE_SPA(IDX_MOBILITY_BISHOP, MobilityB, 14);
@@ -256,7 +261,7 @@ void init_tuner_entries(tune_data_t *data, const char *filename)
             exit(EXIT_FAILURE);
         }
 
-        set_board(&board, linebuf, false, &stack);
+        set_board(&board, linebuf, true, &stack);
         if (init_tuner_entry(cur, &board)) data->size++;
 
         if (data->size && data->size % 100000 == 0)
@@ -354,6 +359,7 @@ double compute_optimal_k(const tune_data_t *data)
     return (start);
 }
 
+#if (THREADS != 1)
 double static_eval_mse(const tune_data_t *data, double K)
 {
     double total = 0;
@@ -366,6 +372,17 @@ double static_eval_mse(const tune_data_t *data, double K)
     }
     return (total / data->size);
 }
+#else
+double static_eval_mse(const tune_data_t *data, double K)
+{
+    double total = 0;
+
+    for (size_t i = 0; i < data->size; ++i)
+        total += pow(data->entries[i].gameResult - sigmoid(K, data->entries[i].staticEval), 2);
+
+    return (total / data->size);
+}
+#endif
 
 double adjusted_eval_mse(const tune_data_t *data, const tp_vector_t delta, double K)
 {
@@ -444,6 +461,7 @@ double adjusted_eval(
     return (mixed);
 }
 
+#if (THREADS != 1)
 void compute_gradient(
     const tune_data_t *data, tp_vector_t gradient, const tp_vector_t delta, double K, int batchIdx)
 {
@@ -468,6 +486,14 @@ void compute_gradient(
         pthread_mutex_unlock(&mutex);
     }
 }
+#else
+void compute_gradient(
+    const tune_data_t *data, tp_vector_t gradient, const tp_vector_t delta, double K, int batchIdx)
+{
+    for (int i = 0; i < BATCH_SIZE; ++i)
+        update_gradient(data->entries + (size_t)batchIdx * BATCH_SIZE + i, gradient, delta, K);
+}
+#endif
 
 void update_gradient(
     const tune_entry_t *entry, tp_vector_t gradient, const tp_vector_t delta, double K)
@@ -581,21 +607,25 @@ void print_parameters(const tp_vector_t base, const tp_vector_t delta)
     PRINT_SP(IDX_KS_OFFSET, SafetyOffset);
     putchar('\n');
 
-    PRINT_SPA(IDX_KNIGHT_CLOSED_POS, ClosedPosKnight, 5, 4, 4, "SPAIR");
-    putchar('\n');
     PRINT_SP(IDX_KNIGHT_SHIELDED, KnightShielded);
     PRINT_SP(IDX_KNIGHT_OUTPOST, KnightOutpost);
     PRINT_SP(IDX_KNIGHT_CENTER_OUTPOST, KnightCenterOutpost);
     PRINT_SP(IDX_KNIGHT_SOLID_OUTPOST, KnightSolidOutpost);
     putchar('\n');
+    PRINT_SPA(IDX_KNIGHT_CLOSED_POS, ClosedPosKnight, 5, 4, 4, "SPAIR");
+    putchar('\n');
 
     PRINT_SP(IDX_BISHOP_PAIR, BishopPairBonus);
     PRINT_SP(IDX_BISHOP_SHIELDED, BishopShielded);
+    PRINT_SP(IDX_BISHOP_TRAPPED, BishopTrapped);
+    PRINT_SP(IDX_BISHOP_BURIED, BishopBuried);
     putchar('\n');
 
     PRINT_SP(IDX_ROOK_SEMIOPEN, RookOnSemiOpenFile);
     PRINT_SP(IDX_ROOK_OPEN, RookOnOpenFile);
     PRINT_SP(IDX_ROOK_XRAY_QUEEN, RookXrayQueen);
+    PRINT_SP(IDX_ROOK_TRAPPED, RookTrapped);
+    PRINT_SP(IDX_ROOK_BURIED, RookBuried);
     putchar('\n');
 
     PRINT_SPA(IDX_MOBILITY_KNIGHT, MobilityN, 9, 4, 4, "SPAIR");
