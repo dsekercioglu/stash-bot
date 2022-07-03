@@ -32,111 +32,115 @@ evaltrace_t Trace;
 
 // Special eval terms
 
-const scorepair_t CastlingBonus = SPAIR(92, -87);
-const scorepair_t Initiative = SPAIR(12, 5);
+const scorepair_t CastlingBonus = SPAIR(32, -62);
+const scorepair_t Initiative = SPAIR(15, 7);
 
 // Passed Pawn eval terms
 
 const scorepair_t PP_OurKingProximity[8] = {
     0,
-    SPAIR(  -8,  37),
-    SPAIR( -18,  27),
-    SPAIR( -14,  -1),
-    SPAIR(  -8, -15),
-    SPAIR(   0, -18),
-    SPAIR(  20, -24),
-    SPAIR(  -1, -24)
+    SPAIR(  -4,  40),
+    SPAIR( -13,  26),
+    SPAIR( -13,  -2),
+    SPAIR( -12, -18),
+    SPAIR(  -6, -18),
+    SPAIR(  17, -20),
+    SPAIR(   1, -22)
 };
 
 const scorepair_t PP_TheirKingProximity[8] = {
     0,
-    SPAIR( -51,-111),
-    SPAIR(  12, -25),
-    SPAIR(   1,   3),
-    SPAIR(   3,  18),
-    SPAIR(   4,  29),
-    SPAIR(   5,  37),
-    SPAIR(  -4,  32)
+    SPAIR( -46,-101),
+    SPAIR(  24, -25),
+    SPAIR(   7,   0),
+    SPAIR(  -3,  14),
+    SPAIR(  -3,  30),
+    SPAIR(  -1,  36),
+    SPAIR(  -8,  31)
 };
 
 // King Safety eval terms
 
-const scorepair_t KnightWeight    = SPAIR(  35,   3);
-const scorepair_t BishopWeight    = SPAIR(  25,   2);
-const scorepair_t RookWeight      = SPAIR(  21, -10);
-const scorepair_t QueenWeight     = SPAIR(  25,  -2);
-const scorepair_t AttackWeight    = SPAIR(  21, -20);
-const scorepair_t WeakKingZone    = SPAIR(  17, -18);
-const scorepair_t SafeKnightCheck = SPAIR(  47,   1);
-const scorepair_t SafeBishopCheck = SPAIR(  36,   4);
-const scorepair_t SafeRookCheck   = SPAIR(  57,   5);
-const scorepair_t SafeQueenCheck  = SPAIR(  43,   4);
-const scorepair_t QueenlessAttack = SPAIR(-109,  -4);
-const scorepair_t SafetyOffset    = SPAIR( -21,  -1);
+const scorepair_t KnightWeight    = SPAIR(  36,   4);
+const scorepair_t BishopWeight    = SPAIR(  29,   4);
+const scorepair_t RookWeight      = SPAIR(  22, -11);
+const scorepair_t QueenWeight     = SPAIR(  27,  -2);
+const scorepair_t AttackWeight    = SPAIR(  20, -16);
+const scorepair_t WeakKingZone    = SPAIR(  12, -19);
+const scorepair_t SafeKnightCheck = SPAIR(  46,   1);
+const scorepair_t SafeBishopCheck = SPAIR(  47,   5);
+const scorepair_t SafeRookCheck   = SPAIR(  58,   5);
+const scorepair_t SafeQueenCheck  = SPAIR(  43,   5);
+const scorepair_t QueenlessAttack = SPAIR(-102,  -4);
+const scorepair_t SafetyOffset    = SPAIR(  -9,   0);
 
 // Knight eval terms
 
-const scorepair_t KnightShielded      = SPAIR(  4, 19);
-const scorepair_t KnightOutpost       = SPAIR( 10,-15);
-const scorepair_t KnightCenterOutpost = SPAIR( 14, -1);
-const scorepair_t KnightSolidOutpost  = SPAIR( 15, 21);
+const scorepair_t KnightShielded      = SPAIR(  8, 18);
+const scorepair_t KnightOutpost       = SPAIR(  9,-15);
+const scorepair_t KnightCenterOutpost = SPAIR(  7, -4);
+const scorepair_t KnightSolidOutpost  = SPAIR( 26, 25);
 
 const scorepair_t ClosedPosKnight[5] = {
-    SPAIR( -22, -22), SPAIR(   1, -13), SPAIR(   5,   0), SPAIR(   7,  11),
-    SPAIR(   8,  32)
+    SPAIR( -18, -24), SPAIR(   4, -11), SPAIR(   4,  -2), SPAIR(   5,  11),
+    SPAIR(   5,  34)
 };
 
 // Bishop eval terms
 
-const scorepair_t BishopPairBonus = SPAIR( 24, 97);
-const scorepair_t BishopShielded  = SPAIR(  7, 19);
+const scorepair_t BishopPairBonus = SPAIR( 32,102);
+const scorepair_t BishopShielded  = SPAIR(  6, 20);
+const scorepair_t BishopTrapped   = SPAIR(-27,-23);
+const scorepair_t BishopBuried    = SPAIR(-27,-23);
 
 // Rook eval terms
 
-const scorepair_t RookOnSemiOpenFile = SPAIR( 13, 26);
-const scorepair_t RookOnOpenFile     = SPAIR( 32, 11);
-const scorepair_t RookXrayQueen      = SPAIR( 10,  3);
+const scorepair_t RookOnSemiOpenFile = SPAIR(  7, 35);
+const scorepair_t RookOnOpenFile     = SPAIR( 32, 12);
+const scorepair_t RookXrayQueen      = SPAIR( 12,  3);
+const scorepair_t RookTrapped        = SPAIR(  0, 10);
+const scorepair_t RookBuried         = SPAIR(-26,-14);
 
 // Mobility eval terms
 
 const scorepair_t MobilityN[9] = {
-    SPAIR( -52,  10), SPAIR( -43, -24), SPAIR( -37,  32), SPAIR( -32,  59),
-    SPAIR( -25,  70), SPAIR( -21,  86), SPAIR( -16,  93), SPAIR( -11,  93),
-    SPAIR(  -9,  85)
+    SPAIR( -59,  12), SPAIR( -41, -25), SPAIR( -37,  21), SPAIR( -33,  54),
+    SPAIR( -26,  72), SPAIR( -22,  90), SPAIR( -14,  96), SPAIR(  -6,  96),
+    SPAIR(  -6,  89)
 };
 
 const scorepair_t MobilityB[14] = {
-    SPAIR( -47, -37), SPAIR( -45, -55), SPAIR( -32, -19), SPAIR( -28,  11),
-    SPAIR( -20,  31), SPAIR( -14,  45), SPAIR( -11,  55), SPAIR( -13,  60),
-    SPAIR( -13,  64), SPAIR( -10,  61), SPAIR(  -7,  56), SPAIR(  -5,  52),
-    SPAIR(   2,  48), SPAIR(  19,  16)
+    SPAIR( -62, -67), SPAIR( -50, -63), SPAIR( -32,  -8), SPAIR( -22,  15),
+    SPAIR( -19,  40), SPAIR( -13,  53), SPAIR( -11,  60), SPAIR(  -7,  56),
+    SPAIR(  -8,  65), SPAIR(  -7,  64), SPAIR(  -5,  58), SPAIR(  -4,  53),
+    SPAIR(   3,  50), SPAIR(  16,  16)
 };
 
 const scorepair_t MobilityR[15] = {
-    SPAIR(-107,  26), SPAIR( -42,  17), SPAIR( -36,  75), SPAIR( -39,  89),
-    SPAIR( -35, 100), SPAIR( -32, 112), SPAIR( -30, 125), SPAIR( -24, 126),
-    SPAIR( -22, 134), SPAIR( -14, 136), SPAIR( -14, 141), SPAIR( -12, 143),
-    SPAIR(  -3, 139), SPAIR(   1, 133), SPAIR(  12, 117)
+    SPAIR( -89,  25), SPAIR( -57,  23), SPAIR( -49,  71), SPAIR( -41,  88),
+    SPAIR( -35,  96), SPAIR( -34, 113), SPAIR( -29, 125), SPAIR( -25, 127),
+    SPAIR( -16, 130), SPAIR( -13, 135), SPAIR( -12, 140), SPAIR(  -6, 142),
+    SPAIR(  -2, 143), SPAIR(   1, 138), SPAIR(  14, 122)
 };
 
 const scorepair_t MobilityQ[28] = {
-    SPAIR( -95,-185), SPAIR(  22, 118), SPAIR(   1, 177), SPAIR(  -2, 164),
-    SPAIR(   2, 106), SPAIR(  -1, 110), SPAIR(  -2, 136), SPAIR(  -0, 167),
-    SPAIR(   3, 178), SPAIR(   7, 190), SPAIR(   9, 197), SPAIR(  12, 199),
-    SPAIR(  14, 208), SPAIR(  15, 207), SPAIR(  16, 213), SPAIR(  16, 212),
-    SPAIR(  19, 213), SPAIR(  18, 208), SPAIR(  21, 202), SPAIR(  23, 197),
-    SPAIR(  27, 187), SPAIR(  28, 186), SPAIR(  16, 190), SPAIR(  19, 174),
+    SPAIR( -93,-184), SPAIR( -68, 113), SPAIR( -40, 169), SPAIR( -20, 159),
+    SPAIR(  -6, 105), SPAIR(   1, 109), SPAIR(   7, 139), SPAIR(  12, 165),
+    SPAIR(  17, 179), SPAIR(  18, 189), SPAIR(  22, 197), SPAIR(  28, 200),
+    SPAIR(  28, 207), SPAIR(  32, 212), SPAIR(  25, 216), SPAIR(  31, 214),
+    SPAIR(  24, 214), SPAIR(  20, 210), SPAIR(  25, 203), SPAIR(  28, 200),
+    SPAIR(  29, 187), SPAIR(  29, 186), SPAIR(  17, 190), SPAIR(  19, 174),
     SPAIR(  43, 156), SPAIR(  -4, 176), SPAIR(  16, 183), SPAIR(  48, 159)
 };
 
 // Threat eval terms
 
-const scorepair_t PawnAttacksMinor  = SPAIR( 39, 43);
-const scorepair_t PawnAttacksRook   = SPAIR( 22, 16);
-const scorepair_t PawnAttacksQueen  = SPAIR( 27,  5);
-const scorepair_t MinorAttacksRook  = SPAIR( 47, 30);
-const scorepair_t MinorAttacksQueen = SPAIR( 37, 12);
-const scorepair_t RookAttacksQueen  = SPAIR( 39, 16);
+const scorepair_t PawnAttacksMinor  = SPAIR( 47, 47);
+const scorepair_t PawnAttacksRook   = SPAIR( 29, 20);
+const scorepair_t PawnAttacksQueen  = SPAIR( 33,  6);
+const scorepair_t MinorAttacksRook  = SPAIR( 52, 33);
+const scorepair_t MinorAttacksQueen = SPAIR( 40, 15);
+const scorepair_t RookAttacksQueen  = SPAIR( 44, 18);
 
 // clang-format on
 
@@ -467,6 +471,35 @@ scorepair_t evaluate_bishops(const board_t *board, evaluation_t *eval, color_t u
             TRACE_ADD(IDX_BISHOP_SHIELDED, us, 1);
         }
 
+        // FRC penalty for Bishop stuck in a corner
+
+        if (board->chess960)
+        {
+            square_t relSq = relative_sq(sq, us);
+            direction_t up = pawn_direction(us);
+            piece_t ourPawn = create_piece(us, PAWN);
+
+            if (relSq == SQ_A1 && piece_on(board, sq + up + EAST) == ourPawn)
+            {
+                // Bigger penalty if our Pawn is blocked by an enemy Pawn
+
+                bool buried = piece_on(board, sq + up * 2 + EAST) == create_piece(not_color(us), PAWN);
+
+                ret += buried ? BishopBuried : BishopTrapped;
+                TRACE_ADD(buried ? IDX_BISHOP_BURIED : IDX_BISHOP_TRAPPED, us, 1);
+            }
+
+            if (relSq == SQ_H1 && piece_on(board, sq + up + WEST) == ourPawn)
+            {
+                // Bigger penalty if our Pawn is blocked by an enemy Pawn
+
+                bool buried = piece_on(board, sq + up * 2 + WEST) == create_piece(not_color(us), PAWN);
+
+                ret += buried ? BishopBuried : BishopTrapped;
+                TRACE_ADD(buried ? IDX_BISHOP_BURIED : IDX_BISHOP_TRAPPED, us, 1);
+            }
+        }
+
         // Bonus for a Bishop on King Attack zone
 
         if (b & eval->kingZone[us])
@@ -529,8 +562,25 @@ scorepair_t evaluate_rooks(const board_t *board, evaluation_t *eval, color_t us)
 
         // Bonus for Rook mobility
 
-        ret += MobilityR[popcount(b & eval->mobilityZone[us])];
+        int mobility = popcount(b & eval->mobilityZone[us]);
+        ret += MobilityR[mobility];
         TRACE_ADD(IDX_MOBILITY_ROOK + popcount(b & eval->mobilityZone[us]), us, 1);
+
+        // Penalty for a trapped Rook
+
+        if (mobility <= 3)
+        {
+            file_t kingf = sq_file(get_king_square(board, us));
+            file_t rookf = sq_file(sq);
+
+            if ((kingf >= FILE_E) == (kingf < rookf))
+            {
+                bool noCastling = !has_castling(us, board->stack->castlings);
+
+                ret += noCastling ? RookBuried : RookTrapped;
+                TRACE_ADD(noCastling ? IDX_ROOK_BURIED : IDX_ROOK_TRAPPED, us, 1);
+            }
+        }
 
         // Bonus for a Rook on King Attack zone
 
