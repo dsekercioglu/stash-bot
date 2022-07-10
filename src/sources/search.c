@@ -34,7 +34,7 @@ int Pruning[2][7];
 void init_search_tables(void)
 {
     for (int d = 1; d < 64; ++d)
-        for (int m = 1; m < 64; ++m) Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        for (int m = 1; m < 64; ++m) Reductions[d][m] = -1.41 + log(d) * log(m) / 1.30;
 
     for (int d = 1; d < 7; ++d)
     {
@@ -427,8 +427,6 @@ score_t search(
 
     if (rootNode && worker->pvLine) ttMove = worker->rootMoves[worker->pvLine].move;
 
-    if (inCheck) goto __main_loop;
-
     // Razoring.
 
     if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
@@ -586,26 +584,21 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
-            if (isQuiet)
-            {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
-                // Increase for non-PV nodes.
+            // Increase for non-PV quiet nodes.
 
-                R += !pvNode;
+            R += !pvNode && isQuiet;
 
-                // Decrease if the move is a killer or countermove.
+            // Decrease if the move is a killer or countermove.
 
-                R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
+            R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
 
-                // Increase/decrease based on history.
+            // Increase/decrease based on history.
 
-                R -= histScore / 4000;
+            R -= clamp(histScore / 873, -2, 2);
 
-                R = clamp(R, 0, newDepth - 1);
-            }
-            else
-                R = 1;
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
