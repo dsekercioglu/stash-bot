@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define UCI_VERSION "v33.7"
+#define UCI_VERSION "v33.8"
 
 // clang-format off
 
@@ -475,6 +475,11 @@ void uci_loop(int argc, char **argv)
     add_option_check(&OptionList, "UCI_Chess960", &Options.chess960, NULL);
     add_option_check(&OptionList, "Ponder", &Options.ponder, NULL);
     add_option_button(&OptionList, "Clear Hash", &on_clear_hash);
+
+    TUNE_DOUBLE(LMR_B, -4, 4);
+    TUNE_DOUBLE(LMR_K, 0.1, 10.0);
+    TUNE_LONG(LMR_M, 0, 8);
+    TUNE_LONG(LMR_Q, 512, 8192);
 
     uci_position("startpos");
 

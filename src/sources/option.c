@@ -18,6 +18,7 @@
 
 #include "option.h"
 #include <inttypes.h>
+#include <math.h>
 #include <stdio.h>
 
 void option_allocation_failure(void)
@@ -296,8 +297,8 @@ void set_option(option_list_t *list, const char *name, const char *value)
 
                 case OptionSpinFlt:
                     sscanf(value, "%lf", &d);
-                    if (d >= *(double *)cur->min && d <= *(double *)cur->max)
-                        *(double *)cur->data = d;
+                    d = fmin(fmax(*(double *)cur->min, d), *(double *)cur->max);
+                    *(double *)cur->data = d;
                     break;
 
                 case OptionScore:

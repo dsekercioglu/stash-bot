@@ -31,10 +31,15 @@
 int Reductions[64][64];
 int Pruning[2][7];
 
+double LMR_B = -1.41;
+double LMR_K = 1.30;
+long LMR_Q = 4000;
+long LMR_M = 2;
+
 void init_search_tables(void)
 {
     for (int d = 1; d < 64; ++d)
-        for (int m = 1; m < 64; ++m) Reductions[d][m] = -1.34 + log(d) * log(m) / 1.26;
+        for (int m = 1; m < 64; ++m) Reductions[d][m] = LMR_B + log(d) * log(m) / LMR_K;
 
     for (int d = 1; d < 7; ++d)
     {
@@ -109,6 +114,7 @@ void main_worker_search(worker_t *worker)
 
         tt_clear();
         timeman_init(board, &Timeman, &SearchParams, chess_clock());
+        init_search_tables();
 
         if (SearchParams.depth == 0) SearchParams.depth = MAX_PLIES;
 
@@ -427,8 +433,6 @@ score_t search(
 
     if (rootNode && worker->pvLine) ttMove = worker->rootMoves[worker->pvLine].move;
 
-    if (inCheck) goto __main_loop;
-
     // Razoring.
 
     if (!pvNode && depth == 1 && ss->staticEval + 150 <= alpha)
@@ -586,26 +590,21 @@ __main_loop:
 
         if (depth >= 3 && moveCount > 2 + 2 * rootNode)
         {
-            if (isQuiet)
-            {
-                R = Reductions[min(depth, 63)][min(moveCount, 63)];
+            R = Reductions[min(depth, 63)][min(moveCount, 63)];
 
-                // Increase for non-PV nodes.
+            // Increase for non-PV quiet nodes.
 
-                R += !pvNode;
+            R += !pvNode && isQuiet;
 
-                // Decrease if the move is a killer or countermove.
+            // Decrease if the move is a killer or countermove.
 
-                R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
+            R -= (currmove == mp.killer1 || currmove == mp.killer2 || currmove == mp.counter);
 
-                // Increase/decrease based on history.
+            // Increase/decrease based on history.
 
-                R -= histScore / 4000;
+            R -= clamp(histScore / LMR_Q, -LMR_M, LMR_M);
 
-                R = clamp(R, 0, newDepth - 1);
-            }
-            else
-                R = 1;
+            R = clamp(R, 0, newDepth - 1);
         }
         else
             R = 0;
