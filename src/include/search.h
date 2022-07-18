@@ -35,7 +35,7 @@ typedef struct
 } searchstack_t;
 
 // Global for Late Move Reductions
-extern int Reductions[64][64];
+extern int Reductions[2][64][64];
 
 // Global for Late Move Pruning
 extern int Pruning[2][7];
