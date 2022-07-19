@@ -34,12 +34,6 @@ typedef struct
     piece_history_t *pieceHistory;
 } searchstack_t;
 
-// Global for Late Move Reductions
-extern int Reductions[64][64];
-
-// Global for Late Move Pruning
-extern int Pruning[2][7];
-
 enum
 {
     MAX_PLIES = 240
