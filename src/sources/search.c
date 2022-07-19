@@ -36,8 +36,8 @@ void init_search_tables(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] = -1.30 + log(d) * log(m) / 1.22;
-            Reductions[1][d][m] = 0.96 + log(d) * log(m) / 2.97;
+            Reductions[0][d][m] = -1.29 + log(d) * log(m) / 1.17;
+            Reductions[1][d][m] = 0.97 + log(d) * log(m) / 2.97;
         }
 
     for (int d = 1; d < 7; ++d)
@@ -602,7 +602,7 @@ __main_loop:
 
             // Increase/decrease based on history.
 
-            R -= clamp(histScore / 4010, -1, 1);
+            R -= clamp(histScore / 3957, -2, 2);
 
             R = clamp(R, 0, newDepth - 1);
         }
