@@ -146,8 +146,22 @@ __top:
             {
                 place_top_move(mp->cur, mp->list.last);
 
-                if (mp->cur->move != mp->ttMove && see_greater_than(mp->board, mp->cur->move, 0))
-                    return ((mp->cur++)->move);
+                if (mp->cur->move == mp->ttMove)
+                {
+                    ++mp->cur;
+                    continue ;
+                }
+
+                if (see_greater_than(mp->board, mp->cur->move, 0))
+                {
+                    move_t move = ((mp->cur++)->move);
+
+                    if (mp->killer1 == move) mp->killer1 = NO_MOVE;
+                    if (mp->killer2 == move) mp->killer2 = NO_MOVE;
+                    if (mp->counter == move) mp->counter = NO_MOVE;
+
+                    return (move);
+                }
 
                 *(mp->badCaptures++) = *(mp->cur++);
             }
@@ -210,9 +224,12 @@ __top:
         case PICK_BAD_INSTABLE:
             while (mp->cur < mp->badCaptures)
             {
-                if (mp->cur->move != mp->ttMove) return ((mp->cur++)->move);
+                move_t move = (mp->cur++)->move;
 
-                mp->cur++;
+                if (move == mp->ttMove) continue ;
+
+                if (mp->inQsearch || (move != mp->killer1 && move != mp->killer2 && move != mp->counter))
+                    return (move);
             }
             break;
 
