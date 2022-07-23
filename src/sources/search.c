@@ -567,8 +567,11 @@ __main_loop:
                     search(board, singularDepth, singularBeta - 1, singularBeta, ss, false);
                 ss->excludedMove = NO_MOVE;
 
-                if (singularScore < singularBeta)
+                if (singularScore < singularBeta) {
+                    if (singularBeta + 250 <= alpha)
+                        return alpha;
                     extension = 1;
+                }
 
                 else if (singularBeta >= beta)
                     return (singularBeta);
