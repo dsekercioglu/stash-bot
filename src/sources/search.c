@@ -36,14 +36,14 @@ void init_search_tables(void)
     for (int d = 1; d < 64; ++d)
         for (int m = 1; m < 64; ++m)
         {
-            Reductions[0][d][m] =  1.01 /* LMR_NB */ + log(d) * log(m) / 3.03 /* LMR_NK */;
-            Reductions[1][d][m] = -1.37 /* LMR_QB */ + log(d) * log(m) / 1.23 /* LMR_QK */;
+            Reductions[0][d][m] =  0.99 /* LMR_NB */ + log(d) * log(m) / 3.00 /* LMR_NK */;
+            Reductions[1][d][m] = -1.37 /* LMR_QB */ + log(d) * log(m) / 1.28 /* LMR_QK */;
         }
 
     for (int d = 1; d < 7; ++d)
     {
-        Pruning[1][d] = +2.73 /* LMP_IB */ + 3.80 /* LMP_IK */ * pow(d, 1.12 /* LMP_IP */);
-        Pruning[0][d] = -2.23 /* LMP_NB */ + 3.08 /* LMP_NK */ * pow(d, 0.82 /* LMP_NP */);
+        Pruning[1][d] = +2.60 /* LMP_IB */ + 3.78 /* LMP_IK */ * pow(d, 1.05 /* LMP_IP */);
+        Pruning[0][d] = -2.16 /* LMP_NB */ + 3.02 /* LMP_NK */ * pow(d, 0.84 /* LMP_NP */);
     }
 }
 
@@ -286,14 +286,14 @@ __retry:
                 depth = iterDepth;
                 beta = (alpha + beta) / 2;
                 alpha = max(-INF_SCORE, (int)pvScore - delta);
-                delta += delta * 301 /* IIW_UK */ / 1024 + 1 /* IIW_UB */;
+                delta += delta * 301 /* IIW_UK */ / 1024 + 0 /* IIW_UB */;
                 goto __retry;
             }
             else if (bound == LOWER_BOUND)
             {
                 depth -= (depth > iterDepth / 2);
                 beta = min(INF_SCORE, (int)pvScore + delta);
-                delta += delta * 301 /* IIW_UK */ / 1024 + 1 /* IIW_UB */;
+                delta += delta * 301 /* IIW_UK */ / 1024 + 0 /* IIW_UB */;
                 goto __retry;
             }
         }
@@ -433,14 +433,14 @@ score_t search(
 
     // Razoring.
 
-    if (!pvNode && depth <= 1 /* RZ_D */ && ss->staticEval + 161 /* RZ_B */ + 20 /* RZ_K */ * depth * depth <= alpha)
+    if (!pvNode && depth <= 1 /* RZ_D */ && ss->staticEval + 160 /* RZ_B */ + 27 /* RZ_K */ * depth * depth <= alpha)
         return (qsearch(board, alpha, beta, ss, false));
 
     improving = ss->plies >= 2 && ss->staticEval > (ss - 2)->staticEval;
 
     // Futility Pruning.
 
-    if (!pvNode && depth <= 8 /* FPP_D */ && eval - 91 /* FPP_K */ * depth + 74 /* FPP_I */ * improving >= beta && eval < VICTORY)
+    if (!pvNode && depth <= 9 /* FPP_D */ && eval - 89 /* FPP_K */ * depth + 69 /* FPP_I */ * improving >= beta && eval < VICTORY)
         return (eval);
 
     // Null move pruning.
@@ -450,7 +450,7 @@ score_t search(
     {
         boardstack_t stack;
 
-        int R = (3489 /* NMP_B */ + 337 /* NMP_D */ * depth) / 1024 + min((eval - beta) / 124 /* NMP_E */, 5 /* NMP_M */);
+        int R = (3504 /* NMP_B */ + 333 /* NMP_D */ * depth) / 1024 + min((eval - beta) / 125 /* NMP_E */, 5 /* NMP_M */);
 
         ss->currentMove = NULL_MOVE;
         ss->pieceHistory = NULL;
@@ -483,7 +483,7 @@ score_t search(
 
     // Reduce depth if the node is absent from TT.
 
-    if (!rootNode && !found && depth >= 3 /* IIR_D */ - 0 /* IIR_PV */ * pvNode) --depth;
+    if (!rootNode && !found && depth >= 3 /* IIR_D */ - 1 /* IIR_PV */ * pvNode) --depth;
 
 __main_loop:
 
@@ -526,12 +526,12 @@ __main_loop:
 
             // Futility Pruning.
 
-            if (depth <= 5 /* FPC_D */ && !inCheck && isQuiet && eval + 232 /* FPC_B */ + 84 /* FPC_K */ * depth <= alpha)
+            if (depth <= 4 /* FPC_D */ && !inCheck && isQuiet && eval + 230 /* FPC_B */ + 81 /* FPC_K */ * depth <= alpha)
                 skipQuiets = true;
 
             // SEE Pruning.
 
-            if (depth <= 7 /* SP_D */
+            if (depth <= 8 /* SP_D */
                 && !see_greater_than(
                     board, currmove, (isQuiet ? -74 /* SP_QK */ * depth : -25 /* SP_NK */ * depth * depth)))
                 continue;
@@ -559,7 +559,7 @@ __main_loop:
         if (!rootNode)
         {
             if (depth >= 10 /* SE_D */ && currmove == ttMove && !ss->excludedMove && (ttBound & LOWER_BOUND)
-                && abs(ttScore) < VICTORY && ttDepth >= depth - 3 /* SE_TT */)
+                && abs(ttScore) < VICTORY && ttDepth >= depth - 2 /* SE_TT */)
             {
                 score_t singularBeta = ttScore - depth * 7 /* SE_BK */ / 4;
                 int singularDepth = (depth + 0 /* SE_SB */) / 4;
@@ -608,7 +608,7 @@ __main_loop:
 
                 // Increase/decrease based on history.
 
-                R -= histScore / 3859 /* LMR_HQ */;
+                R -= histScore / 3833 /* LMR_HQ */;
             }
 
             R = clamp(R, 0, newDepth - 1);
@@ -779,7 +779,7 @@ score_t qsearch(board_t *board, score_t alpha, score_t beta, searchstack_t *ss, 
     // Check if futility pruning is possible.
 
     const bool canFutilityPrune = (!inCheck && popcount(board->piecetypeBB[ALL_PIECES]) > 6 /* QSF_PC */);
-    const score_t futilityBase = bestScore + 115 /* QSF_B */;
+    const score_t futilityBase = bestScore + 110 /* QSF_B */;
 
     while ((currmove = movepick_next_move(&mp, false)) != NO_MOVE)
     {
