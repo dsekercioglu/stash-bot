@@ -556,21 +556,27 @@ __main_loop:
 
         if (!rootNode)
         {
-            if (depth >= 9 && currmove == ttMove && !ss->excludedMove && (ttBound & LOWER_BOUND)
+            if (currmove == ttMove && !ss->excludedMove && (ttBound & LOWER_BOUND)
                 && abs(ttScore) < VICTORY && ttDepth >= depth - 2)
             {
                 score_t singularBeta = ttScore - depth;
-                int singularDepth = depth / 2;
 
-                ss->excludedMove = ttMove;
-                score_t singularScore =
-                    search(board, singularDepth, singularBeta - 1, singularBeta, ss, false);
-                ss->excludedMove = NO_MOVE;
+                bool multiCut = depth >= 9;
+                score_t singularScore;
+                if (multiCut) {
+                    int singularDepth = depth / 2;
+                    ss->excludedMove = ttMove;
+                    singularScore =
+                        search(board, singularDepth, singularBeta - 1, singularBeta, ss, false);
+                    ss->excludedMove = NO_MOVE;
+                } else {
+                    singularScore = ss->staticEval;
+                }
 
                 if (singularScore < singularBeta)
                     extension = 1;
 
-                else if (singularBeta >= beta)
+                else if (multiCut && singularBeta >= beta)
                     return (singularBeta);
             }
             else if (givesCheck)
